@@ -5,6 +5,135 @@ All notable changes to SIGMAX will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-01-XX
+
+### 🚀 Major Feature Release
+
+This release adds advanced machine learning, comprehensive monitoring, alerting systems, and enhanced UI components.
+
+### Added
+
+#### Machine Learning & Intelligence
+- **ML Predictor Module** with ensemble methods
+  - XGBoost for gradient boosting
+  - LightGBM for fast gradient boosting
+  - Random Forest for ensemble learning
+  - Gradient Boosting for regression
+  - Feature engineering from 12 technical indicators
+  - Time series cross-validation
+  - Ensemble prediction with configurable weighting
+
+- **Sentiment Analysis Agent**
+  - Multi-source sentiment aggregation
+  - News sentiment with keyword scoring
+  - Social media sentiment tracking
+  - On-chain metrics analysis
+  - Fear & Greed index integration
+  - Confidence scoring and trending detection
+
+- **Market Regime Detector**
+  - 6 market regime classifications (bull/bear trending, sideways, high/low volatility, uncertain)
+  - Hidden Markov Model-based detection
+  - Multi-indicator regime analysis
+  - Adaptive strategy parameters per regime
+  - Confidence scoring for regime transitions
+
+#### Trading & Portfolio Management
+- **Advanced Backtesting Framework**
+  - Performance metrics: Sharpe ratio, Sortino ratio, max drawdown
+  - Position tracking with full trade history
+  - Walk-forward analysis support
+  - Detailed profit/loss analysis
+  - Win rate and profit factor calculation
+  - Trade-by-trade audit trail
+
+- **Portfolio Rebalancer**
+  - Multiple rebalancing strategies (threshold, calendar, volatility-adjusted)
+  - Risk parity rebalancing option
+  - Quantum-enhanced portfolio optimization
+  - Transaction cost modeling
+  - Drift detection and threshold management
+  - Rebalancing frequency control
+
+#### Monitoring & Alerting
+- **Alert Management System**
+  - Multi-channel delivery (console, webhook, email, SMS, Telegram, Discord, Slack)
+  - Four severity levels (info, warning, critical, emergency)
+  - Alert throttling to prevent spam
+  - Priority-based routing
+  - Alert history tracking
+  - Customizable alert rules
+  - Pre-configured trading alert templates
+
+- **Performance Monitoring**
+  - Real-time system resource tracking (CPU, memory, disk, network)
+  - Trading metrics calculation (win rate, PnL, Sharpe ratio)
+  - Latency measurement and statistics
+  - Throughput analysis
+  - Historical metrics storage
+  - Performance summary reports
+
+#### UI Components
+- **Alert Panel Component**
+  - Multi-level alert display with color coding
+  - Real-time alert filtering by severity
+  - Alert dismissal and clearing
+  - Alert statistics dashboard
+  - Timestamp formatting (relative time)
+  - Tag-based alert organization
+
+- **Performance Chart Component**
+  - Real-time PnL visualization
+  - Win rate tracking
+  - Sharpe ratio display
+  - Profit factor metrics
+  - Current streak indicator
+  - Interactive timeframe selection (1h, 24h, 7d, 30d)
+  - SVG-based chart rendering
+
+- **Enhanced Risk Dashboard**
+  - Live exposure tracking
+  - Daily PnL monitoring
+  - Drawdown metrics
+  - Auto-pause trigger indicators
+  - Value at Risk (VaR) calculation
+
+#### Testing
+- **Comprehensive Integration Tests**
+  - End-to-end workflow testing
+  - Multi-agent debate validation
+  - Risk limit enforcement tests
+  - Quantum optimization integration
+  - Arbitrage detection tests
+  - Compliance check validation
+  - Emergency stop testing
+  - Concurrent analysis tests
+  - Error recovery validation
+  - Performance and memory usage tests
+
+### Enhanced
+- **UI Layout** - Added Performance Chart and Alert Panel to main dashboard
+- **Documentation** - Updated README with new features and capabilities
+- **Type Safety** - All new modules include comprehensive type hints and docstrings
+
+### Technical Specifications
+
+**New Dependencies:**
+- scikit-learn 1.3+ (for ML models)
+- xgboost 2.0+ (gradient boosting)
+- lightgbm 4.1+ (fast gradient boosting)
+- psutil 5.9+ (system monitoring)
+- aiohttp 3.9+ (async HTTP for webhooks)
+
+**Performance Improvements:**
+- ML prediction ensemble reduces overfitting
+- Market regime detection improves strategy adaptation
+- Alert throttling reduces noise
+- Performance monitoring identifies bottlenecks
+
+### Breaking Changes
+None - This is a backward-compatible feature release
+
 ## [1.0.0] - 2025-01-XX
 
 ### 🎉 Initial Release

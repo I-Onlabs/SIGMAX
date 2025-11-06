@@ -34,6 +34,9 @@ SIGMAX is a **fully autonomous, multi-agent AI trading operating system** that c
 - **Specialized Agents**: Sentiment, Technical, Fundamentals, Risk, Arbitrage, Privacy, Compliance
 - **Adaptive Learning**: RLHF-tuned responses with FinLLM models
 - **RAG + ZK-Proofs**: Verifiable memory and audit trails
+- **ML Ensemble**: XGBoost, LightGBM, Random Forest, Gradient Boosting for price prediction
+- **Sentiment Analysis**: Multi-source aggregation (news, social, on-chain, Fear & Greed)
+- **Market Regime Detection**: 6 regime types with HMM-based classification
 
 ### 📊 Advanced Trading
 - **Freqtrade Integration**: Paper + Live trading with FreqAI
@@ -41,6 +44,9 @@ SIGMAX is a **fully autonomous, multi-agent AI trading operating system** that c
 - **Multi-Chain**: BTC, ETH, Solana, Base, Arbitrum, Polygon
 - **Arbitrage Scanner**: 50+ DEX/CEX real-time monitoring
 - **MEV Shield**: Anti-sandwich, anti-frontrun protection
+- **Advanced Backtesting**: Sharpe/Sortino ratio, max drawdown, walk-forward analysis
+- **Portfolio Rebalancing**: Quantum-enhanced with multiple strategies (threshold, calendar, volatility-adjusted)
+- **Performance Monitoring**: Real-time metrics with latency tracking and throughput analysis
 
 ### ⚛️ Quantum Computing
 - **Portfolio Optimization**: VQE + QAOA with hot-starting
@@ -55,6 +61,8 @@ SIGMAX is a **fully autonomous, multi-agent AI trading operating system** that c
 - **EU AI Act Compliant**: Bias detection + transparency
 - **SEC Compliant**: Trade logging and reporting
 - **Privacy First**: PII detection + anti-collusion
+- **Multi-Channel Alerts**: Console, webhook, email, SMS, Telegram, Discord, Slack
+- **Alert Management**: Throttling, priority routing, customizable rules
 
 ### 🎨 Neural Cockpit UI
 - **3D Agent Swarm**: Live visualization of agent activity
@@ -63,6 +71,9 @@ SIGMAX is a **fully autonomous, multi-agent AI trading operating system** that c
 - **ESG Satellite**: Geographic risk visualization
 - **Voice Commands**: Natural language control
 - **macOS Native**: Tauri-based .app (6MB installer)
+- **Performance Charts**: Real-time PnL, win rate, Sharpe ratio visualization
+- **Alert Panel**: Multi-level alert display with filtering and statistics
+- **Risk Dashboard**: Live exposure tracking with auto-pause indicators
 
 ---
 

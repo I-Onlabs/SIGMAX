@@ -6,6 +6,8 @@ import TradingPanel from './components/TradingPanel'
 import AgentDebateLog from './components/AgentDebateLog'
 import QuantumCircuit from './components/QuantumCircuit'
 import RiskDashboard from './components/RiskDashboard'
+import AlertPanel from './components/AlertPanel'
+import PerformanceChart from './components/PerformanceChart'
 
 function App() {
   const [status, setStatus] = useState<any>(null)
@@ -108,8 +110,14 @@ function App() {
             {/* Trading Panel */}
             <TradingPanel />
 
+            {/* Performance Chart */}
+            <PerformanceChart />
+
             {/* Agent Debate Log */}
             <AgentDebateLog />
+
+            {/* Alert Panel */}
+            <AlertPanel />
           </div>
 
           {/* Right Column */}
