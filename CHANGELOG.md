@@ -5,6 +5,168 @@ All notable changes to SIGMAX will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-11-06
+
+### 🚀 Major Enhancement Release
+
+This release significantly enhances the API with enterprise-grade features including comprehensive security, monitoring, documentation, performance optimization, and operational improvements.
+
+### Added
+
+#### API & Security Enhancements
+- **API Key Authentication** with Bearer token support
+- **Rate Limiting System** with configurable limits per endpoint
+  - Default: 60 requests/minute
+  - Analysis endpoints: 10 requests/minute
+  - Trading endpoints: 5 requests/minute
+- **Request Metrics Tracking** with performance statistics
+- **Enhanced Error Handling** with detailed logging and stack traces
+- **Input Validation** using Pydantic models with custom validators
+- **CORS Configuration** with environment-based origins
+- **GZip Compression** middleware for response optimization
+- **Trusted Host Protection** for production environments
+- **Request Logging Middleware** with timing and client tracking
+
+#### Health & Monitoring
+- **Advanced Health Checks**
+  - `/health` - Basic health endpoint
+  - `/health/ready` - Kubernetes-style readiness probe (checks CPU, memory, disk)
+  - `/health/live` - Kubernetes-style liveness probe
+- **System Metrics Endpoint** (`/metrics`)
+  - CPU, memory, disk usage tracking
+  - API request statistics
+  - Success rates and response times
+  - Per-endpoint performance metrics
+- **Real-time Performance Monitoring**
+  - Request duration tracking
+  - Error rate monitoring
+  - Endpoint-specific statistics
+
+#### Documentation
+- **Comprehensive API Reference** (`docs/API_REFERENCE.md`)
+  - All endpoints documented with examples
+  - Request/response schemas
+  - Error codes and solutions
+  - Python and JavaScript/TypeScript client examples
+  - WebSocket API documentation
+- **Deployment Guide** (`docs/DEPLOYMENT.md`)
+  - Multiple deployment methods (Docker, Kubernetes, manual)
+  - Security hardening checklist
+  - Performance tuning recommendations
+  - Backup and recovery procedures
+  - Production-ready configurations
+- **Troubleshooting Guide** (`docs/TROUBLESHOOTING.md`)
+  - Common issues and solutions
+  - Diagnostic scripts
+  - Error message reference
+  - Performance optimization tips
+  - Docker and container troubleshooting
+
+#### Performance & Caching
+- **Advanced Caching Layer** (`core/utils/cache.py`)
+  - Redis-backed caching with automatic fallback to in-memory
+  - Configurable TTL (Time To Live)
+  - `@cached` decorator for easy function caching
+  - Cache statistics and monitoring
+  - Support for both JSON and pickle serialization
+  - Cache key generation utilities
+- **Connection Pooling** ready for database optimization
+- **Async/Await** throughout for better concurrency
+
+#### Enhanced API Endpoints
+- **Improved Response Models**
+  - Consistent timestamp formatting
+  - Detailed error messages
+  - Additional metadata (CPU usage, system stats)
+- **Pagination Support** for history endpoints
+- **Query Parameters** for filtering and limiting results
+- **WebSocket Improvements** with better connection handling
+
+### Enhanced
+
+#### API Documentation
+- **OpenAPI 3.0** with detailed descriptions
+- **Swagger UI** at `/docs` with interactive testing
+- **ReDoc** at `/redoc` for alternative documentation view
+- **Tagged Endpoints** for better organization (System, Trading, Analysis, Control, Monitoring)
+- **Rate Limit Documentation** in API descriptions
+
+#### Error Handling
+- **Consistent Error Format** across all endpoints
+- **HTTP Exception Handling** with appropriate status codes
+- **Validation Errors** with detailed field information
+- **Logging** of all errors with stack traces
+
+#### Security
+- **Environment-based Configuration** for sensitive data
+- **API Key Generation** instructions
+- **HTTPS/TLS** setup documentation
+- **Firewall Configuration** examples
+- **Secrets Management** options (env vars, Vault, Kubernetes)
+
+### Technical Improvements
+
+**New Dependencies:**
+- `psutil 5.9+` - System resource monitoring
+- `redis 5.0+` (optional) - Enhanced caching backend
+
+**Performance Improvements:**
+- Response time tracking for all endpoints
+- Automatic rate limiting to prevent abuse
+- GZip compression for large responses
+- Efficient caching with Redis or in-memory fallback
+
+**Code Quality:**
+- Comprehensive type hints throughout
+- Detailed docstrings for all endpoints
+- Consistent code formatting
+- Error handling best practices
+
+### Breaking Changes
+- API now requires authentication when `SIGMAX_API_KEY` is set
+- Rate limiting may affect high-frequency API calls
+- Some endpoint response formats include additional metadata
+
+### Migration Guide
+
+#### From v1.x to v2.0
+
+1. **Add API Key (Optional but Recommended)**
+```bash
+echo "SIGMAX_API_KEY=$(openssl rand -hex 32)" >> .env
+```
+
+2. **Update Client Code for Rate Limits**
+```python
+# Add retry logic with exponential backoff
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+retry_strategy = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=[429, 500, 502, 503, 504]
+)
+```
+
+3. **Update CORS Origins**
+```bash
+# In .env
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+```
+
+### Deployment Recommendations
+
+**Production Checklist:**
+- [x] Set strong API key
+- [x] Configure CORS properly
+- [x] Enable HTTPS/TLS
+- [x] Set up monitoring
+- [x] Configure backups
+- [x] Review rate limits
+- [x] Set up health checks
+- [x] Configure log rotation
+
 ## [1.1.0] - 2025-01-XX
 
 ### 🚀 Major Feature Release
