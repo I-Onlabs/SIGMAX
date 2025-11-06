@@ -7,6 +7,8 @@ import asyncio
 from typing import Dict, Any, List, Optional, TypedDict, Annotated
 from datetime import datetime
 import json
+import sys
+from pathlib import Path
 
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -15,6 +17,18 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from loguru import logger
 import operator
+
+# Add parent directory to path for protocol imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from modules.protocols import (
+    DataModuleProtocol,
+    ExecutionModuleProtocol,
+    QuantumModuleProtocol,
+    ComplianceModuleProtocol,
+    RLModuleProtocol,
+    ArbitrageModuleProtocol
+)
 
 from .researcher import ResearcherAgent
 from .analyzer import AnalyzerAgent
@@ -59,14 +73,26 @@ class SIGMAXOrchestrator:
 
     def __init__(
         self,
-        data_module,
-        execution_module,
-        quantum_module,
-        rl_module,
-        arbitrage_module,
-        compliance_module,
+        data_module: DataModuleProtocol,
+        execution_module: ExecutionModuleProtocol,
+        quantum_module: Optional[QuantumModuleProtocol],
+        rl_module: Optional[RLModuleProtocol],
+        arbitrage_module: Optional[ArbitrageModuleProtocol],
+        compliance_module: ComplianceModuleProtocol,
         risk_profile: str = "conservative"
     ):
+        """
+        Initialize SIGMAX Orchestrator with dependency injection
+
+        Args:
+            data_module: Module implementing DataModuleProtocol
+            execution_module: Module implementing ExecutionModuleProtocol
+            quantum_module: Optional module implementing QuantumModuleProtocol
+            rl_module: Optional module implementing RLModuleProtocol
+            arbitrage_module: Optional module implementing ArbitrageModuleProtocol
+            compliance_module: Module implementing ComplianceModuleProtocol
+            risk_profile: Risk profile ('conservative', 'balanced', 'aggressive')
+        """
         self.data_module = data_module
         self.execution_module = execution_module
         self.quantum_module = quantum_module
