@@ -124,9 +124,47 @@ class ExecutionModule:
             logger.warning(f"Position size {size} exceeds limit {self.max_position_size}")
             return False
 
-        # Check daily loss (TODO: implement)
+        # Check daily loss limit
+        daily_pnl = await self._calculate_daily_pnl()
+        if daily_pnl < -self.max_daily_loss:
+            logger.warning(
+                f"Daily loss ${abs(daily_pnl):.2f} exceeds limit ${self.max_daily_loss}. "
+                f"Trade blocked."
+            )
+            return False
+
+        # Check if we're approaching the limit with this trade
+        # Assume worst case: full stop loss on this trade
+        potential_loss = size * self.stop_loss_pct / 100
+        if (daily_pnl - potential_loss) < -self.max_daily_loss:
+            logger.warning(
+                f"Trade could push daily loss to ${abs(daily_pnl - potential_loss):.2f}, "
+                f"exceeding limit ${self.max_daily_loss}"
+            )
+            return False
 
         return True
+
+    async def _calculate_daily_pnl(self) -> float:
+        """Calculate profit/loss for current day"""
+        from datetime import datetime, timedelta
+
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Filter trades from today
+        today_trades = [
+            t for t in self.trade_history
+            if datetime.fromisoformat(t['timestamp']) >= today_start
+        ]
+
+        # Calculate PnL (simplified - in production, track entry/exit pairs)
+        pnl = 0.0
+        for trade in today_trades:
+            # This is simplified; real implementation needs matched pairs
+            if trade.get('pnl'):
+                pnl += trade['pnl']
+
+        return pnl
 
     async def _execute_paper_trade(
         self,
@@ -136,10 +174,11 @@ class ExecutionModule:
         price: Optional[float]
     ) -> Dict[str, Any]:
         """Execute paper trade"""
+        from core.testing.fixtures import MockMarketData
 
         # Use mock price if not provided
         if not price:
-            price = 95000 if "BTC" in symbol else 3500  # Mock price
+            price = MockMarketData.get_price(symbol)
 
         base, quote = symbol.split("/")
 
@@ -226,11 +265,66 @@ class ExecutionModule:
 
     async def close_all_positions(self):
         """Emergency close all positions"""
-        logger.warning("Closing all positions!")
+        logger.warning("🚨 Closing all positions!")
 
-        # TODO: Implement actual position closing
+        closed_positions = []
+        errors = []
 
-        self.open_orders = []
+        try:
+            if self.mode == "live" and self.exchange:
+                # Fetch all open positions
+                positions = await self.exchange.fetch_positions()
+
+                for position in positions:
+                    if position['contracts'] > 0:
+                        symbol = position['symbol']
+                        size = position['contracts']
+                        side = 'sell' if position['side'] == 'long' else 'buy'
+
+                        try:
+                            result = await self.exchange.create_order(
+                                symbol=symbol,
+                                type='market',
+                                side=side,
+                                amount=size
+                            )
+                            closed_positions.append(result)
+                            logger.info(f"✓ Closed {symbol}: {size} @ market")
+                        except Exception as e:
+                            error_msg = f"Failed to close {symbol}: {e}"
+                            logger.error(error_msg)
+                            errors.append(error_msg)
+
+            elif self.mode == "paper":
+                # Close paper positions by selling all holdings
+                for asset, balance in list(self.paper_balance.items()):
+                    if asset != "USDT" and balance > 0:
+                        # Market sell everything
+                        symbol = f"{asset}/USDT"
+                        result = await self._execute_paper_trade(symbol, "sell", balance, None)
+                        closed_positions.append(result)
+                        logger.info(f"✓ Paper closed: {symbol}")
+
+            self.open_orders = []
+
+            if errors:
+                raise Exception(f"Closed {len(closed_positions)} positions with {len(errors)} errors: {errors}")
+
+            logger.info(f"✓ Emergency close completed: {len(closed_positions)} positions closed")
+            return {
+                "success": True,
+                "closed_count": len(closed_positions),
+                "positions": closed_positions
+            }
+
+        except Exception as e:
+            logger.error(f"Emergency close error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "closed_count": len(closed_positions),
+                "failed_count": len(errors)
+            }
 
     async def get_status(self) -> Dict[str, Any]:
         """Get execution module status"""

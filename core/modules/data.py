@@ -24,6 +24,7 @@ class DataModule:
         self.exchange = None
         self.cache = {}
         self.cache_ttl = 60  # seconds
+        self._cache_cleanup_task = None
 
         logger.info("✓ Data module created")
 
@@ -62,6 +63,10 @@ class DataModule:
         except Exception as e:
             logger.warning(f"Could not initialize CCXT: {e}. Using mock data.")
             self.exchange = None
+
+        # Start cache cleanup task
+        self._cache_cleanup_task = asyncio.create_task(self._cleanup_cache_loop())
+        logger.debug("✓ Cache cleanup task started")
 
     async def get_market_data(
         self,
@@ -124,31 +129,9 @@ class DataModule:
 
     def _generate_mock_data(self, symbol: str) -> Dict[str, Any]:
         """Generate mock market data for testing"""
-        import random
+        from core.testing.fixtures import MockMarketData
 
-        base_prices = {
-            "BTC/USDT": 95000,
-            "ETH/USDT": 3500,
-            "SOL/USDT": 180
-        }
-
-        base_price = base_prices.get(symbol, 100)
-        price = base_price * (1 + random.uniform(-0.02, 0.02))
-
-        return {
-            "symbol": symbol,
-            "price": price,
-            "volume_24h": random.uniform(1e8, 1e9),
-            "change_24h": random.uniform(-5, 5),
-            "high_24h": price * 1.03,
-            "low_24h": price * 0.97,
-            "bid": price * 0.999,
-            "ask": price * 1.001,
-            "spread": price * 0.002,
-            "ohlcv": [],
-            "orderbook": {"bids": [], "asks": []},
-            "timestamp": datetime.now().isoformat()
-        }
+        return MockMarketData.generate_market_data_dict(symbol)
 
     async def get_historical_data(
         self,
@@ -187,7 +170,40 @@ class DataModule:
             logger.error(f"Error fetching historical data: {e}")
             return []
 
+    async def _cleanup_cache_loop(self):
+        """Periodic cache cleanup to prevent memory leaks"""
+        try:
+            while True:
+                await asyncio.sleep(60)  # Run every minute
+
+                now = datetime.now()
+                expired_keys = [
+                    key for key, (_, timestamp) in self.cache.items()
+                    if (now - timestamp).total_seconds() > self.cache_ttl
+                ]
+
+                for key in expired_keys:
+                    del self.cache[key]
+
+                if expired_keys:
+                    logger.debug(f"Cleaned {len(expired_keys)} expired cache entries")
+        except asyncio.CancelledError:
+            logger.debug("Cache cleanup task cancelled")
+        except Exception as e:
+            logger.error(f"Error in cache cleanup: {e}")
+
     async def close(self):
         """Close connections"""
+        # Cancel cleanup task
+        if self._cache_cleanup_task:
+            self._cache_cleanup_task.cancel()
+            try:
+                await self._cache_cleanup_task
+            except asyncio.CancelledError:
+                pass
+
+        # Close exchange
         if self.exchange:
             await self.exchange.close()
+
+        logger.info("✓ Data module closed")

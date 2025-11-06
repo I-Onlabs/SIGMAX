@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Activity, Brain, TrendingUp, Shield, Zap } from 'lucide-react'
 import NeuralSwarm3D from './components/NeuralSwarm3D'
 import StatusPanel from './components/StatusPanel'
@@ -12,6 +12,61 @@ import PerformanceChart from './components/PerformanceChart'
 function App() {
   const [status, setStatus] = useState<any>(null)
   const [ws, setWs] = useState<WebSocket | null>(null)
+  const [wsConnected, setWsConnected] = useState(false)
+  const reconnectTimeoutRef = useRef<number | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+
+  const connectWebSocket = useCallback(() => {
+    // Clear any existing reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+
+    const websocket = new WebSocket('ws://localhost:8000/ws')
+
+    websocket.onopen = () => {
+      console.log('WebSocket connected')
+      setWsConnected(true)
+      reconnectAttemptsRef.current = 0 // Reset on successful connection
+    }
+
+    websocket.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      console.log('WebSocket message:', data)
+
+      if (data.type === 'status_update') {
+        setStatus(data.payload)
+      }
+    }
+
+    websocket.onerror = (error) => {
+      console.error('WebSocket error:', error)
+      setWsConnected(false)
+    }
+
+    websocket.onclose = () => {
+      console.log('WebSocket disconnected')
+      setWsConnected(false)
+
+      // Attempt to reconnect with exponential backoff
+      reconnectAttemptsRef.current += 1
+      const maxAttempts = 10
+
+      if (reconnectAttemptsRef.current <= maxAttempts) {
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000)
+        console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxAttempts})`)
+
+        reconnectTimeoutRef.current = window.setTimeout(() => {
+          connectWebSocket()
+        }, delay)
+      } else {
+        console.error('Max reconnection attempts reached. Please refresh the page.')
+      }
+    }
+
+    setWs(websocket)
+  }, [])
 
   useEffect(() => {
     // Fetch initial status
@@ -20,36 +75,19 @@ function App() {
       .then(data => setStatus(data))
       .catch(err => console.error('Failed to fetch status:', err))
 
-    // Connect to WebSocket
-    const websocket = new WebSocket('ws://localhost:8000/ws')
-
-    websocket.onopen = () => {
-      console.log('WebSocket connected')
-    }
-
-    websocket.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      console.log('WebSocket message:', data)
-
-      if (data.type === 'status_update') {
-        // Update status in real-time
-      }
-    }
-
-    websocket.onerror = (error) => {
-      console.error('WebSocket error:', error)
-    }
-
-    websocket.onclose = () => {
-      console.log('WebSocket disconnected')
-    }
-
-    setWs(websocket)
+    // Connect WebSocket
+    connectWebSocket()
 
     return () => {
-      websocket.close()
+      // Cleanup
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
+      if (ws) {
+        ws.close()
+      }
     }
-  }, [])
+  }, [connectWebSocket])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
@@ -71,8 +109,8 @@ function App() {
 
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-sm">Operational</span>
+                <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+                <span className="text-sm">{wsConnected ? 'Connected' : 'Disconnected'}</span>
               </div>
 
               <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur">
