@@ -28,6 +28,13 @@ from modules.quantum import QuantumModule
 from modules.rl import RLModule
 from modules.arbitrage import ArbitrageModule
 from modules.compliance import ComplianceModule
+from modules.alerts import AlertManager, TradingAlerts, get_alert_manager, set_alert_manager
+from modules.performance_monitor import PerformanceMonitor, get_performance_monitor, set_performance_monitor
+from modules.ml_predictor import MLPredictor
+from modules.backtest import Backtester
+from modules.portfolio_rebalancer import PortfolioRebalancer
+from modules.regime_detector import RegimeDetector
+from agents.sentiment import SentimentAgent
 from utils.healthcheck import HealthChecker
 from utils.telegram_bot import TelegramBot
 
@@ -93,10 +100,38 @@ class SIGMAX:
         self.rl_module: Optional[RLModule] = None
         self.arbitrage_module: Optional[ArbitrageModule] = None
         self.compliance_module: Optional[ComplianceModule] = None
+        self.alert_manager: Optional[AlertManager] = None
+        self.trading_alerts: Optional[TradingAlerts] = None
+        self.performance_monitor: Optional[PerformanceMonitor] = None
+        self.ml_predictor: Optional[MLPredictor] = None
+        self.sentiment_agent: Optional[SentimentAgent] = None
+        self.backtester: Optional[Backtester] = None
+        self.portfolio_rebalancer: Optional[PortfolioRebalancer] = None
+        self.regime_detector: Optional[RegimeDetector] = None
         self.telegram_bot: Optional[TelegramBot] = None
         self.health_checker: Optional[HealthChecker] = None
 
         logger.info(f"🚀 SIGMAX initialized in {mode} mode with {risk_profile} profile")
+
+    def _get_llm(self):
+        """Get configured LLM"""
+        # Priority: Ollama (local) > OpenAI > Mock
+        if os.getenv("OLLAMA_BASE_URL"):
+            from langchain_ollama import ChatOllama
+            return ChatOllama(
+                base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+                model=os.getenv("OLLAMA_MODEL", "llama3.1"),
+                temperature=0.7
+            )
+        elif os.getenv("OPENAI_API_KEY"):
+            from langchain_openai import ChatOpenAI
+            return ChatOpenAI(
+                model=os.getenv("OPENAI_MODEL", "gpt-4-turbo-preview"),
+                temperature=0.7
+            )
+        else:
+            logger.warning("No LLM configured, using mock responses")
+            return None
 
     async def initialize(self):
         """Initialize all modules"""
@@ -160,6 +195,64 @@ class SIGMAX:
                 progress.remove_task(task)
                 logger.info("✓ Compliance module initialized")
 
+                # Initialize alert manager
+                task = progress.add_task("Initializing alert system...", total=None)
+                self.alert_manager = AlertManager(
+                    enabled_channels=[],  # Configure in production
+                    webhook_urls={},
+                    throttle_seconds=60
+                )
+                self.trading_alerts = TradingAlerts(self.alert_manager)
+                set_alert_manager(self.alert_manager)
+                progress.remove_task(task)
+                logger.info("✓ Alert manager initialized")
+
+                # Initialize performance monitor
+                task = progress.add_task("Initializing performance monitor...", total=None)
+                self.performance_monitor = PerformanceMonitor(
+                    history_size=10000,
+                    aggregate_interval=60
+                )
+                await self.performance_monitor.start()
+                set_performance_monitor(self.performance_monitor)
+                progress.remove_task(task)
+                logger.info("✓ Performance monitor initialized")
+
+                # Initialize ML predictor
+                task = progress.add_task("Initializing ML predictor...", total=None)
+                self.ml_predictor = MLPredictor()
+                progress.remove_task(task)
+                logger.info("✓ ML predictor initialized")
+
+                # Initialize sentiment agent
+                task = progress.add_task("Initializing sentiment agent...", total=None)
+                from langchain_openai import ChatOpenAI
+                llm = self._get_llm()
+                self.sentiment_agent = SentimentAgent(llm)
+                progress.remove_task(task)
+                logger.info("✓ Sentiment agent initialized")
+
+                # Initialize market regime detector
+                task = progress.add_task("Initializing regime detector...", total=None)
+                self.regime_detector = RegimeDetector()
+                progress.remove_task(task)
+                logger.info("✓ Regime detector initialized")
+
+                # Initialize portfolio rebalancer
+                task = progress.add_task("Initializing portfolio rebalancer...", total=None)
+                self.portfolio_rebalancer = PortfolioRebalancer(
+                    target_weights={'BTC/USDT': 0.6, 'ETH/USDT': 0.3, 'SOL/USDT': 0.1},
+                    rebalance_threshold=0.05
+                )
+                progress.remove_task(task)
+                logger.info("✓ Portfolio rebalancer initialized")
+
+                # Initialize backtester
+                task = progress.add_task("Initializing backtester...", total=None)
+                self.backtester = Backtester(initial_capital=50.0)
+                progress.remove_task(task)
+                logger.info("✓ Backtester initialized")
+
                 # Initialize multi-agent orchestrator
                 task = progress.add_task("Initializing agent swarm...", total=None)
                 self.orchestrator = SIGMAXOrchestrator(
@@ -169,6 +262,13 @@ class SIGMAX:
                     rl_module=self.rl_module,
                     arbitrage_module=self.arbitrage_module,
                     compliance_module=self.compliance_module,
+                    alert_manager=self.alert_manager,
+                    trading_alerts=self.trading_alerts,
+                    performance_monitor=self.performance_monitor,
+                    ml_predictor=self.ml_predictor,
+                    sentiment_agent=self.sentiment_agent,
+                    regime_detector=self.regime_detector,
+                    portfolio_rebalancer=self.portfolio_rebalancer,
                     risk_profile=self.risk_profile
                 )
                 await self.orchestrator.initialize()
@@ -260,6 +360,10 @@ class SIGMAX:
         # Stop Telegram bot
         if self.telegram_bot:
             await self.telegram_bot.stop()
+
+        # Stop performance monitor
+        if self.performance_monitor:
+            await self.performance_monitor.stop()
 
         # Stop health checker
         if self.health_checker:
@@ -392,9 +496,70 @@ async def main():
 
     # Run
     if args.backtest:
+        if not args.start or not args.end:
+            console.print("[red]Error: --start and --end dates required for backtest mode[/red]")
+            console.print("Example: python main.py --backtest --start 2024-01-01 --end 2024-12-31")
+            sys.exit(1)
+
         logger.info(f"Running backtest from {args.start} to {args.end}")
-        # TODO: Implement backtest mode
-        console.print("[yellow]Backtest mode not yet implemented[/yellow]")
+        console.print(f"[cyan]Running backtest: {args.start} to {args.end}[/cyan]")
+
+        from datetime import datetime as dt
+        import numpy as np
+
+        # Parse dates
+        start_date = dt.strptime(args.start, "%Y-%m-%d")
+        end_date = dt.strptime(args.end, "%Y-%m-%d")
+
+        # Generate synthetic data for demonstration
+        days = (end_date - start_date).days
+        timestamps = [start_date.timestamp() + i * 86400 for i in range(days)]
+
+        # Mock OHLCV data
+        data = {
+            'BTC/USDT': np.random.rand(days, 6)
+        }
+        data['BTC/USDT'][:, 0] = timestamps
+        data['BTC/USDT'][:, 4] = 50000 + np.cumsum(np.random.randn(days) * 500)  # Close prices
+
+        # Simple strategy function
+        async def simple_strategy(market_data, timestamp):
+            """Simple moving average crossover strategy"""
+            signals = []
+            for symbol, ohlcv in market_data.items():
+                if len(ohlcv) < 20:
+                    continue
+
+                closes = ohlcv[:, 4]
+                sma_fast = np.mean(closes[-5:])
+                sma_slow = np.mean(closes[-20:])
+
+                if sma_fast > sma_slow:
+                    signals.append({'symbol': symbol, 'action': 'buy', 'size': 0.01})
+                elif sma_fast < sma_slow:
+                    signals.append({'symbol': symbol, 'action': 'sell', 'size': 0.01})
+
+            return signals
+
+        # Run backtest
+        result = await sigmax.backtester.run(
+            strategy_func=simple_strategy,
+            data=data,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        # Display results
+        console.print("\n[bold green]Backtest Results:[/bold green]")
+        console.print(f"Total Trades: {result.total_trades}")
+        console.print(f"Winning Trades: {result.winning_trades}")
+        console.print(f"Win Rate: {result.win_rate:.2%}")
+        console.print(f"Total PnL: ${result.total_pnl:.2f}")
+        console.print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
+        console.print(f"Sortino Ratio: {result.sortino_ratio:.2f}")
+        console.print(f"Max Drawdown: ${result.max_drawdown:.2f}")
+        console.print(f"Profit Factor: {result.profit_factor:.2f}")
+
     else:
         await sigmax.start()
 

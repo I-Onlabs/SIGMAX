@@ -65,6 +65,13 @@ class SIGMAXOrchestrator:
         rl_module,
         arbitrage_module,
         compliance_module,
+        alert_manager=None,
+        trading_alerts=None,
+        performance_monitor=None,
+        ml_predictor=None,
+        sentiment_agent=None,
+        regime_detector=None,
+        portfolio_rebalancer=None,
         risk_profile: str = "conservative"
     ):
         self.data_module = data_module
@@ -73,6 +80,13 @@ class SIGMAXOrchestrator:
         self.rl_module = rl_module
         self.arbitrage_module = arbitrage_module
         self.compliance_module = compliance_module
+        self.alert_manager = alert_manager
+        self.trading_alerts = trading_alerts
+        self.performance_monitor = performance_monitor
+        self.ml_predictor = ml_predictor
+        self.sentiment_agent = sentiment_agent
+        self.regime_detector = regime_detector
+        self.portfolio_rebalancer = portfolio_rebalancer
         self.risk_profile = risk_profile
 
         # Initialize LLM
@@ -92,6 +106,7 @@ class SIGMAXOrchestrator:
         # State
         self.running = False
         self.paused = False
+        self.last_state = None
 
         logger.info("✓ SIGMAX Orchestrator created")
 
