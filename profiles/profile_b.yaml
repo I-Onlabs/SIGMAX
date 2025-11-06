@@ -1,0 +1,103 @@
+# Profile B: Performance-Optimized
+# High-performance setup with Aeron, DPDK, and optional LLM
+
+profile: "b"
+environment: "production"
+
+# Symbols to trade
+symbols:
+  - "BTC/USDT"
+  - "ETH/USDT"
+  - "SOL/USDT"
+  - "BNB/USDT"
+  - "XRP/USDT"
+
+# Exchange configurations
+exchanges:
+  binance:
+    api_key: ""  # Set via environment variable
+    api_secret: ""
+    testnet: false  # Production mode
+    rate_limit: 2400
+    enable_websocket: true
+  
+  coinbase:
+    api_key: ""
+    api_secret: ""
+    testnet: false
+    rate_limit: 1200
+    enable_websocket: true
+  
+  bybit:
+    api_key: ""
+    api_secret: ""
+    testnet: false
+    rate_limit: 1200
+    enable_websocket: true
+
+# Database configuration
+database:
+  postgres_url: "postgresql://sigmax:sigmax@localhost:5432/sigmax"
+  clickhouse_url: "clickhouse://localhost:9000/sigmax"
+  use_sqlite: false
+
+# IPC configuration
+ipc:
+  transport: "aeron"  # Aeron for Profile B
+  zmq_base_port: 5555
+  aeron_dir: "/dev/shm/aeron"
+
+# Risk management
+risk:
+  max_position_usd: 50000.0
+  max_order_usd: 5000.0
+  max_leverage: 3.0
+  price_band_pct: 3.0
+  rate_limit_per_sec: 20
+  cooldown_ms: 50
+
+# Decision layer
+decision:
+  enabled_layers: [0, 1, 2, 3, 4]  # All layers including L3 controller and L4 LLM
+  enable_ml: true
+  enable_llm: true  # LLM enabled in Profile B
+  llm_provider: "anthropic"
+  llm_model: "claude-3-5-sonnet-20241022"
+  llm_temperature: 0.1
+  llm_max_tokens: 1000
+  llm_timeout_ms: 500
+
+# Observability
+observability:
+  prometheus_port: 9090
+  enable_ebpf: true  # eBPF enabled for ns tracing
+  log_level: "WARNING"  # Less verbose in production
+  log_path: "/var/log/sigmax"
+
+# Features
+features:
+  window_ms: 200  # Faster 200ms windows
+  compute_imbalance: true
+  compute_volatility: true
+  depth_levels: 10  # Deeper book analysis
+
+# Signals
+signals:
+  volatility:
+    enabled: true
+    rv_window_ms: 2000  # Faster RV computation
+  news:
+    enabled: true
+    sources: ["coindesk", "cointelegraph", "bloomberg"]
+  listings:
+    enabled: true
+    exchanges: ["binance", "coinbase"]
+  reddit:
+    enabled: true  # Social sentiment enabled
+
+# Performance optimizations
+performance:
+  enable_dpdk: true
+  enable_numa: true
+  cpu_affinity: [0, 1, 2, 3]  # Pin to specific cores
+  use_huge_pages: true

@@ -1,0 +1,138 @@
+groups:
+  - name: sigmax_latency
+    interval: 10s
+    rules:
+      # Tick-to-trade latency exceeded
+      - alert: TickToTradeLatencyHigh
+        expr: histogram_quantile(0.99, rate(sigmax_latency_microseconds_bucket{stage="tick_to_trade"}[5m])) > 20000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High tick-to-trade latency"
+          description: "p99 tick-to-trade latency is {{ $value }}µs (threshold: 20000µs)"
+
+      # Individual stage latency spikes
+      - alert: StageLatencySpike
+        expr: histogram_quantile(0.99, rate(sigmax_latency_microseconds_bucket[5m])) > 5000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latency spike in {{ $labels.stage }}"
+          description: "p99 latency for {{ $labels.stage }} is {{ $value }}µs"
+
+  - name: sigmax_queue
+    interval: 10s
+    rules:
+      # Queue depth too high
+      - alert: QueueDepthHigh
+        expr: sigmax_ingest_queue_depth > 1000
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High queue depth in {{ $labels.queue_name }}"
+          description: "Queue {{ $labels.queue_name }} depth is {{ $value }} (threshold: 1000)"
+
+      # Queue depth critical
+      - alert: QueueDepthCritical
+        expr: sigmax_ingest_queue_depth > 10000
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical queue depth in {{ $labels.queue_name }}"
+          description: "Queue {{ $labels.queue_name }} depth is {{ $value }} (threshold: 10000)"
+
+  - name: sigmax_errors
+    interval: 10s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(sigmax_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in {{ $labels.service }}"
+          description: "Error rate is {{ $value }}/sec for {{ $labels.error_type }}"
+
+      # Risk blocks spike
+      - alert: RiskBlocksSpike
+        expr: rate(sigmax_risk_blocks_total[5m]) > 5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High risk block rate"
+          description: "Risk blocks for {{ $labels.reason }} at {{ $value }}/sec"
+
+  - name: sigmax_trading
+    interval: 10s
+    rules:
+      # Order rejection rate high
+      - alert: OrderRejectionRateHigh
+        expr: rate(sigmax_orders_rejected_total[5m]) / rate(sigmax_orders_submitted_total[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High order rejection rate"
+          description: "{{ $value | humanizePercentage }} of orders rejected"
+
+      # Position size approaching limit
+      - alert: PositionSizeNearLimit
+        expr: abs(sigmax_position_size) / 50000 > 0.8
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Position size near limit for {{ $labels.symbol }}"
+          description: "Position is {{ $value }} (80% of limit)"
+
+      # Unrealized P&L drop
+      - alert: UnrealizedPnLDrop
+        expr: delta(sigmax_unrealized_pnl_usd[5m]) < -1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Large unrealized P&L drop for {{ $labels.symbol }}"
+          description: "Unrealized P&L dropped by ${{ $value }}"
+
+  - name: sigmax_infrastructure
+    interval: 30s
+    rules:
+      # Service down
+      - alert: ServiceDown
+        expr: up{job=~"sigmax-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.service }} is down"
+          description: "{{ $labels.service }} has been down for more than 1 minute"
+
+      # Database connection issues
+      - alert: DatabaseConnectionIssue
+        expr: up{job=~"postgres|clickhouse"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database {{ $labels.job }} connection lost"
+          description: "Cannot connect to {{ $labels.job }}"
+
+  - name: sigmax_time_sync
+    interval: 30s
+    rules:
+      # PTP offset too high (if using PTP)
+      - alert: PTPOffsetHigh
+        expr: abs(sigmax_ptp_offset_ns) > 250
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PTP time offset too high"
+          description: "PTP offset is {{ $value }}ns (threshold: 250ns)"

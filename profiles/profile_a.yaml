@@ -1,0 +1,86 @@
+# Profile A: Simple, Pure Python
+# Optimized for rapid prototyping and ease of use
+
+profile: "a"
+environment: "development"
+
+# Symbols to trade
+symbols:
+  - "BTC/USDT"
+  - "ETH/USDT"
+  - "SOL/USDT"
+
+# Exchange configurations
+exchanges:
+  binance:
+    api_key: ""  # Set via environment variable BINANCE_API_KEY
+    api_secret: ""  # Set via environment variable BINANCE_API_SECRET
+    testnet: true
+    rate_limit: 1200
+    enable_websocket: true
+  
+  coinbase:
+    api_key: ""
+    api_secret: ""
+    testnet: true
+    rate_limit: 600
+    enable_websocket: true
+
+# Database configuration
+database:
+  postgres_url: "postgresql://sigmax:sigmax@localhost:5432/sigmax"
+  clickhouse_url: "clickhouse://localhost:9000/sigmax"
+  use_sqlite: false
+  sqlite_path: "./data/sigmax.db"
+
+# IPC configuration
+ipc:
+  transport: "zmq"  # ZeroMQ for Profile A
+  zmq_base_port: 5555
+  aeron_dir: "/dev/shm/aeron"
+
+# Risk management
+risk:
+  max_position_usd: 5000.0
+  max_order_usd: 500.0
+  max_leverage: 1.0
+  price_band_pct: 5.0
+  rate_limit_per_sec: 5
+  cooldown_ms: 200
+
+# Decision layer
+decision:
+  enabled_layers: [0, 1, 2]  # L0 constraints, L1 rules, L2 micro-ML
+  enable_ml: true
+  enable_llm: false  # No LLM in Profile A
+  llm_provider: "anthropic"
+  llm_model: "claude-3-5-sonnet-20241022"
+  llm_temperature: 0.1
+
+# Observability
+observability:
+  prometheus_port: 9090
+  enable_ebpf: false  # No eBPF in Profile A
+  log_level: "INFO"
+  log_path: "./logs"
+
+# Features
+features:
+  window_ms: 500  # 500ms micro-windows
+  compute_imbalance: true
+  compute_volatility: true
+  depth_levels: 5
+
+# Signals
+signals:
+  volatility:
+    enabled: true
+    rv_window_ms: 5000
+  news:
+    enabled: true
+    sources: ["coindesk", "cointelegraph"]
+  listings:
+    enabled: true
+    exchanges: ["binance"]
+  reddit:
+    enabled: false  # Optional, disabled by default

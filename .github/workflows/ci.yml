@@ -1,0 +1,49 @@
+name: SIGMAX CI/CD
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: sigmax_test
+          POSTGRES_USER: sigmax
+          POSTGRES_PASSWORD: sigmax
+        ports:
+          - 5432:5432
+      
+      clickhouse:
+        image: clickhouse/clickhouse-server:latest
+        ports:
+          - 9000:9000
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+    
+    - name: Run unit tests
+      run: |
+        pytest tests/unit/ -v --cov=apps --cov=pkg
+    
+    - name: Run linters
+      run: |
+        pip install flake8 black
+        flake8 apps/ pkg/ --max-line-length=120

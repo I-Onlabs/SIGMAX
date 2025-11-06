@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - OLTP database for orders, fills, positions
+  postgres:
+    image: postgres:16-alpine
+    container_name: sigmax-postgres
+    environment:
+      POSTGRES_DB: sigmax
+      POSTGRES_USER: sigmax
+      POSTGRES_PASSWORD: sigmax
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../db/migrations/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sigmax"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sigmax-network
+
+  # ClickHouse - OLAP database for ticks, latencies, audit logs
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: sigmax-clickhouse
+    environment:
+      CLICKHOUSE_DB: sigmax
+      CLICKHOUSE_USER: sigmax
+      CLICKHOUSE_PASSWORD: sigmax
+    ports:
+      - "9000:9000"  # Native protocol
+      - "8123:8123"  # HTTP interface
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ../../db/migrations/clickhouse:/docker-entrypoint-initdb.d
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sigmax-network
+
+  # Prometheus - Metrics collection and alerting
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sigmax-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../prometheus/alerts.yml:/etc/prometheus/alerts.yml
+      - prometheus_data:/prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sigmax-network
+
+  # Grafana - Metrics visualization (alternative to Kibana for quick setup)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sigmax-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../prometheus/grafana-dashboards:/etc/grafana/provisioning/dashboards
+      - ../prometheus/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sigmax-network
+
+  # Redis - Optional cache for market data and order book snapshots
+  redis:
+    image: redis:7-alpine
+    container_name: sigmax-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sigmax-network
+
+  # AlertManager - Alert routing and management
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: sigmax-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ../prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sigmax-network
+
+  # Toxiproxy - Chaos engineering proxy for testing resilience
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:latest
+    container_name: sigmax-toxiproxy
+    ports:
+      - "8474:8474"  # API
+      - "9999:9999"  # Proxy ports
+    networks:
+      - sigmax-network
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+  prometheus_data:
+  grafana_data:
+  redis_data:
+  alertmanager_data:
+
+networks:
+  sigmax-network:
+    driver: bridge

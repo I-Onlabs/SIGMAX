@@ -1,0 +1,88 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  external_labels:
+    cluster: 'sigmax'
+    environment: 'development'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load rules
+rule_files:
+  - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # SIGMAX services
+  - job_name: 'sigmax-ingest'
+    static_configs:
+      - targets: ['host.docker.internal:9091']
+        labels:
+          service: 'ingest_cex'
+
+  - job_name: 'sigmax-book'
+    static_configs:
+      - targets: ['host.docker.internal:9092']
+        labels:
+          service: 'book_shard'
+
+  - job_name: 'sigmax-features'
+    static_configs:
+      - targets: ['host.docker.internal:9093']
+        labels:
+          service: 'features'
+
+  - job_name: 'sigmax-decision'
+    static_configs:
+      - targets: ['host.docker.internal:9094']
+        labels:
+          service: 'decision'
+
+  - job_name: 'sigmax-risk'
+    static_configs:
+      - targets: ['host.docker.internal:9095']
+        labels:
+          service: 'risk'
+
+  - job_name: 'sigmax-router'
+    static_configs:
+      - targets: ['host.docker.internal:9096']
+        labels:
+          service: 'router'
+
+  - job_name: 'sigmax-exec'
+    static_configs:
+      - targets: ['host.docker.internal:9097']
+        labels:
+          service: 'exec_cex'
+
+  - job_name: 'sigmax-obs'
+    static_configs:
+      - targets: ['host.docker.internal:9098']
+        labels:
+          service: 'obs'
+
+  # PostgreSQL exporter (optional)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+
+  # ClickHouse metrics
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['clickhouse:8123']
+
+  # Redis exporter (optional)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
