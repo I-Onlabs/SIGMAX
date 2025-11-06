@@ -5,6 +5,7 @@ import StatusPanel from './components/StatusPanel'
 import TradingPanel from './components/TradingPanel'
 import AgentDebateLog from './components/AgentDebateLog'
 import QuantumCircuit from './components/QuantumCircuit'
+import RiskDashboard from './components/RiskDashboard'
 
 function App() {
   const [status, setStatus] = useState<any>(null)
@@ -115,6 +116,9 @@ function App() {
           <div className="space-y-6">
             {/* Status Panel */}
             <StatusPanel status={status} />
+
+            {/* Risk Dashboard */}
+            <RiskDashboard />
 
             {/* Quantum Circuit */}
             <QuantumCircuit />
