@@ -96,24 +96,24 @@ class SIGMAXOrchestrator:
         logger.info("✓ SIGMAX Orchestrator created")
 
     def _get_llm(self):
-        """Get configured LLM"""
-        import os
+        """Get configured LLM with fallback"""
+        import sys
+        from pathlib import Path
 
-        # Priority: Ollama (local) > OpenAI > Anthropic
-        if os.getenv("OLLAMA_BASE_URL"):
-            return ChatOllama(
-                base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-                model=os.getenv("OLLAMA_MODEL", "llama3.1"),
-                temperature=0.7
-            )
-        elif os.getenv("OPENAI_API_KEY"):
-            return ChatOpenAI(
-                model=os.getenv("OPENAI_MODEL", "gpt-4-turbo-preview"),
-                temperature=0.7
-            )
-        else:
+        # Add core directory to path for imports
+        core_path = Path(__file__).parent.parent
+        if str(core_path) not in sys.path:
+            sys.path.insert(0, str(core_path))
+
+        from llm.factory import LLMProvider
+
+        provider = LLMProvider()
+        llm = provider.get_llm(temperature=0.7)
+
+        if not llm:
             logger.warning("No LLM configured, using mock responses")
-            return None
+
+        return llm
 
     async def initialize(self):
         """Initialize the LangGraph workflow"""
@@ -424,23 +424,67 @@ Be skeptical and risk-focused. Cite specific concerns.
         return "continue"
 
     def _extract_score(self, argument: str) -> float:
-        """Extract numerical score from argument (simple heuristic)"""
-        # Count positive vs negative words as proxy
-        positive_words = ["strong", "bullish", "uptrend", "support", "buy", "growth"]
-        negative_words = ["weak", "bearish", "downtrend", "resistance", "sell", "risk"]
+        """
+        Extract numerical score from argument using multiple methods
 
+        Priority:
+        1. Explicit score markers (e.g., "Score: 0.8", "Confidence: 75%")
+        2. Semantic analysis with negation handling
+        3. Fallback word counting
+        """
         if not argument:
             return 0.0
 
         text_lower = argument.lower()
-        pos_count = sum(1 for word in positive_words if word in text_lower)
-        neg_count = sum(1 for word in negative_words if word in text_lower)
 
-        total = pos_count + neg_count
-        if total == 0:
-            return 0.0
+        # Method 1: Look for explicit numeric scores
+        import re
+        score_patterns = [
+            r'score[:\s]+([0-9.]+)',
+            r'confidence[:\s]+([0-9.]+)%?',
+            r'rating[:\s]+([0-9.]+)',
+            r'\b([0-9]\.?[0-9]?)/10\b'
+        ]
 
-        return (pos_count - neg_count) / total
+        for pattern in score_patterns:
+            match = re.search(pattern, text_lower)
+            if match:
+                value = float(match.group(1))
+                # Normalize to [-1, 1] range
+                if value > 1:
+                    value = (value / 100) if value <= 100 else (value / 10)
+                return max(-1.0, min(1.0, value))
+
+        # Method 2: Semantic patterns with negation handling
+        strong_positive = ['strongly bullish', 'very strong', 'excellent', 'outstanding', 'compelling']
+        moderate_positive = ['bullish', 'positive', 'good', 'favorable', 'uptrend', 'support', 'buy', 'growth']
+        strong_negative = ['strongly bearish', 'very weak', 'terrible', 'avoid at all costs', 'high risk']
+        moderate_negative = ['bearish', 'negative', 'weak', 'unfavorable', 'downtrend', 'resistance', 'sell', 'decline']
+        negations = ['not', 'no', 'hardly', 'barely', 'neither', "isn't", "aren't", "won't"]
+
+        # Count with negation awareness
+        score = 0.0
+        sentences = text_lower.split('.')
+
+        for sentence in sentences:
+            words = sentence.split()
+            has_negation = any(neg in words for neg in negations)
+
+            # Weight patterns by strength
+            if any(phrase in sentence for phrase in strong_positive):
+                score += -0.6 if has_negation else 0.6
+            elif any(phrase in sentence for phrase in moderate_positive):
+                score += -0.3 if has_negation else 0.3
+            elif any(phrase in sentence for phrase in strong_negative):
+                score += 0.6 if has_negation else -0.6
+            elif any(phrase in sentence for phrase in moderate_negative):
+                score += 0.3 if has_negation else -0.3
+
+        # Normalize by sentence count
+        if sentences:
+            score = score / len(sentences)
+
+        return max(-1.0, min(1.0, score))
 
     async def analyze_symbol(
         self,

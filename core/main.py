@@ -34,6 +34,16 @@ from utils.telegram_bot import TelegramBot
 # Load environment variables
 load_dotenv()
 
+# Validate configuration
+from config.validator import ConfigValidator
+
+validator = ConfigValidator()
+if not validator.validate_all():
+    from rich.console import Console as ErrorConsole
+    error_console = ErrorConsole()
+    error_console.print("[bold red]❌ Configuration validation failed. Please fix errors above.[/bold red]")
+    sys.exit(1)
+
 # Configure logger
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOG_FILE = Path(os.getenv("LOG_FILE", "logs/sigmax.log"))
