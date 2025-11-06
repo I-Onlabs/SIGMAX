@@ -22,6 +22,12 @@ from .optimizer import OptimizerAgent
 from .risk import RiskAgent
 from .privacy import PrivacyAgent
 
+# Import for type hints and alerts
+try:
+    from modules.alerts import AlertLevel
+except ImportError:
+    AlertLevel = None
+
 
 class AgentState(TypedDict):
     """State shared across all agents in the debate"""
@@ -463,7 +469,7 @@ Be skeptical and risk-focused. Cite specific concerns.
         market_data: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Analyze a symbol using multi-agent debate
+        Analyze a symbol using multi-agent debate with ML, sentiment, and regime analysis
 
         Args:
             symbol: Trading symbol (e.g., 'BTC/USDT')
@@ -475,38 +481,145 @@ Be skeptical and risk-focused. Cite specific concerns.
         if not self.app:
             raise RuntimeError("Orchestrator not initialized. Call initialize() first.")
 
-        # Fetch market data if not provided
-        if not market_data:
-            market_data = await self.data_module.get_market_data(symbol)
-
-        # Initial state
-        initial_state = {
-            "messages": [],
-            "symbol": symbol,
-            "current_price": market_data.get("price", 0.0),
-            "market_data": market_data,
-            "bull_argument": None,
-            "bear_argument": None,
-            "research_summary": None,
-            "technical_analysis": None,
-            "sentiment_score": 0.0,
-            "risk_assessment": {},
-            "compliance_check": {},
-            "final_decision": None,
-            "confidence": 0.0,
-            "iteration": 0,
-            "max_iterations": 1
-        }
-
-        # Run the workflow
-        config = {"configurable": {"thread_id": f"{symbol}_{datetime.now().timestamp()}"}}
-
         try:
+            # Fetch market data if not provided
+            if not market_data:
+                market_data = await self.data_module.get_market_data(symbol)
+
+            # Get OHLCV for advanced analysis
+            ohlcv = await self.data_module.get_ohlcv(symbol, timeframe='1h', limit=200)
+
+            # === ENHANCED ANALYSIS WITH NEW MODULES ===
+
+            # 1. Detect market regime
+            regime_info = None
+            if self.regime_detector:
+                try:
+                    regime_info = await self.regime_detector.detect_regime(ohlcv, lookback=100)
+                    logger.info(f"📈 Market Regime for {symbol}: {regime_info.get('regime')}")
+                except Exception as e:
+                    logger.warning(f"Regime detection failed: {e}")
+
+            # 2. Get ML prediction
+            ml_prediction = None
+            if self.ml_predictor:
+                try:
+                    ml_prediction = await self.ml_predictor.predict(ohlcv)
+                    logger.info(f"🤖 ML Prediction for {symbol}: {ml_prediction.get('prediction'):.4f} (confidence: {ml_prediction.get('confidence'):.2f})")
+                except Exception as e:
+                    logger.warning(f"ML prediction failed: {e}")
+
+            # 3. Get sentiment analysis
+            sentiment_info = None
+            if self.sentiment_agent:
+                try:
+                    sentiment_info = await self.sentiment_agent.analyze(symbol, lookback_hours=24)
+                    logger.info(f"💭 Sentiment for {symbol}: {sentiment_info.get('aggregate_score'):.2f}")
+                except Exception as e:
+                    logger.warning(f"Sentiment analysis failed: {e}")
+
+            # 4. Check portfolio rebalancing need
+            rebalance_needed = False
+            if self.portfolio_rebalancer and self.execution_module:
+                try:
+                    current_portfolio = await self.execution_module.get_portfolio()
+                    current_prices = {symbol: market_data.get('price', 0.0)}
+                    rebalance_needed = await self.portfolio_rebalancer.should_rebalance(
+                        current_portfolio,
+                        current_prices
+                    )
+                    if rebalance_needed:
+                        logger.info(f"⚖️ Portfolio rebalancing recommended")
+                except Exception as e:
+                    logger.warning(f"Rebalancing check failed: {e}")
+
+            # === INITIAL STATE WITH ENHANCED DATA ===
+
+            initial_state = {
+                "messages": [],
+                "symbol": symbol,
+                "current_price": market_data.get("price", 0.0),
+                "market_data": market_data,
+                "bull_argument": None,
+                "bear_argument": None,
+                "research_summary": None,
+                "technical_analysis": None,
+                "sentiment_score": sentiment_info.get('aggregate_score', 0.0) if sentiment_info else 0.0,
+                "risk_assessment": {},
+                "compliance_check": {},
+                "final_decision": None,
+                "confidence": 0.0,
+                "iteration": 0,
+                "max_iterations": 1,
+                # Enhanced data
+                "regime": regime_info.get('regime') if regime_info else 'uncertain',
+                "ml_prediction": ml_prediction.get('prediction') if ml_prediction else None,
+                "ml_confidence": ml_prediction.get('confidence') if ml_prediction else 0.0,
+                "sentiment": sentiment_info if sentiment_info else {},
+                "rebalance_needed": rebalance_needed
+            }
+
+            # Run the workflow
+            config = {"configurable": {"thread_id": f"{symbol}_{datetime.now().timestamp()}"}}
+
             result = await self.app.ainvoke(initial_state, config)
-            return result.get("final_decision", {})
+
+            # Store last state for debugging
+            self.last_state = result
+
+            decision = result.get("final_decision", {})
+
+            # === POST-ANALYSIS ACTIONS ===
+
+            # Record performance metrics
+            if self.performance_monitor and decision.get('action') in ['buy', 'sell']:
+                self.performance_monitor.record_throughput('analysis_completed')
+
+            # Send alerts for high-confidence signals
+            if self.trading_alerts and AlertLevel and decision.get('confidence', 0) > 0.8:
+                confidence = decision['confidence']
+                action = decision['action']
+
+                if action == 'buy':
+                    alert_level = AlertLevel.INFO if confidence < 0.9 else AlertLevel.WARNING
+                    await self.trading_alerts.manager.send_alert(
+                        level=alert_level,
+                        title=f"High Confidence {action.upper()} Signal: {symbol}",
+                        message=f"Orchestrator recommends {action} {symbol} with {confidence:.1%} confidence",
+                        data={
+                            'symbol': symbol,
+                            'action': action,
+                            'confidence': confidence,
+                            'regime': regime_info.get('regime') if regime_info else None,
+                            'ml_prediction': ml_prediction.get('prediction') if ml_prediction else None
+                        },
+                        tags=['trading', 'signal', symbol, action]
+                    )
+
+            # Send alert for regime changes
+            if regime_info and self.trading_alerts:
+                regime = regime_info.get('regime')
+                if regime in ['high_volatility', 'bear_trending']:
+                    await self.trading_alerts.market_anomaly(
+                        symbol=symbol,
+                        anomaly_type='regime_change',
+                        severity=regime_info.get('confidence', 0.5),
+                        description=f"Market regime changed to {regime}"
+                    )
+
+            return decision
 
         except Exception as e:
             logger.error(f"Error in analyze_symbol: {e}", exc_info=True)
+
+            # Send error alert
+            if self.trading_alerts:
+                await self.trading_alerts.system_error(
+                    component='orchestrator',
+                    error_message=str(e),
+                    error_details={'symbol': symbol}
+                )
+
             return {
                 "action": "hold",
                 "symbol": symbol,
