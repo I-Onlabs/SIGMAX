@@ -95,25 +95,46 @@ class RiskAgent:
     async def _check_policies(
         self,
         symbol: str,
-        risk_profile: str
+        risk_profile: str,
+        trade_size: float = 0.0
     ) -> Dict[str, Any]:
-        """Check OPA policies"""
+        """
+        Check policies using compliance module (OPA integration)
 
-        # TODO: Integrate with OPA
-        # For now, simple checks
+        The compliance module handles OPA communication and falls back
+        to embedded policies when OPA is unavailable
+        """
+        # Build trade data for compliance check
+        trade_data = {
+            "symbol": symbol,
+            "size": trade_size,
+            "leverage": self.max_leverage,
+            "action": "analyze",  # Pre-trade analysis
+            "risk_profile": risk_profile
+        }
 
+        # Check with compliance module (uses OPA if available)
+        compliance_result = await self.compliance_module.check_compliance(
+            trade=trade_data,
+            risk_profile=risk_profile
+        )
+
+        # Convert compliance result to policy check format
         checks = {
-            "position_size_ok": True,
-            "daily_loss_ok": True,
-            "leverage_ok": True,
-            "blacklist_ok": symbol not in []
+            "compliant": compliance_result.get("compliant", False),
+            "position_size_ok": trade_size <= self.max_position_size,
+            "leverage_ok": self.max_leverage <= float(os.getenv("MAX_LEVERAGE", "1")),
+            "blacklist_ok": symbol not in compliance_result.get("violations", []),
+            "policy_approved": compliance_result.get("compliant", False)
         }
 
         approved = all(checks.values())
 
         return {
             "approved": approved,
-            "checks": checks
+            "checks": checks,
+            "compliance_reason": compliance_result.get("reason", ""),
+            "violations": compliance_result.get("violations", [])
         }
 
     async def _assess_market_risk(self, symbol: str, market_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
