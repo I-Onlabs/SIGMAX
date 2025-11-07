@@ -139,14 +139,38 @@ Agents: {len(status.get('agents', {}))} active
         await self.orchestrator.stop()
 
     async def _handle_why(self, update, context):
-        """Handle /why command"""
+        """Handle /why command - Explain last trading decision"""
         symbol = context.args[0] if context.args else "BTC/USDT"
 
-        # TODO: Retrieve last decision explanation
-        message = f"Explaining last decision for {symbol}...\n\n" \
-                 f"This feature is coming soon!"
+        # Get decision history from orchestrator
+        if not hasattr(self.orchestrator, 'decision_history'):
+            await update.message.reply_text(
+                "⚠️ Decision history not available"
+            )
+            return
 
-        await update.message.reply_text(message)
+        decision_history = self.orchestrator.decision_history
+        last_decision = decision_history.get_last_decision(symbol)
+
+        if not last_decision:
+            # Try to find any recent decision
+            all_symbols = decision_history.get_all_symbols()
+            if all_symbols:
+                available = ', '.join(all_symbols[:5])
+                await update.message.reply_text(
+                    f"❌ No decisions found for {symbol}\n\n"
+                    f"Try: {available}"
+                )
+            else:
+                await update.message.reply_text(
+                    f"❌ No trading decisions recorded yet.\n\n"
+                    f"Start trading first with /start"
+                )
+            return
+
+        # Format and send explanation
+        explanation = decision_history.format_decision_explanation(last_decision)
+        await update.message.reply_text(explanation, parse_mode='Markdown')
 
     async def _handle_message(self, update, context):
         """Handle natural language messages"""

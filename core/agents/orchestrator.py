@@ -36,6 +36,10 @@ from .optimizer import OptimizerAgent
 from .risk import RiskAgent
 from .privacy import PrivacyAgent
 
+# Import decision history
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+from decision_history import DecisionHistory
+
 
 class AgentState(TypedDict):
     """State shared across all agents in the debate"""
@@ -118,6 +122,9 @@ class SIGMAXOrchestrator:
         # State
         self.running = False
         self.paused = False
+
+        # Decision history for explainability
+        self.decision_history = DecisionHistory(max_history_per_symbol=20)
 
         logger.info("✓ SIGMAX Orchestrator created")
 
@@ -433,6 +440,19 @@ Be skeptical and risk-focused. Cite specific concerns.
 
         logger.info(f"📊 Decision: {decision['action'].upper()} {state['symbol']} "
                    f"(confidence: {decision.get('confidence', 0):.2%})")
+
+        # Store decision in history for explainability
+        agent_debate = {
+            "bull_argument": state.get("bull_argument", ""),
+            "bear_argument": state.get("bear_argument", ""),
+            "research_summary": state.get("research_summary", ""),
+            "technical_analysis": state.get("technical_analysis", "")
+        }
+        self.decision_history.add_decision(
+            symbol=state['symbol'],
+            decision=decision,
+            agent_debate=agent_debate
+        )
 
         return {
             "messages": [{"role": "decision", "content": json.dumps(decision)}],
