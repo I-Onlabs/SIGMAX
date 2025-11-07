@@ -22,6 +22,9 @@ from pydantic import BaseModel, Field, validator
 from loguru import logger
 import psutil
 
+# Import SIGMAX manager
+from sigmax_manager import get_sigmax_manager
+
 # Connection manager for WebSocket clients
 class ConnectionManager:
     def __init__(self):
@@ -400,30 +403,21 @@ async def get_status():
     Returns current state of all agents, modules, and trading activity
     """
     try:
-        # TODO: Connect to actual SIGMAX instance
-        return {
-            "running": True,
-            "mode": "paper",
-            "timestamp": datetime.now().isoformat(),
-            "agents": {
-                "orchestrator": "active",
-                "researcher": "active",
-                "analyzer": "active",
-                "optimizer": "active",
-                "risk": "active",
-                "privacy": "active"
-            },
-            "trading": {
-                "open_positions": 0,
-                "pnl_today": 0.0,
-                "trades_today": 0,
-                "win_rate": 0.0
-            },
-            "system": {
-                "cpu_usage": psutil.cpu_percent(),
-                "memory_usage": psutil.virtual_memory().percent
-            }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Get status from running SIGMAX instance
+        status = await manager.get_status()
+
+        # Add system metrics
+        status["system"] = {
+            "cpu_usage": psutil.cpu_percent(),
+            "memory_usage": psutil.virtual_memory().percent,
+            "disk_usage": psutil.disk_usage('/').percent
         }
+
+        return status
+
     except Exception as e:
         logger.error(f"Error getting status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -445,28 +439,27 @@ async def analyze_symbol(request: AnalysisRequest):
     **Rate limit:** 10 requests per minute
     """
     try:
-        # TODO: Connect to orchestrator
         logger.info(f"Analyzing {request.symbol}")
 
-        return {
-            "symbol": request.symbol,
-            "decision": "hold",
-            "confidence": 0.5,
-            "timestamp": datetime.now().isoformat(),
-            "reasoning": {
-                "bull": "Positive technical indicators show upward momentum",
-                "bear": "High volatility presents significant risk",
-                "technical": "RSI neutral at 50, MACD showing consolidation",
-                "risk": "Within acceptable risk parameters"
-            },
-            "technical_indicators": {
-                "rsi": 50.0,
-                "macd": 0.0,
-                "volume": 1000000
-            }
-        }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Run analysis through orchestrator
+        result = await manager.analyze_symbol(
+            symbol=request.symbol,
+            include_debate=request.include_debate
+        )
+
+        # Add timestamp if not present
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return result
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error analyzing {request.symbol}: {e}")
         raise HTTPException(status_code=500, detail="Analysis failed")
@@ -488,26 +481,28 @@ async def execute_trade(request: TradeRequest):
     - Compliance validation required
     """
     try:
-        # TODO: Connect to execution module
         logger.info(f"Trade request: {request.action} {request.size} {request.symbol}")
 
-        # Validate trade size
-        if request.size > 1.0:  # Example limit
-            raise ValueError("Trade size exceeds maximum limit")
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
 
-        return {
-            "success": True,
-            "order_id": f"ORDER_{int(time.time() * 1000)}",
-            "symbol": request.symbol,
-            "action": request.action,
-            "size": request.size,
-            "status": "filled",
-            "timestamp": datetime.now().isoformat(),
-            "filled_price": 95000.0,  # Mock
-            "fee": 0.001
-        }
+        # Execute trade through execution module
+        result = await manager.execute_trade(
+            symbol=request.symbol,
+            action=request.action,
+            size=request.size
+        )
+
+        # Add timestamp if not present
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return result
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error executing trade: {e}")
         raise HTTPException(status_code=500, detail="Trade execution failed")
@@ -525,30 +520,20 @@ async def get_portfolio():
     - Performance metrics
     """
     try:
-        return {
-            "total_value": 50.0,
-            "cash": 2.5,
-            "invested": 47.5,
-            "positions": [
-                {
-                    "symbol": "BTC/USDT",
-                    "size": 0.0005,
-                    "entry_price": 90000.0,
-                    "current_price": 95000.0,
-                    "value": 47.5,
-                    "pnl": 2.5,
-                    "pnl_pct": 5.56,
-                    "pnl_usd": 2.5
-                }
-            ],
-            "performance": {
-                "total_return": 5.26,
-                "daily_return": 0.5,
-                "sharpe_ratio": 1.8,
-                "max_drawdown": -2.5
-            },
-            "timestamp": datetime.now().isoformat()
-        }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Get portfolio from execution module
+        portfolio = await manager.get_portfolio()
+
+        # Add timestamp if not present
+        if "timestamp" not in portfolio:
+            portfolio["timestamp"] = datetime.now().isoformat()
+
+        return portfolio
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting portfolio: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch portfolio")
@@ -575,19 +560,26 @@ async def get_trade_history(
         if limit > 500:
             raise ValueError("Limit cannot exceed 500")
 
-        # TODO: Fetch from database
-        trades = []
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
 
-        return {
-            "trades": trades,
-            "total": 0,
-            "limit": limit,
-            "offset": offset,
-            "symbol": symbol,
-            "timestamp": datetime.now().isoformat()
-        }
+        # Fetch trade history from execution module
+        history = await manager.get_trade_history(
+            limit=limit,
+            offset=offset,
+            symbol=symbol
+        )
+
+        # Add timestamp if not present
+        if "timestamp" not in history:
+            history["timestamp"] = datetime.now().isoformat()
+
+        return history
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting trade history: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch history")
@@ -676,19 +668,20 @@ async def get_quantum_circuit():
     used for portfolio optimization (VQE or QAOA method)
     """
     try:
-        return {
-            "svg": "",  # Base64 encoded SVG - TODO: Generate from quantum module
-            "timestamp": datetime.now().isoformat(),
-            "method": "VQE",
-            "qubits": 4,
-            "shots": 1000,
-            "backend": "qasm_simulator",
-            "optimization_result": {
-                "converged": True,
-                "iterations": 50,
-                "final_energy": -1.85
-            }
-        }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Get quantum circuit from quantum module
+        circuit_data = await manager.get_quantum_circuit()
+
+        # Add timestamp if not present
+        if "timestamp" not in circuit_data:
+            circuit_data["timestamp"] = datetime.now().isoformat()
+
+        return circuit_data
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting quantum circuit: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch quantum circuit")
@@ -742,13 +735,29 @@ async def start_trading():
     """
     try:
         logger.info("Starting trading system")
-        # TODO: Connect to SIGMAX instance
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Start trading
+        success = await manager.start()
+
+        if not success:
+            raise RuntimeError("Failed to start trading system")
+
+        # Get current status
+        status = await manager.get_status()
+
         return {
             "success": True,
             "message": "Trading started successfully",
             "timestamp": datetime.now().isoformat(),
-            "mode": "paper"
+            "mode": status.get("mode", "paper"),
+            "risk_profile": status.get("risk_profile", "conservative")
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error starting trading: {e}")
         raise HTTPException(status_code=500, detail="Failed to start trading")
@@ -764,12 +773,24 @@ async def pause_trading():
     """
     try:
         logger.info("Pausing trading system")
-        # TODO: Connect to SIGMAX instance
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Pause trading
+        success = await manager.pause()
+
+        if not success:
+            raise RuntimeError("Failed to pause trading system")
+
         return {
             "success": True,
             "message": "Trading paused successfully",
             "timestamp": datetime.now().isoformat()
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error pausing trading: {e}")
         raise HTTPException(status_code=500, detail="Failed to pause trading")
@@ -785,12 +806,24 @@ async def stop_trading():
     """
     try:
         logger.info("Stopping trading system")
-        # TODO: Connect to SIGMAX instance
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Stop trading
+        success = await manager.stop()
+
+        if not success:
+            raise RuntimeError("Failed to stop trading system")
+
         return {
             "success": True,
             "message": "Trading stopped successfully",
             "timestamp": datetime.now().isoformat()
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error stopping trading: {e}")
         raise HTTPException(status_code=500, detail="Failed to stop trading")
@@ -811,14 +844,23 @@ async def emergency_stop():
     """
     try:
         logger.critical("🚨 EMERGENCY STOP INITIATED")
-        # TODO: Connect to SIGMAX instance and execute emergency stop
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Execute emergency stop
+        result = await manager.emergency_stop()
+
         return {
             "success": True,
             "message": "Emergency stop executed - All positions closed",
             "timestamp": datetime.now().isoformat(),
-            "positions_closed": 0,
-            "orders_cancelled": 0
+            "positions_closed": result.get("positions_closed", 0),
+            "orders_cancelled": result.get("orders_cancelled", 0)
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error during emergency stop: {e}")
         raise HTTPException(status_code=500, detail="Emergency stop failed")
