@@ -1,48 +1,44 @@
 import { useState, useEffect } from 'react'
 import { LineChart, TrendingUp, TrendingDown, Activity, DollarSign } from 'lucide-react'
 
-interface PerformanceData {
-  timestamp: string
-  pnl: number
-  cumulative_pnl: number
-  trades: number
-  win_rate: number
-}
-
-interface TradingMetrics {
-  total_trades: number
-  winning_trades: number
-  losing_trades: number
-  win_rate: number
-  total_pnl: number
-  sharpe_ratio: number
-  max_drawdown: number
-  profit_factor: number
-  current_streak: number
-}
-
-export default function PerformanceChart() {
-  const [performanceData, setPerformanceData] = useState<PerformanceData[]>([])
-  const [metrics, setMetrics] = useState<TradingMetrics | null>(null)
-  const [timeframe, setTimeframe] = useState<string>('24h')
-
-  useEffect(() => {
-    fetchPerformanceData()
-    const interval = setInterval(fetchPerformanceData, 10000)
-    return () => clearInterval(interval)
-  }, [timeframe])
-
-  const fetchPerformanceData = async () => {
-    try {
-      const response = await fetch(`/api/performance?timeframe=${timeframe}`)
-      const data = await response.json()
-
-      setPerformanceData(data.history || [])
-      setMetrics(data.metrics || null)
-    } catch (error) {
-      console.error('Failed to fetch performance data:', error)
-    }
+interface PortfolioUpdate {
+  total_value?: number
+  cash?: number
+  invested?: number
+  positions?: Array<any>
+  performance?: {
+    total_return?: number
+    daily_return?: number
+    sharpe_ratio?: number
+    max_drawdown?: number
   }
+  timestamp?: string
+}
+
+interface PerformanceChartProps {
+  portfolio: PortfolioUpdate | null
+}
+
+export default function PerformanceChart({ portfolio }: PerformanceChartProps) {
+  const [timeframe, setTimeframe] = useState<string>('24h')
+  const [performanceHistory, setPerformanceHistory] = useState<Array<{ timestamp: string, value: number }>>([])
+
+  // Track portfolio value over time
+  useEffect(() => {
+    if (portfolio && portfolio.total_value) {
+      setPerformanceHistory(prev => {
+        const newHistory = [
+          ...prev,
+          {
+            timestamp: portfolio.timestamp || new Date().toISOString(),
+            value: portfolio.total_value || 0
+          }
+        ]
+        // Keep only last 100 data points
+        return newHistory.slice(-100)
+      })
+    }
+  }, [portfolio])
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -57,19 +53,20 @@ export default function PerformanceChart() {
     return `${(value * 100).toFixed(2)}%`
   }
 
-  const getStreakDisplay = (streak: number) => {
-    if (streak === 0) return { text: 'No streak', color: 'text-gray-400', icon: Activity }
-    if (streak > 0) return { text: `${streak} wins`, color: 'text-green-400', icon: TrendingUp }
-    return { text: `${Math.abs(streak)} losses`, color: 'text-red-400', icon: TrendingDown }
-  }
+  // Calculate metrics from portfolio
+  const totalPnl = portfolio ? (portfolio.total_value || 50) - 50 : 0 // Assume $50 starting capital
+  const winRate = 0 // Would need trade history to calculate
+  const sharpeRatio = portfolio?.performance?.sharpe_ratio || 0
+  const maxDrawdown = portfolio?.performance?.max_drawdown || 0
+  const profitFactor = totalPnl > 0 ? 1.5 : 0 // Simplified
 
-  const maxPnl = performanceData.length > 0
-    ? Math.max(...performanceData.map(d => d.cumulative_pnl))
-    : 0
-  const minPnl = performanceData.length > 0
-    ? Math.min(...performanceData.map(d => d.cumulative_pnl))
-    : 0
-  const range = maxPnl - minPnl || 1
+  const maxVal = performanceHistory.length > 0
+    ? Math.max(...performanceHistory.map(d => d.value))
+    : 50
+  const minVal = performanceHistory.length > 0
+    ? Math.min(...performanceHistory.map(d => d.value))
+    : 50
+  const range = maxVal - minVal || 1
 
   return (
     <div className="rounded-2xl border border-white/10 backdrop-blur-lg bg-white/5">
@@ -100,44 +97,43 @@ export default function PerformanceChart() {
         </div>
 
         {/* Key Metrics */}
-        {metrics && (
+        {portfolio && (
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-white/5 rounded-lg p-3">
               <div className="text-xs text-gray-400 mb-1">Total PnL</div>
               <div className={`text-xl font-bold ${
-                metrics.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'
+                totalPnl >= 0 ? 'text-green-400' : 'text-red-400'
               }`}>
-                {formatCurrency(metrics.total_pnl)}
+                {formatCurrency(totalPnl)}
               </div>
             </div>
 
             <div className="bg-white/5 rounded-lg p-3">
-              <div className="text-xs text-gray-400 mb-1">Win Rate</div>
+              <div className="text-xs text-gray-400 mb-1">Total Value</div>
               <div className="text-xl font-bold text-cyan-400">
-                {formatPercent(metrics.win_rate)}
+                {formatCurrency(portfolio.total_value || 50)}
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                {metrics.winning_trades}W / {metrics.losing_trades}L
+                Cash: {formatCurrency(portfolio.cash || 0)}
               </div>
             </div>
 
             <div className="bg-white/5 rounded-lg p-3">
               <div className="text-xs text-gray-400 mb-1">Sharpe Ratio</div>
               <div className={`text-xl font-bold ${
-                metrics.sharpe_ratio >= 1 ? 'text-green-400' :
-                metrics.sharpe_ratio >= 0 ? 'text-yellow-400' : 'text-red-400'
+                sharpeRatio >= 1 ? 'text-green-400' :
+                sharpeRatio >= 0 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {metrics.sharpe_ratio.toFixed(2)}
+                {sharpeRatio.toFixed(2)}
               </div>
             </div>
 
             <div className="bg-white/5 rounded-lg p-3">
-              <div className="text-xs text-gray-400 mb-1">Profit Factor</div>
+              <div className="text-xs text-gray-400 mb-1">Daily Return</div>
               <div className={`text-xl font-bold ${
-                metrics.profit_factor >= 1.5 ? 'text-green-400' :
-                metrics.profit_factor >= 1 ? 'text-yellow-400' : 'text-red-400'
+                (portfolio.performance?.daily_return || 0) >= 0 ? 'text-green-400' : 'text-red-400'
               }`}>
-                {metrics.profit_factor.toFixed(2)}
+                {formatPercent(portfolio.performance?.daily_return || 0)}
               </div>
             </div>
           </div>
@@ -146,12 +142,12 @@ export default function PerformanceChart() {
 
       {/* Chart */}
       <div className="p-6">
-        {performanceData.length === 0 ? (
+        {performanceHistory.length === 0 ? (
           <div className="h-64 flex items-center justify-center text-gray-500">
             <div className="text-center">
               <LineChart className="w-16 h-16 mx-auto mb-3 opacity-30" />
               <p>No performance data yet</p>
-              <p className="text-sm mt-1">Start trading to see your performance</p>
+              <p className="text-sm mt-1">Tracking portfolio value in real-time</p>
             </div>
           </div>
         ) : (
@@ -171,24 +167,22 @@ export default function PerformanceChart() {
                 />
               ))}
 
-              {/* Zero line */}
-              {minPnl < 0 && maxPnl > 0 && (
-                <line
-                  x1="0"
-                  y1={200 - ((0 - minPnl) / range) * 200}
-                  x2="800"
-                  y2={200 - ((0 - minPnl) / range) * 200}
-                  stroke="rgba(255,255,255,0.2)"
-                  strokeWidth="2"
-                  strokeDasharray="5,5"
-                />
-              )}
+              {/* Starting capital line */}
+              <line
+                x1="0"
+                y1={200 - ((50 - minVal) / range) * 200}
+                x2="800"
+                y2={200 - ((50 - minVal) / range) * 200}
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth="2"
+                strokeDasharray="5,5"
+              />
 
               {/* Performance line */}
               <polyline
-                points={performanceData.map((d, i) => {
-                  const x = (i / (performanceData.length - 1)) * 800
-                  const y = 200 - ((d.cumulative_pnl - minPnl) / range) * 200
+                points={performanceHistory.map((d, i) => {
+                  const x = (i / (performanceHistory.length - 1)) * 800
+                  const y = 200 - ((d.value - minVal) / range) * 200
                   return `${x},${y}`
                 }).join(' ')}
                 fill="none"
@@ -213,9 +207,9 @@ export default function PerformanceChart() {
               {/* Area fill */}
               <polygon
                 points={[
-                  ...performanceData.map((d, i) => {
-                    const x = (i / (performanceData.length - 1)) * 800
-                    const y = 200 - ((d.cumulative_pnl - minPnl) / range) * 200
+                  ...performanceHistory.map((d, i) => {
+                    const x = (i / (performanceHistory.length - 1)) * 800
+                    const y = 200 - ((d.value - minVal) / range) * 200
                     return `${x},${y}`
                   }),
                   '800,200',
@@ -227,16 +221,16 @@ export default function PerformanceChart() {
 
             {/* Y-axis labels */}
             <div className="absolute top-0 left-0 h-full flex flex-col justify-between text-xs text-gray-500">
-              <span>{formatCurrency(maxPnl)}</span>
-              <span>{formatCurrency((maxPnl + minPnl) / 2)}</span>
-              <span>{formatCurrency(minPnl)}</span>
+              <span>{formatCurrency(maxVal)}</span>
+              <span>{formatCurrency((maxVal + minVal) / 2)}</span>
+              <span>{formatCurrency(minVal)}</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Additional Metrics */}
-      {metrics && (
+      {portfolio && (
         <div className="p-4 border-t border-white/10 bg-white/5">
           <div className="grid grid-cols-3 gap-4">
             <div className="flex items-center space-x-3">
@@ -244,7 +238,7 @@ export default function PerformanceChart() {
               <div>
                 <div className="text-sm text-gray-400">Max Drawdown</div>
                 <div className="text-lg font-semibold text-red-400">
-                  {formatCurrency(metrics.max_drawdown)}
+                  {maxDrawdown.toFixed(2)}%
                 </div>
               </div>
             </div>
@@ -252,29 +246,25 @@ export default function PerformanceChart() {
             <div className="flex items-center space-x-3">
               <Activity className="w-5 h-5 text-cyan-400" />
               <div>
-                <div className="text-sm text-gray-400">Total Trades</div>
+                <div className="text-sm text-gray-400">Positions</div>
                 <div className="text-lg font-semibold">
-                  {metrics.total_trades}
+                  {portfolio.positions?.length || 0}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center space-x-3">
-              {(() => {
-                const streak = getStreakDisplay(metrics.current_streak)
-                const Icon = streak.icon
-                return (
-                  <>
-                    <Icon className={`w-5 h-5 ${streak.color}`} />
-                    <div>
-                      <div className="text-sm text-gray-400">Current Streak</div>
-                      <div className={`text-lg font-semibold ${streak.color}`}>
-                        {streak.text}
-                      </div>
-                    </div>
-                  </>
-                )
-              })()}
+              {totalPnl >= 0 ? (
+                <TrendingUp className="w-5 h-5 text-green-400" />
+              ) : (
+                <TrendingDown className="w-5 h-5 text-red-400" />
+              )}
+              <div>
+                <div className="text-sm text-gray-400">Total Return</div>
+                <div className={`text-lg font-semibold ${totalPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {formatPercent((portfolio.performance?.total_return || 0))}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { AlertTriangle, Info, AlertCircle, XCircle, X, Bell, BellOff } from 'lucide-react'
+import { useState } from 'react'
+import { AlertTriangle, Info, AlertCircle, XCircle, X, Bell, BellOff, TrendingUp, TrendingDown } from 'lucide-react'
 
 interface Alert {
   id: string
@@ -10,37 +10,49 @@ interface Alert {
   tags: string[]
 }
 
-export default function AlertPanel() {
-  const [alerts, setAlerts] = useState<Alert[]>([])
+interface AlertPanelProps {
+  trades?: Array<{
+    symbol: string
+    action: string
+    size: number
+    order_id?: string
+    status?: string
+    filled_price?: number
+    fee?: number
+    timestamp: string
+  }>
+}
+
+export default function AlertPanel({ trades }: AlertPanelProps) {
   const [filter, setFilter] = useState<string>('all')
   const [muted, setMuted] = useState(false)
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    // Fetch recent alerts
-    fetchAlerts()
+  // Convert trades to alerts format, filtering out dismissed ones
+  const alerts: Alert[] = (trades?.map((trade, i) => {
+    const isSuccess = trade.status === 'filled' || trade.status === 'success'
+    const isBuy = trade.action === 'buy'
+    const id = trade.order_id || `trade-${i}`
 
-    // Poll for new alerts
-    const interval = setInterval(fetchAlerts, 5000)
+    // Skip dismissed alerts
+    if (dismissedIds.has(id)) return null
 
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchAlerts = async () => {
-    try {
-      const response = await fetch('/api/alerts')
-      const data = await response.json()
-      setAlerts(data.alerts || [])
-    } catch (error) {
-      console.error('Failed to fetch alerts:', error)
+    return {
+      id,
+      level: isSuccess ? 'info' : 'warning',
+      title: `${isBuy ? 'Buy' : 'Sell'} Order ${isSuccess ? 'Filled' : 'Pending'}`,
+      message: `${trade.action.toUpperCase()} ${trade.size} ${trade.symbol}${trade.filled_price ? ` @ $${trade.filled_price.toFixed(2)}` : ''}${trade.fee ? ` (fee: $${trade.fee.toFixed(4)})` : ''}`,
+      timestamp: trade.timestamp,
+      tags: [trade.symbol, trade.action, trade.status || 'pending']
     }
-  }
+  }).filter(Boolean) as Alert[]) || []
 
   const dismissAlert = (id: string) => {
-    setAlerts(alerts.filter(a => a.id !== id))
+    setDismissedIds(prev => new Set([...prev, id]))
   }
 
   const clearAll = () => {
-    setAlerts([])
+    setDismissedIds(new Set(alerts.map(a => a.id)))
   }
 
   const getAlertIcon = (level: string) => {
