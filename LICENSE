@@ -19,3 +19,32 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+THIRD-PARTY LICENSES
+
+This project uses the following third-party software:
+
+1. Freqtrade (GPL-3.0)
+   https://github.com/freqtrade/freqtrade
+
+2. Hummingbot (Apache 2.0)
+   https://github.com/hummingbot/hummingbot
+
+3. Qiskit (Apache 2.0)
+   https://github.com/Qiskit/qiskit
+
+4. LangChain (MIT)
+   https://github.com/langchain-ai/langchain
+
+5. React (MIT)
+   https://github.com/facebook/react
+
+6. Tauri (MIT/Apache 2.0)
+   https://github.com/tauri-apps/tauri
+
+7. Three.js (MIT)
+   https://github.com/mrdoob/three.js
+
+Please refer to each project's repository for their full license terms.

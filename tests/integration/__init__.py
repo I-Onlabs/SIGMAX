@@ -1,1 +1,3 @@
-"""Integration tests for end-to-end pipeline"""
+"""
+Integration tests for SIGMAX
+"""

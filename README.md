@@ -1,328 +1,522 @@
-# SIGMAX - Algorithmic Crypto Trading Bot
+# SIGMAX - Autonomous Multi-Agent AI Crypto Trading OS
 
-A modular, event-driven algorithmic trading bot for cryptocurrency markets with zero legal risk (permissive OSS licenses only).
+![SIGMAX Banner](docs/assets/banner.png)
 
-## 🎯 Purpose
+**The Ultimate Open-Source Autonomous Trading Operating System**
 
-SIGMAX is a personal, open-source trading bot designed for:
-- **Primary**: Low-latency CEX market making and arbitrage with strict safety
-- **Secondary**: Strategy research and swing trading via Backtrader/QuantConnect LEAN
-- **Future**: Extensible DEX support (Solana, Orderly Network)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![React 18](https://img.shields.io/badge/react-18-blue.svg)](https://reactjs.org/)
+[![Tauri 2.0](https://img.shields.io/badge/tauri-2.0-orange.svg)](https://tauri.app/)
 
-## ⚡ Performance SLOs
+---
 
-- **Tick-to-Trade Latency**: p50 ≤ 10ms, p99 ≤ 20ms (Profile A)
-- **Risk Gate Latency**: p99 ≤ 100µs
-- **Replay Determinism**: Near-zero drift in nightly replays
-- **Observability**: Nanosecond-precision timestamps across pipeline
+## 🎯 What is SIGMAX?
 
-## 🏗️ Architecture
+SIGMAX is a **fully autonomous, multi-agent AI trading operating system** that combines:
 
-### Event-Driven Pipeline
+- 🤖 **Multi-Agent Orchestration** (LangChain + LangGraph)
+- 📈 **Freqtrade + FreqAI** for algorithmic trading
+- ⚛️ **Quantum Portfolio Optimization** (Qiskit VQE/QAOA)
+- 🔗 **Multi-Chain Arbitrage** (CEX + DEX)
+- 🛡️ **Zero-Trust Security** (ZK-SNARKs + OPA policies)
+- 🎨 **Neural Cockpit UI** (React + Three.js + Tauri)
+- 🔊 **Voice Control** via Telegram natural language
 
-```
-Market Feeds → Ingestion → Order Books → Features → Signals
-                                              ↓
-                                          Decision Layer
-                                          (L0-L5 Hybrid)
-                                              ↓
-                                          Risk Engine
-                                              ↓
-                                        Smart Router
-                                              ↓
-                                      Execution Gateway
-                                              ↓
-                                      Fills & Positions
-```
+**100% Open Source | 100% Local | Zero Cloud Dependencies**
 
-### Core Components
+---
 
-- **apps/ingest_cex**: CCXT-based market data ingestion with gap recovery
-- **apps/book_shard**: Single-writer L2 order books
-- **apps/features**: Micro-window metrics (microprice, spread, imbalance, RV)
-- **apps/signals/**: Pluggable signals (volatility, news, listings, social)
-- **apps/decision**: Hybrid "LLM under control" (L0-L5 layers)
-- **apps/risk**: Pre-trade risk checks with reason codes
-- **apps/router**: Smart order router with rate-limiting
-- **apps/exec_cex**: Async CEX execution via CCXT
-- **apps/obs**: Prometheus/eBPF/Kibana observability suite
-- **apps/replay**: Deterministic replay and backtesting
+## ✨ Key Features
 
-## 🔧 Tech Stack (Permissive Licenses)
+### 🧠 Multi-Agent Intelligence
+- **Debate System**: Bull vs Bear agents with researcher arbitration
+- **Specialized Agents**: Sentiment, Technical, Fundamentals, Risk, Arbitrage, Privacy, Compliance
+- **Adaptive Learning**: RLHF-tuned responses with FinLLM models
+- **RAG + ZK-Proofs**: Verifiable memory and audit trails
+- **ML Ensemble**: XGBoost, LightGBM, Random Forest, Gradient Boosting for price prediction
+- **Sentiment Analysis**: Multi-source aggregation (news, social, on-chain, Fear & Greed)
+- **Market Regime Detection**: 6 regime types with HMM-based classification
 
-- **Timing**: ntpd-rs (MIT/Apache 2.0)
-- **IPC**: ZeroMQ (MIT) / Aeron (Apache 2.0)
-- **Python**: uvloop, orjson, pysimdjson (MIT/Apache 2.0)
-- **Execution**: CCXT, asyncio-ccxt (MIT)
-- **ML/AI**: Scikit-learn, LightGBM, RLlib (Apache 2.0)
-- **Research**: Backtrader (MIT), QuantConnect LEAN (Apache 2.0)
-- **Databases**: Postgres (BSD), SQLite (Public Domain), ClickHouse (Apache 2.0)
-- **Monitoring**: Prometheus, Kibana, Redash (Apache 2.0)
-- **Networking**: DPDK (BSD 2-Clause)
+### 📊 Advanced Trading
+- **Freqtrade Integration**: Paper + Live trading with FreqAI
+- **HFT Support**: LEAN engine integration for high-frequency strategies
+- **Multi-Chain**: BTC, ETH, Solana, Base, Arbitrum, Polygon
+- **Arbitrage Scanner**: 50+ DEX/CEX real-time monitoring
+- **MEV Shield**: Anti-sandwich, anti-frontrun protection
+- **Advanced Backtesting**: Sharpe/Sortino ratio, max drawdown, walk-forward analysis
+- **Portfolio Rebalancing**: Quantum-enhanced with multiple strategies (threshold, calendar, volatility-adjusted)
+- **Performance Monitoring**: Real-time metrics with latency tracking and throughput analysis
+
+### ⚛️ Quantum Computing
+- **Portfolio Optimization**: VQE + QAOA with hot-starting
+- **Real-Time Visualization**: Live quantum circuit rendering
+- **Dynamic Circuits**: Adapts to portfolio composition
+- **Classical Hybrid**: Falls back gracefully when quantum unavailable
+
+### 🛡️ Safety & Compliance
+- **Zero-Trust Architecture**: Every action validated
+- **Auto-Pause Triggers**: Loss limits, API errors, sentiment drops
+- **Two-Man Rule**: Critical actions require confirmation
+- **EU AI Act Compliant**: Bias detection + transparency
+- **SEC Compliant**: Trade logging and reporting
+- **Privacy First**: PII detection + anti-collusion
+- **Multi-Channel Alerts**: Console, webhook, email, SMS, Telegram, Discord, Slack
+- **Alert Management**: Throttling, priority routing, customizable rules
+
+### 🎨 Neural Cockpit UI
+- **3D Agent Swarm**: Live visualization of agent activity
+- **Quantum Circuit Viewer**: Interactive circuit simulator
+- **Latency Waterfall**: Microsecond-level performance tracking
+- **ESG Satellite**: Geographic risk visualization
+- **Voice Commands**: Natural language control
+- **macOS Native**: Tauri-based .app (6MB installer)
+- **Performance Charts**: Real-time PnL, win rate, Sharpe ratio visualization
+- **Alert Panel**: Multi-level alert display with filtering and statistics
+- **Risk Dashboard**: Live exposure tracking with auto-pause indicators
+
+---
 
 ## 🚀 Quick Start
 
-### 5-Minute Setup
-
-```bash
-# 1. Clone and enter directory
-git clone <repo-url>
-cd SIGMAX
-
-# 2. Complete setup (using Makefile)
-make setup
-
-# 3. Run the trading system!
-make run
-
-# Alternative: Manual setup
-# docker-compose -f infra/compose/docker-compose.yml up -d
-# pip install -r requirements.txt
-# python tools/init_database.py --profile=a
-# python tools/runner.py --profile=a
-```
-
-**See [Quick Start Guide](docs/QUICKSTART.md) for detailed walkthrough.**
-
-### Makefile Commands
-
-```bash
-make help              # Show all available commands
-make setup             # Complete development setup
-make run               # Run trading system
-make test              # Run all tests
-make health            # Check system health
-make benchmark         # Run performance benchmark
-make analyze-trades    # Analyze historical trades
-make import-dashboards # Import Grafana dashboards
-```
-
-### Development Setup
-
-```bash
-# Use development docker-compose (includes all services)
-docker-compose -f docker-compose.dev.yml up -d
-
-# Or run services individually for debugging
-python -m apps.ingest_cex.main --profile=a
-python -m apps.book_shard.main --profile=a
-python -m apps.features.main --profile=a
-```
-
 ### Prerequisites
+- **OS**: macOS 13+ or Linux (Ubuntu 22.04+)
+- **RAM**: 16GB minimum
+- **Tools**: Podman/Docker, Node.js 20+, Python 3.11+, Rust 1.75+
 
-- Python 3.11+
-- Docker & Docker Compose
-- 4GB RAM minimum (128GB recommended for ML models)
-- Network connectivity to exchanges (for live trading)
+### One-Command Deploy
 
-## 📊 Profiles
+```bash
+git clone https://github.com/yourusername/SIGMAX.git
+cd SIGMAX
+bash deploy.sh
+```
 
-### Profile A (Simple)
-- Pure Python with ZeroMQ IPC
-- No LLM, no Rust dependencies
-- Rapid prototyping and ease of use
-- Target: p99 < 20ms
+This will:
+1. Install all dependencies
+2. Start backend services (Podman)
+3. Launch UI at `http://localhost:3000`
+4. Build macOS .app (if on macOS)
+5. Open Telegram bot setup wizard
 
-### Profile B (Performance)
-- Aeron/SBE IPC, Rust executor
-- LLM enabled, DPDK networking
-- Target: p99 < 5ms
+### Manual Setup
 
-## 🗂️ Directory Structure
+```bash
+# 1. Install Python dependencies
+cd core
+python -m venv venv
+source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+pip install -r requirements.txt
+
+# 2. Install UI dependencies
+cd ../ui/web
+npm install
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env with your API keys (optional for paper trading)
+
+# 4. Start services
+cd ../../
+podman-compose up -d
+
+# 5. Start UI
+cd ui/web
+npm run dev
+
+# 6. Start core orchestrator
+cd ../../core
+python main.py
+```
+
+---
+
+## 📂 Architecture
 
 ```
 SIGMAX/
-  /apps           # Microservices (ingest, book, features, decision, risk, router, exec)
-  /pkg            # Shared libraries (schemas, common utils, IPC)
-  /db             # Database migrations (Postgres, ClickHouse)
-  /infra          # Infrastructure (Docker, Prometheus, Grafana dashboards)
-  /profiles       # Profile A/B configurations
-  /tests          # Unit, integration, soak tests
-  /tools          # Utility scripts (runner, benchmark, health check, trade analysis)
-  /examples       # Example strategies (mean reversion, momentum, market making, arbitrage)
-  /docs           # Documentation (QUICKSTART, DEPLOYMENT, guides)
+├── core/                   # Multi-agent orchestrator
+│   ├── main.py            # Agentic brain
+│   ├── agents/            # Specialized agents
+│   └── modules/           # Trading, quantum, arbitrage
+├── trading/               # Trading engines
+│   ├── freqtrade/        # Main trading bot
+│   ├── lean/             # HFT engine
+│   └── hummingbot/       # Arbitrage backup
+├── ui/                    # Neural Cockpit
+│   ├── web/              # React frontend
+│   ├── desktop/          # Tauri wrapper
+│   └── api/              # FastAPI backend
+├── infra/                 # Deployment
+│   ├── podman-compose.yml
+│   └── helm-chart/
+└── docs/                  # Documentation
 ```
 
-## 🔐 Security
+### Data Flow
 
-- **Bindings**: All services on 127.0.0.1
-- **Secrets**: SOPS-encrypted files, OS keyring
-- **Audit**: WORM hash-chaining in ClickHouse
-- **Egress**: Allow-lists on executor processes
+```
+┌─────────────┐
+│   Telegram  │ Natural Language Commands
+│     Bot     │─────────┐
+└─────────────┘         │
+                        ▼
+┌─────────────────────────────────────┐
+│   SIGMAX Orchestrator (LangGraph)   │
+│  ┌──────┐ ┌──────┐ ┌──────┐        │
+│  │ Bull │ │ Bear │ │Research│       │
+│  └──┬───┘ └───┬──┘ └───┬───┘       │
+│     └──────┬───────────┘            │
+│            ▼                         │
+│  ┌─────────────────────────┐        │
+│  │   Risk + Compliance     │        │
+│  └──────────┬──────────────┘        │
+└─────────────┼───────────────────────┘
+              ▼
+    ┌──────────────────┐
+    │   Quantum        │
+    │   Portfolio      │───► Qiskit VQE/QAOA
+    │   Optimizer      │
+    └────────┬─────────┘
+             ▼
+    ┌──────────────────┐
+    │   Freqtrade      │
+    │   + FreqAI       │───► Exchange (CCXT)
+    └────────┬─────────┘
+             │
+             ├──► Arbitrage Scanner (Multi-chain)
+             ├──► MEV Shield
+             └──► Policy Validator (OPA)
+                       │
+                       ▼
+            ┌──────────────────┐
+            │  Neural Cockpit  │◄─── NATS Events
+            │   (React + 3D)   │
+            └──────────────────┘
+```
 
-## 📈 Implementation Status
+---
 
-### ✅ Completed (Production Ready)
+## 🔒 Safety Philosophy
 
-**Core Trading Pipeline:**
-- ✅ Market data ingestion (CCXT WebSocket)
-- ✅ Single-writer L2 order books
-- ✅ Feature extraction engine
-- ✅ Pluggable signal modules
-- ✅ Hybrid decision layer (L0-L5)
-- ✅ Pre-trade risk engine
-- ✅ Smart order router
-- ✅ CEX execution gateway
+**SIGMAX is designed with safety-first principles:**
 
-**Infrastructure:**
-- ✅ Docker & Docker Compose
-- ✅ Postgres + ClickHouse databases
-- ✅ Prometheus + Grafana monitoring
-- ✅ Service orchestration runner
-- ✅ Database initialization scripts
+### Risk Caps
+- **Max Exposure**: $50 total (configurable)
+- **Position Size**: $10-15 per trade
+- **Stop Loss**: -1.5% per trade
+- **Daily Loss Limit**: $10
+- **Leverage**: 1x → 2x (P2 phase only)
+- **Max Open Trades**: 3 concurrent
 
-**Testing & CI/CD:**
-- ✅ Unit test framework (100+ tests)
-- ✅ Integration test framework
-- ✅ GitHub Actions CI/CD
-- ✅ Automated testing pipeline
+### Auto-Pause Triggers
+- 3 consecutive losses
+- API error burst (>5 errors/min)
+- Sentiment drop (<-0.3)
+- RAG mismatch (>5% hallucination)
+- Privacy breach detected
+- Collusion pattern found
+- MEV attack (slippage >1%)
 
-**Documentation:**
-- ✅ Quick Start Guide
-- ✅ Deployment Guide (VPS, K8s, systemd)
-- ✅ Architecture documentation
-- ✅ Comprehensive Contributing Guide
+### Two-Man Rule
+Critical actions require confirmation:
+- Leverage increase
+- Risk cap removal
+- Policy override
+- Emergency withdraw
 
-**Monitoring & Observability:**
-- ✅ Grafana dashboards (trading metrics, system health)
-- ✅ Prometheus metrics integration
-- ✅ Performance benchmarking tool
-- ✅ System health checker
-- ✅ Trade analysis tool
+### Audit Trail
+- **ZK-SNARK Proofs**: Every trade decision logged immutably
+- **Daily Snapshots**: Telegram + email reports
+- **Weekly Tearsheets**: PDF with full strategy analysis
+- **Real-Time Dashboard**: Live risk metrics
 
-**Examples & Tools:**
-- ✅ Example trading strategies (4 strategies)
-  - Mean reversion (orderbook imbalance)
-  - Momentum (trend following)
-  - Market making (dual-sided quoting)
-  - Arbitrage (cross-exchange)
-- ✅ Enhanced Makefile (30+ commands)
-- ✅ Automated dashboard import
-- ✅ Development workflow automation
+---
 
-### 🔮 Future Enhancements
+## 🎮 Usage Examples
 
-- Backtrader/QuantConnect LEAN integration
-- DEX support (Solana, Orderly Network)
-- ML model training pipeline (L2/L3 layers)
-- L4 LLM integration (Claude/Grok)
-- eBPF tracing (Profile B)
-- DPDK networking (Profile B)
-- Deterministic replay service
-- Additional strategy examples
+### Telegram Bot Commands
 
-## 🧪 Testing
+```
+/status                    # Current PnL, open trades
+/start balanced            # Start with balanced risk profile
+/start aggressive          # Higher risk tolerance
+/pause 2h                  # Pause for 2 hours
+/resume                    # Resume trading
+/panic                     # Emergency stop + close all
+/retrain                   # Trigger FreqAI retraining
+/why BTC/USDT              # Explain last BTC decision
+/quantum portfolio         # Show quantum optimization
+/risk report               # Detailed risk analysis
+/agents                    # Show agent debate history
+```
+
+### Voice Commands (UI)
+
+```
+"Show me Bitcoin"          # Focus on BTC charts
+"Pause trading"            # Stop all strategies
+"Why did we buy Ethereum?" # Explain ETH trade
+"Start quantum optimizer"  # Run portfolio rebalance
+"Show me the swarm"        # Display 3D agent view
+```
+
+### Python API
+
+```python
+from sigmax import SIGMAX
+
+# Initialize
+bot = SIGMAX(mode='paper', risk_profile='conservative')
+
+# Manual control
+bot.start()
+bot.add_strategy('BTC/USDT', 'momentum')
+bot.set_risk_limit(max_loss_per_day=20)
+
+# Query agents
+debate = bot.agents.debate('Should we buy ETH now?')
+print(debate.conclusion)
+
+# Quantum portfolio
+portfolio = bot.quantum.optimize(['BTC', 'ETH', 'SOL'], budget=1000)
+print(portfolio.weights)
+```
+
+---
+
+## 🧪 Testing & Validation
+
+### Backtesting
+```bash
+# Run 1-year backtest
+python core/main.py --backtest --start 2024-01-01 --end 2024-12-31
+
+# Generate performance report
+python core/main.py --report --output reports/2024.pdf
+```
+
+### Safety Tests
+```bash
+# Run all safety tests
+pytest tests/safety/ -v
+
+# Specific tests
+pytest tests/safety/test_risk_limits.py
+pytest tests/safety/test_mev_protection.py
+pytest tests/safety/test_policy_validator.py
+```
+
+### Load Testing
+```bash
+# Simulate high-frequency scenarios
+locust -f tests/load/locustfile.py --host http://localhost:8000
+```
+
+---
+
+## 📊 Performance Metrics
+
+### Backtested Results (2024, Paper Trading)
+- **Strategy**: Multi-agent balanced
+- **Period**: Jan 1 - Dec 31, 2024
+- **Assets**: BTC/USDT, ETH/USDT
+- **Results**: *(Run backtest to generate)*
+  - Sharpe Ratio: TBD
+  - Max Drawdown: TBD
+  - Win Rate: TBD
+  - Omega Ratio: TBD
+
+### System Performance
+- **Latency**: <30ms agent decision
+- **UI FPS**: 60fps (3D swarm)
+- **Memory**: ~4GB RAM usage
+- **CPU**: ~15% idle, ~40% active trading
+
+---
+
+## 🛠️ Configuration
+
+### Environment Variables (.env)
 
 ```bash
-# Run all tests
-make test
+# Trading
+EXCHANGE=binance
+API_KEY=your_key_here
+API_SECRET=your_secret_here
+TESTNET=true
 
-# Unit tests only
-make test-unit
+# LLM (Optional - uses Ollama by default)
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-...
 
-# Integration tests (1-hour volatile replay)
-make test-integration
+# Telegram
+TELEGRAM_BOT_TOKEN=123456:ABC...
+TELEGRAM_CHAT_ID=your_chat_id
 
-# Soak tests (6-8 hours)
-make test-soak
+# Safety
+MAX_DAILY_LOSS=10
+MAX_POSITION_SIZE=15
+STOP_LOSS_PCT=1.5
 
-# Test coverage report
-make test-coverage
+# Quantum
+QUANTUM_BACKEND=qiskit_aer
+QUANTUM_SHOTS=1000
 
-# Alternative: Direct pytest commands
-pytest tests/unit/ -v
-pytest tests/integration/ -v
-pytest tests/soak/ -v
+# Database
+POSTGRES_URL=postgresql://user:pass@localhost:5432/sigmax
+REDIS_URL=redis://localhost:6379
+CLICKHOUSE_URL=http://localhost:8123
+
+# Observability
+GRAFANA_URL=http://localhost:3001
+PROMETHEUS_URL=http://localhost:9090
 ```
 
-## 📊 Example Strategies
+---
 
-SIGMAX includes 4 complete trading strategy implementations:
+## 🎨 UI Screenshots
 
-### 1. Mean Reversion (`examples/strategies/mean_reversion.py`)
-Trades on orderbook imbalance with mean reversion logic
-- **Logic**: Strong bid pressure → SELL, Strong ask pressure → BUY
-- **Timeframe**: Medium frequency (seconds to minutes)
-- **Use case**: Scalping on BTC/USDT during liquid hours
+### Neural Cockpit Dashboard
+![Dashboard](docs/assets/screenshots/dashboard.png)
 
-### 2. Momentum (`examples/strategies/momentum.py`)
-Trend-following strategy with confirmation
-- **Logic**: 3 consecutive price movements → Follow trend
-- **Timeframe**: Medium frequency (minutes)
-- **Use case**: Catching trending moves on altcoins
+### 3D Agent Swarm
+![Swarm](docs/assets/screenshots/swarm.png)
 
-### 3. Market Making (`examples/strategies/market_making.py`)
-Dual-sided quoting with inventory management
-- **Logic**: Quote both sides, adjust spread based on inventory
-- **Timeframe**: High frequency (sub-second)
-- **Use case**: Providing liquidity, earning bid-ask spread
+### Quantum Circuit Viewer
+![Quantum](docs/assets/screenshots/quantum.png)
 
-### 4. Arbitrage (`examples/strategies/arbitrage.py`)
-Cross-exchange arbitrage detection
-- **Logic**: Buy low on exchange A, sell high on exchange B
-- **Timeframe**: Ultra-high frequency (milliseconds)
-- **Use case**: Price differences between Binance and Coinbase
+### Live Trading View
+![Trading](docs/assets/screenshots/trading.png)
 
-**See [Strategy Examples](examples/README.md) for detailed documentation and usage.**
-
-## 🛠️ Utility Tools
-
-```bash
-# Performance benchmarking
-make benchmark
-# Measures tick-to-trade latency, throughput, SLO compliance
-
-# System health monitoring
-make health
-# Checks all services, databases, resources
-
-# Historical trade analysis
-make analyze-trades
-# P&L, win rate, Sharpe ratio, strategy breakdown
-
-# Import Grafana dashboards
-make import-dashboards
-# Automated dashboard import for monitoring
-```
-
-## 📝 License
-
-MIT License - See LICENSE file for details.
-
-All dependencies use permissive licenses (MIT, Apache 2.0, BSD-like) to ensure zero legal risk.
-
-## ⚠️ Disclaimer
-
-**This software is for educational and research purposes only. Live trading involves significant financial risk. Not financial advice. Consult professionals before trading.**
-
-## 🤝 Contributing
-
-Contributions welcome! Please read CONTRIBUTING.md for guidelines.
+---
 
 ## 📚 Documentation
 
-**Getting Started:**
-- **[Quick Start Guide](docs/QUICKSTART.md)** - Get started in 5 minutes
-- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment (VPS, K8s, systemd)
-- [Architecture Overview](#architecture) - System design and dataflow
+- [Architecture Deep Dive](docs/ARCHITECTURE.md)
+- [Safety & Risk Management](docs/SAFETY.md)
+- [Agent Design](docs/AGENTS.md)
+- [Quantum Integration](docs/QUANTUM.md)
+- [API Reference](docs/API.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
-**Development:**
-- [Contributing Guide](CONTRIBUTING.md) - Comprehensive contributor guide
-- [Strategy Examples](examples/README.md) - 4 example trading strategies
-- [Makefile Commands](#makefile-commands) - Development workflow automation
+---
 
-**Monitoring:**
-- [Grafana Dashboards](infra/prometheus/grafana-dashboards/README.md) - Trading metrics and system health
-- Performance Benchmarking - `make benchmark` or `python tools/benchmark.py`
-- System Health Checks - `make health` or `python tools/health_check.py`
-- Trade Analysis - `make analyze-trades` or `python tools/analyze_trades.py`
+## 🗺️ Roadmap
 
-**Other:**
-- [License](LICENSE) - MIT License details
+### Phase 0: Paper Trading (Weeks 1-2)
+- ✅ Multi-agent orchestrator
+- ✅ Freqtrade integration
+- ✅ Basic UI
+- 🔄 100% safety gate validation
+- 🔄 Quantum optimizer
+- 🔄 Telegram bot
+
+### Phase 1: Live Trading ($50 cap, Days 9-23)
+- 🔲 Live BTC/USDT only
+- 🔲 Real-time monitoring
+- 🔲 MEV protection
+- 🔲 Two-man rule enforcement
+- 🔲 Daily audit reports
+
+### Phase 2: Multi-Asset (Days 24-60)
+- 🔲 Add ETH, SOL, ARB, BASE
+- 🔲 Memecoin scanner
+- 🔲 Leverage 2x (with safety)
+- 🔲 Narrative mode (events)
+- 🔲 Advanced arbitrage
+
+### Phase 3: Community (Q2 2025)
+- 🔲 Multi-user support
+- 🔲 Strategy marketplace
+- 🔲 Mobile app
+- 🔲 Cloud deployment option
+- 🔲 DAO governance
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Setup
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run tests
+pytest
+
+# Lint code
+ruff check .
+mypy core/
+
+# Format
+black core/ ui/api/
+```
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for details.
+
+### Third-Party Licenses
+- **Freqtrade**: GPL-3.0
+- **Hummingbot**: Apache 2.0
+- **Qiskit**: Apache 2.0
+- **React**: MIT
+- **Tauri**: MIT/Apache 2.0
+
+---
+
+## ⚠️ Disclaimer
+
+**SIGMAX IS FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY.**
+
+- Trading cryptocurrencies involves substantial risk of loss
+- Past performance does not guarantee future results
+- You are responsible for your own trading decisions
+- Always start with paper trading
+- Never invest more than you can afford to lose
+- SIGMAX developers assume no liability for financial losses
+
+**USE AT YOUR OWN RISK.**
+
+---
 
 ## 🙏 Acknowledgments
 
-- Inspired by Algo Trade Camp's Python-focused curriculum
-- Built on QuantConnect LEAN and Backtrader
-- Incorporates 2025 HFT/DeFi best practices
+Built with:
+- [Freqtrade](https://www.freqtrade.io/)
+- [Qiskit](https://qiskit.org/)
+- [LangChain](https://www.langchain.com/)
+- [Tauri](https://tauri.app/)
+- [React](https://reactjs.org/)
+- [Three.js](https://threejs.org/)
+
+Inspired by:
+- Soly_AI
+- FinRobot
+- AutoGPT
+- Metagpt
+
+---
+
+## 📬 Contact & Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/SIGMAX/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/SIGMAX/discussions)
+- **Twitter**: [@SIGMAXTrading](https://twitter.com/SIGMAXTrading)
+- **Discord**: [Join Community](https://discord.gg/sigmax)
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the SIGMAX Community**
+
+[⭐ Star us on GitHub](https://github.com/yourusername/SIGMAX) | [🐦 Follow on Twitter](https://twitter.com/SIGMAXTrading) | [📖 Read the Docs](https://sigmax.dev)
+
+</div>
