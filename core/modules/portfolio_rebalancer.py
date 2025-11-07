@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 import numpy as np
 from loguru import logger
+import aiohttp
 
 
 class PortfolioRebalancer:
@@ -288,29 +289,119 @@ class PortfolioRebalancer:
 
         return {s: w / total for s, w in inv_vols.items()}
 
+    async def _fetch_market_caps(self, symbols: List[str]) -> Dict[str, float]:
+        """
+        Fetch actual market capitalizations from CoinGecko API
+
+        Args:
+            symbols: List of trading symbols (e.g., ['BTC/USDT', 'ETH/USDT'])
+
+        Returns:
+            Dictionary mapping symbols to market caps in USD
+        """
+        # Extract base assets from trading pairs
+        coin_ids_map = {
+            'BTC': 'bitcoin',
+            'ETH': 'ethereum',
+            'BNB': 'binancecoin',
+            'SOL': 'solana',
+            'AVAX': 'avalanche-2',
+            'MATIC': 'matic-network',
+            'DOT': 'polkadot',
+            'LINK': 'chainlink',
+            'UNI': 'uniswap',
+            'ATOM': 'cosmos',
+            'ADA': 'cardano',
+            'XRP': 'ripple',
+            'DOGE': 'dogecoin',
+            'LTC': 'litecoin',
+            'TRX': 'tron',
+            'NEAR': 'near',
+            'ALGO': 'algorand',
+            'FTM': 'fantom',
+        }
+
+        # Extract base assets and map to CoinGecko IDs
+        base_assets = []
+        symbol_to_base = {}
+        for symbol in symbols:
+            base = symbol.split('/')[0] if '/' in symbol else symbol
+            symbol_to_base[symbol] = base
+            if base in coin_ids_map:
+                base_assets.append(coin_ids_map[base])
+
+        if not base_assets:
+            logger.warning("No recognized assets for market cap fetching")
+            return {}
+
+        try:
+            # Fetch market caps from CoinGecko
+            async with aiohttp.ClientSession() as session:
+                url = "https://api.coingecko.com/api/v3/simple/price"
+                params = {
+                    'ids': ','.join(base_assets),
+                    'vs_currencies': 'usd',
+                    'include_market_cap': 'true'
+                }
+
+                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                    if response.status != 200:
+                        logger.warning(f"CoinGecko API returned status {response.status}")
+                        return {}
+
+                    data = await response.json()
+
+                    # Build market cap dictionary
+                    market_caps = {}
+                    for symbol, base in symbol_to_base.items():
+                        coin_id = coin_ids_map.get(base)
+                        if coin_id and coin_id in data:
+                            market_cap = data[coin_id].get('usd_market_cap', 0)
+                            if market_cap > 0:
+                                market_caps[symbol] = market_cap
+
+                    logger.info(f"Fetched market caps for {len(market_caps)}/{len(symbols)} symbols")
+                    return market_caps
+
+        except Exception as e:
+            logger.error(f"Failed to fetch market caps from CoinGecko: {e}")
+            return {}
+
     async def _market_cap_weighted(
         self,
         symbols: List[str],
         market_data: Dict[str, Any]
     ) -> Dict[str, float]:
-        """Market cap weighted portfolio"""
-        # TODO: Fetch actual market caps
-        # For now, use price * volume as proxy
+        """
+        Market cap weighted portfolio using real market capitalizations
 
-        caps = {}
+        Falls back to price * volume proxy if API fetch fails
+        """
+        # Try to fetch actual market caps
+        caps = await self._fetch_market_caps(symbols)
 
-        for symbol in symbols:
-            if symbol in market_data:
-                price = market_data[symbol].get('price', 0)
-                volume = market_data[symbol].get('volume_24h', 0)
-                caps[symbol] = price * volume
+        # Fallback to price * volume proxy if API failed
+        if not caps:
+            logger.info("Using price * volume as market cap proxy")
+            for symbol in symbols:
+                if symbol in market_data:
+                    price = market_data[symbol].get('price', 0)
+                    volume = market_data[symbol].get('volume_24h', 0)
+                    if price > 0 and volume > 0:
+                        caps[symbol] = price * volume
 
+        # Equal weighting fallback
         if not caps or sum(caps.values()) == 0:
+            logger.warning("No market cap data available, using equal weights")
             n = len(symbols)
             return {symbol: 1.0 / n for symbol in symbols}
 
+        # Normalize to weights
         total = sum(caps.values())
-        return {s: c / total for s, c in caps.items()}
+        weights = {s: c / total for s, c in caps.items()}
+
+        logger.info(f"Market cap weights: {weights}")
+        return weights
 
     def _calculate_weights(
         self,
