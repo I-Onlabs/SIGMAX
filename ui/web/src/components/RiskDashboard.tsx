@@ -1,41 +1,29 @@
-import { useState, useEffect } from 'react'
 import { Shield, AlertTriangle, TrendingDown, TrendingUp, Activity, DollarSign } from 'lucide-react'
 
-interface RiskMetrics {
-  totalExposure: number
-  maxExposure: number
-  dailyPnL: number
-  dailyLossLimit: number
-  openPositions: number
-  maxPositions: number
-  consecutiveLosses: number
-  currentDrawdown: number
-  maxDrawdown: number
-  sharpeRatio: number
-  volatility: number
-  valueAtRisk: number
+interface RiskDashboardProps {
+  portfolio: any
+  status: any
 }
 
-export default function RiskDashboard() {
-  const [metrics, setMetrics] = useState<RiskMetrics>({
-    totalExposure: 35.50,
-    maxExposure: 50,
-    dailyPnL: 2.30,
-    dailyLossLimit: 10,
-    openPositions: 2,
-    maxPositions: 3,
-    consecutiveLosses: 0,
-    currentDrawdown: 1.5,
-    maxDrawdown: 10,
-    sharpeRatio: 1.45,
-    volatility: 15.3,
-    valueAtRisk: 4.2
-  })
+export default function RiskDashboard({ portfolio, status }: RiskDashboardProps) {
+  // Calculate metrics from portfolio and status
+  const totalExposure = portfolio?.invested || 0
+  const maxExposure = 50 // Paper trading limit
+  const dailyPnL = status?.trading?.pnl_today || 0
+  const dailyLossLimit = 10
+  const openPositions = portfolio?.positions?.length || 0
+  const maxPositions = 3
+  const consecutiveLosses = 0 // Would need trade history
+  const currentDrawdown = Math.abs(portfolio?.performance?.max_drawdown || 0)
+  const maxDrawdown = 10
+  const sharpeRatio = portfolio?.performance?.sharpe_ratio || 0
+  const volatility = 15.3 // Would need historical data
+  const valueAtRisk = 4.2 // Would need calculation
 
   // Calculate risk levels
-  const exposureLevel = (metrics.totalExposure / metrics.maxExposure) * 100
-  const dailyPnLLevel = (metrics.dailyPnL / metrics.dailyLossLimit) * 100
-  const drawdownLevel = (metrics.currentDrawdown / metrics.maxDrawdown) * 100
+  const exposureLevel = (totalExposure / maxExposure) * 100
+  const dailyPnLLevel = (dailyPnL / dailyLossLimit) * 100
+  const drawdownLevel = (currentDrawdown / maxDrawdown) * 100
 
   const getRiskColor = (level: number) => {
     if (level < 50) return 'text-green-400 border-green-500/30 bg-green-500/10'
@@ -77,8 +65,8 @@ export default function RiskDashboard() {
             <DollarSign className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="flex items-baseline space-x-1">
-            <span className="text-2xl font-bold">${metrics.totalExposure}</span>
-            <span className="text-sm text-gray-400">/ ${metrics.maxExposure}</span>
+            <span className="text-2xl font-bold">${totalExposure.toFixed(2)}</span>
+            <span className="text-sm text-gray-400">/ ${maxExposure}</span>
           </div>
           <div className="mt-2 w-full bg-gray-700/50 rounded-full h-2 overflow-hidden">
             <div
@@ -104,19 +92,19 @@ export default function RiskDashboard() {
             )}
           </div>
           <div className="flex items-baseline space-x-1">
-            <span className={`text-2xl font-bold ${metrics.dailyPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              ${metrics.dailyPnL >= 0 ? '+' : ''}{metrics.dailyPnL}
+            <span className={`text-2xl font-bold ${dailyPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              ${dailyPnL >= 0 ? '+' : ''}{dailyPnL.toFixed(2)}
             </span>
           </div>
           <div className="mt-2 w-full bg-gray-700/50 rounded-full h-2 overflow-hidden">
             <div
               className={`h-full transition-all duration-500 ${
-                metrics.dailyPnL >= 0 ? 'bg-green-500' : 'bg-red-500'
+                dailyPnL >= 0 ? 'bg-green-500' : 'bg-red-500'
               }`}
               style={{ width: `${Math.min(Math.abs(dailyPnLLevel), 100)}%` }}
             />
           </div>
-          <div className="mt-1 text-xs text-gray-500">Limit: -${metrics.dailyLossLimit}</div>
+          <div className="mt-1 text-xs text-gray-500">Limit: -${dailyLossLimit}</div>
         </div>
       </div>
 
@@ -129,13 +117,13 @@ export default function RiskDashboard() {
             <Activity className="w-4 h-4 text-purple-400" />
           </div>
           <div className="flex items-baseline space-x-1">
-            <span className="text-2xl font-bold">{metrics.openPositions}</span>
-            <span className="text-sm text-gray-400">/ {metrics.maxPositions}</span>
+            <span className="text-2xl font-bold">{openPositions}</span>
+            <span className="text-sm text-gray-400">/ {maxPositions}</span>
           </div>
-          {metrics.consecutiveLosses > 0 && (
+          {consecutiveLosses > 0 && (
             <div className="mt-2 px-2 py-1 rounded bg-red-500/20 border border-red-500/30">
               <span className="text-xs text-red-400">
-                {metrics.consecutiveLosses} consecutive losses
+                {consecutiveLosses} consecutive losses
               </span>
             </div>
           )}
@@ -149,7 +137,7 @@ export default function RiskDashboard() {
           </div>
           <div className="flex items-baseline space-x-1">
             <span className="text-2xl font-bold text-orange-400">
-              {metrics.currentDrawdown.toFixed(1)}%
+              {currentDrawdown.toFixed(1)}%
             </span>
           </div>
           <div className="mt-2 w-full bg-gray-700/50 rounded-full h-2 overflow-hidden">
@@ -158,7 +146,7 @@ export default function RiskDashboard() {
               style={{ width: `${drawdownLevel}%` }}
             />
           </div>
-          <div className="mt-1 text-xs text-gray-500">Max: {metrics.maxDrawdown}%</div>
+          <div className="mt-1 text-xs text-gray-500">Max: {maxDrawdown}%</div>
         </div>
       </div>
 
@@ -169,22 +157,22 @@ export default function RiskDashboard() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-400">Sharpe Ratio</span>
             <span className={`text-sm font-semibold ${
-              metrics.sharpeRatio > 1 ? 'text-green-400' :
-              metrics.sharpeRatio > 0.5 ? 'text-yellow-400' :
+              sharpeRatio > 1 ? 'text-green-400' :
+              sharpeRatio > 0.5 ? 'text-yellow-400' :
               'text-red-400'
             }`}>
-              {metrics.sharpeRatio.toFixed(2)}
+              {sharpeRatio.toFixed(2)}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-400">Volatility (30d)</span>
-            <span className="text-sm font-semibold">{metrics.volatility.toFixed(1)}%</span>
+            <span className="text-sm font-semibold">{volatility.toFixed(1)}%</span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-400">Value at Risk (95%)</span>
-            <span className="text-sm font-semibold text-orange-400">${metrics.valueAtRisk.toFixed(2)}</span>
+            <span className="text-sm font-semibold text-orange-400">${valueAtRisk.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -195,22 +183,22 @@ export default function RiskDashboard() {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-400">3 consecutive losses</span>
-            <span className={metrics.consecutiveLosses >= 3 ? 'text-red-400' : 'text-green-400'}>
-              {metrics.consecutiveLosses >= 3 ? '⚠️ TRIGGERED' : '✓ OK'}
+            <span className={consecutiveLosses >= 3 ? 'text-red-400' : 'text-green-400'}>
+              {consecutiveLosses >= 3 ? '⚠️ TRIGGERED' : '✓ OK'}
             </span>
           </div>
 
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-400">Daily loss &gt; $10</span>
-            <span className={metrics.dailyPnL < -10 ? 'text-red-400' : 'text-green-400'}>
-              {metrics.dailyPnL < -10 ? '⚠️ TRIGGERED' : '✓ OK'}
+            <span className={dailyPnL < -10 ? 'text-red-400' : 'text-green-400'}>
+              {dailyPnL < -10 ? '⚠️ TRIGGERED' : '✓ OK'}
             </span>
           </div>
 
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-400">Max exposure exceeded</span>
-            <span className={metrics.totalExposure > metrics.maxExposure ? 'text-red-400' : 'text-green-400'}>
-              {metrics.totalExposure > metrics.maxExposure ? '⚠️ TRIGGERED' : '✓ OK'}
+            <span className={totalExposure > maxExposure ? 'text-red-400' : 'text-green-400'}>
+              {totalExposure > maxExposure ? '⚠️ TRIGGERED' : '✓ OK'}
             </span>
           </div>
         </div>

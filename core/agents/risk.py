@@ -5,6 +5,7 @@ Risk Agent - Policy Validation & Risk Management
 from typing import Dict, Any, Optional
 from loguru import logger
 import os
+import numpy as np
 
 
 class RiskAgent:
@@ -94,37 +95,169 @@ class RiskAgent:
     async def _check_policies(
         self,
         symbol: str,
-        risk_profile: str
+        risk_profile: str,
+        trade_size: float = 0.0
     ) -> Dict[str, Any]:
-        """Check OPA policies"""
+        """
+        Check policies using compliance module (OPA integration)
 
-        # TODO: Integrate with OPA
-        # For now, simple checks
+        The compliance module handles OPA communication and falls back
+        to embedded policies when OPA is unavailable
+        """
+        # Build trade data for compliance check
+        trade_data = {
+            "symbol": symbol,
+            "size": trade_size,
+            "leverage": self.max_leverage,
+            "action": "analyze",  # Pre-trade analysis
+            "risk_profile": risk_profile
+        }
 
+        # Check with compliance module (uses OPA if available)
+        compliance_result = await self.compliance_module.check_compliance(
+            trade=trade_data,
+            risk_profile=risk_profile
+        )
+
+        # Convert compliance result to policy check format
         checks = {
-            "position_size_ok": True,
-            "daily_loss_ok": True,
-            "leverage_ok": True,
-            "blacklist_ok": symbol not in []
+            "compliant": compliance_result.get("compliant", False),
+            "position_size_ok": trade_size <= self.max_position_size,
+            "leverage_ok": self.max_leverage <= float(os.getenv("MAX_LEVERAGE", "1")),
+            "blacklist_ok": symbol not in compliance_result.get("violations", []),
+            "policy_approved": compliance_result.get("compliant", False)
         }
 
         approved = all(checks.values())
 
         return {
             "approved": approved,
-            "checks": checks
+            "checks": checks,
+            "compliance_reason": compliance_result.get("reason", ""),
+            "violations": compliance_result.get("violations", [])
         }
 
-    async def _assess_market_risk(self, symbol: str) -> Dict[str, Any]:
-        """Assess market-specific risks"""
+    async def _assess_market_risk(self, symbol: str, market_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Assess market-specific risks with actual calculations
 
-        # TODO: Calculate actual volatility, liquidity, etc.
+        Args:
+            symbol: Trading pair (e.g., BTC/USDT)
+            market_data: Optional dictionary containing:
+                - prices: List of historical prices for volatility calculation
+                - volumes: List of trading volumes for liquidity assessment
+                - market_cap: Market capitalization (if available)
+
+        Returns:
+            Risk assessment with volatility, liquidity, and correlation metrics
+        """
+        volatility_value = 0.0
+        volatility_level = "unknown"
+        liquidity_value = 0.0
+        liquidity_level = "unknown"
+        risk_level = "medium"
+
+        # Extract base asset from symbol (e.g., BTC from BTC/USDT)
+        base_asset = symbol.split('/')[0] if '/' in symbol else symbol
+
+        # Calculate volatility if historical prices are provided
+        if market_data and 'prices' in market_data and len(market_data['prices']) > 1:
+            prices = np.array(market_data['prices'])
+
+            # Calculate returns
+            returns = np.diff(prices) / prices[:-1]
+
+            # Annualized volatility (assuming daily prices)
+            volatility_value = float(np.std(returns) * np.sqrt(365) * 100)
+
+            # Classify volatility
+            if volatility_value < 30:
+                volatility_level = "low"
+            elif volatility_value < 60:
+                volatility_level = "medium"
+            elif volatility_value < 100:
+                volatility_level = "high"
+            else:
+                volatility_level = "extreme"
+
+        else:
+            # Use heuristics based on asset type
+            major_assets = ['BTC', 'ETH', 'BNB', 'SOL', 'USDT', 'USDC']
+            mid_cap_assets = ['AVAX', 'MATIC', 'DOT', 'LINK', 'UNI', 'ATOM']
+
+            if base_asset in major_assets:
+                volatility_value = 45.0  # Typical for major crypto
+                volatility_level = "medium"
+            elif base_asset in mid_cap_assets:
+                volatility_value = 70.0  # Higher for mid-cap
+                volatility_level = "high"
+            else:
+                volatility_value = 120.0  # Very high for small-cap/unknown
+                volatility_level = "extreme"
+
+        # Calculate liquidity if volume data is provided
+        if market_data and 'volumes' in market_data and len(market_data['volumes']) > 0:
+            volumes = np.array(market_data['volumes'])
+
+            # Average daily volume
+            avg_volume = float(np.mean(volumes))
+
+            # Liquidity score based on average volume
+            if avg_volume > 1_000_000_000:  # $1B+
+                liquidity_level = "very_high"
+                liquidity_value = 95.0
+            elif avg_volume > 100_000_000:  # $100M+
+                liquidity_level = "high"
+                liquidity_value = 80.0
+            elif avg_volume > 10_000_000:  # $10M+
+                liquidity_level = "medium"
+                liquidity_value = 60.0
+            elif avg_volume > 1_000_000:  # $1M+
+                liquidity_level = "low"
+                liquidity_value = 35.0
+            else:
+                liquidity_level = "very_low"
+                liquidity_value = 15.0
+
+        else:
+            # Use heuristics based on asset type
+            major_assets = ['BTC', 'ETH', 'BNB', 'SOL']
+            mid_cap_assets = ['AVAX', 'MATIC', 'DOT', 'LINK']
+
+            if base_asset in major_assets:
+                liquidity_level = "very_high"
+                liquidity_value = 90.0
+            elif base_asset in mid_cap_assets:
+                liquidity_level = "high"
+                liquidity_value = 75.0
+            else:
+                liquidity_level = "medium"
+                liquidity_value = 50.0
+
+        # Determine overall risk level
+        if volatility_level == "extreme" or liquidity_level == "very_low":
+            risk_level = "high"
+        elif volatility_level in ["high", "medium"] and liquidity_level in ["high", "very_high"]:
+            risk_level = "medium"
+        elif volatility_level == "low" and liquidity_level in ["high", "very_high"]:
+            risk_level = "low"
+        else:
+            risk_level = "medium"
+
+        # Calculate correlation (placeholder - would need market-wide data)
+        correlation = 0.5  # Default moderate correlation with market
 
         return {
-            "level": "medium",
-            "volatility": "medium",
-            "liquidity": "high",
-            "correlation": 0.5
+            "level": risk_level,
+            "volatility": volatility_level,
+            "volatility_value": volatility_value,
+            "liquidity": liquidity_level,
+            "liquidity_value": liquidity_value,
+            "correlation": correlation,
+            "details": {
+                "asset": base_asset,
+                "data_source": "historical" if market_data else "heuristic"
+            }
         }
 
     async def _check_red_flags(

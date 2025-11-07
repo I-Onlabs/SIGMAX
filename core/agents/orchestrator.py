@@ -369,12 +369,15 @@ Be skeptical and risk-focused. Cite specific concerns.
         logger.info(f"⚛️ Optimizer calculating optimal action for {state['symbol']}")
 
         try:
+            # Get current portfolio from execution module
+            current_portfolio = await self.execution_module.get_portfolio()
+
             optimization = await self.optimizer.optimize(
                 symbol=state["symbol"],
                 bull_score=self._extract_score(state.get("bull_argument", "")),
                 bear_score=self._extract_score(state.get("bear_argument", "")),
                 risk_assessment=state.get("risk_assessment", {}),
-                current_portfolio={}  # TODO: Get from execution module
+                current_portfolio=current_portfolio
             )
 
             return {

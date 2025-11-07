@@ -22,6 +22,9 @@ from pydantic import BaseModel, Field, validator
 from loguru import logger
 import psutil
 
+# Import SIGMAX manager
+from sigmax_manager import get_sigmax_manager
+
 # Connection manager for WebSocket clients
 class ConnectionManager:
     def __init__(self):
@@ -400,30 +403,21 @@ async def get_status():
     Returns current state of all agents, modules, and trading activity
     """
     try:
-        # TODO: Connect to actual SIGMAX instance
-        return {
-            "running": True,
-            "mode": "paper",
-            "timestamp": datetime.now().isoformat(),
-            "agents": {
-                "orchestrator": "active",
-                "researcher": "active",
-                "analyzer": "active",
-                "optimizer": "active",
-                "risk": "active",
-                "privacy": "active"
-            },
-            "trading": {
-                "open_positions": 0,
-                "pnl_today": 0.0,
-                "trades_today": 0,
-                "win_rate": 0.0
-            },
-            "system": {
-                "cpu_usage": psutil.cpu_percent(),
-                "memory_usage": psutil.virtual_memory().percent
-            }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Get status from running SIGMAX instance
+        status = await manager.get_status()
+
+        # Add system metrics
+        status["system"] = {
+            "cpu_usage": psutil.cpu_percent(),
+            "memory_usage": psutil.virtual_memory().percent,
+            "disk_usage": psutil.disk_usage('/').percent
         }
+
+        return status
+
     except Exception as e:
         logger.error(f"Error getting status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -445,28 +439,27 @@ async def analyze_symbol(request: AnalysisRequest):
     **Rate limit:** 10 requests per minute
     """
     try:
-        # TODO: Connect to orchestrator
         logger.info(f"Analyzing {request.symbol}")
 
-        return {
-            "symbol": request.symbol,
-            "decision": "hold",
-            "confidence": 0.5,
-            "timestamp": datetime.now().isoformat(),
-            "reasoning": {
-                "bull": "Positive technical indicators show upward momentum",
-                "bear": "High volatility presents significant risk",
-                "technical": "RSI neutral at 50, MACD showing consolidation",
-                "risk": "Within acceptable risk parameters"
-            },
-            "technical_indicators": {
-                "rsi": 50.0,
-                "macd": 0.0,
-                "volume": 1000000
-            }
-        }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Run analysis through orchestrator
+        result = await manager.analyze_symbol(
+            symbol=request.symbol,
+            include_debate=request.include_debate
+        )
+
+        # Add timestamp if not present
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return result
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error analyzing {request.symbol}: {e}")
         raise HTTPException(status_code=500, detail="Analysis failed")
@@ -488,26 +481,28 @@ async def execute_trade(request: TradeRequest):
     - Compliance validation required
     """
     try:
-        # TODO: Connect to execution module
         logger.info(f"Trade request: {request.action} {request.size} {request.symbol}")
 
-        # Validate trade size
-        if request.size > 1.0:  # Example limit
-            raise ValueError("Trade size exceeds maximum limit")
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
 
-        return {
-            "success": True,
-            "order_id": f"ORDER_{int(time.time() * 1000)}",
-            "symbol": request.symbol,
-            "action": request.action,
-            "size": request.size,
-            "status": "filled",
-            "timestamp": datetime.now().isoformat(),
-            "filled_price": 95000.0,  # Mock
-            "fee": 0.001
-        }
+        # Execute trade through execution module
+        result = await manager.execute_trade(
+            symbol=request.symbol,
+            action=request.action,
+            size=request.size
+        )
+
+        # Add timestamp if not present
+        if "timestamp" not in result:
+            result["timestamp"] = datetime.now().isoformat()
+
+        return result
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error executing trade: {e}")
         raise HTTPException(status_code=500, detail="Trade execution failed")
@@ -525,30 +520,20 @@ async def get_portfolio():
     - Performance metrics
     """
     try:
-        return {
-            "total_value": 50.0,
-            "cash": 2.5,
-            "invested": 47.5,
-            "positions": [
-                {
-                    "symbol": "BTC/USDT",
-                    "size": 0.0005,
-                    "entry_price": 90000.0,
-                    "current_price": 95000.0,
-                    "value": 47.5,
-                    "pnl": 2.5,
-                    "pnl_pct": 5.56,
-                    "pnl_usd": 2.5
-                }
-            ],
-            "performance": {
-                "total_return": 5.26,
-                "daily_return": 0.5,
-                "sharpe_ratio": 1.8,
-                "max_drawdown": -2.5
-            },
-            "timestamp": datetime.now().isoformat()
-        }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Get portfolio from execution module
+        portfolio = await manager.get_portfolio()
+
+        # Add timestamp if not present
+        if "timestamp" not in portfolio:
+            portfolio["timestamp"] = datetime.now().isoformat()
+
+        return portfolio
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting portfolio: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch portfolio")
@@ -575,19 +560,26 @@ async def get_trade_history(
         if limit > 500:
             raise ValueError("Limit cannot exceed 500")
 
-        # TODO: Fetch from database
-        trades = []
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
 
-        return {
-            "trades": trades,
-            "total": 0,
-            "limit": limit,
-            "offset": offset,
-            "symbol": symbol,
-            "timestamp": datetime.now().isoformat()
-        }
+        # Fetch trade history from execution module
+        history = await manager.get_trade_history(
+            limit=limit,
+            offset=offset,
+            symbol=symbol
+        )
+
+        # Add timestamp if not present
+        if "timestamp" not in history:
+            history["timestamp"] = datetime.now().isoformat()
+
+        return history
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting trade history: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch history")
@@ -676,19 +668,20 @@ async def get_quantum_circuit():
     used for portfolio optimization (VQE or QAOA method)
     """
     try:
-        return {
-            "svg": "",  # Base64 encoded SVG - TODO: Generate from quantum module
-            "timestamp": datetime.now().isoformat(),
-            "method": "VQE",
-            "qubits": 4,
-            "shots": 1000,
-            "backend": "qasm_simulator",
-            "optimization_result": {
-                "converged": True,
-                "iterations": 50,
-                "final_energy": -1.85
-            }
-        }
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Get quantum circuit from quantum module
+        circuit_data = await manager.get_quantum_circuit()
+
+        # Add timestamp if not present
+        if "timestamp" not in circuit_data:
+            circuit_data["timestamp"] = datetime.now().isoformat()
+
+        return circuit_data
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error getting quantum circuit: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch quantum circuit")
@@ -696,41 +689,262 @@ async def get_quantum_circuit():
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time updates"""
+    """
+    WebSocket endpoint for real-time updates
+
+    Broadcasts:
+    - System status every 5 seconds
+    - Market prices every 2 seconds
+    - Portfolio updates every 3 seconds
+    - Trade executions immediately
+    - Agent decisions immediately
+    - System health every 10 seconds
+    """
     await manager.connect(websocket)
 
+    # Get SIGMAX manager
+    sigmax_manager = await get_sigmax_manager()
+
     try:
-        # Send initial data
+        # Send welcome message
         await websocket.send_json({
             "type": "connected",
-            "message": "Connected to SIGMAX"
+            "message": "Connected to SIGMAX real-time updates",
+            "timestamp": datetime.now().isoformat(),
+            "server_version": "2.0.0"
         })
 
-        # Keep connection alive and broadcast updates
-        while True:
-            # Receive messages from client
-            data = await websocket.receive_json()
-
-            # Echo back (or handle command)
+        # Send initial status
+        try:
+            status = await sigmax_manager.get_status()
             await websocket.send_json({
-                "type": "echo",
-                "data": data
+                "type": "initial_status",
+                "data": status,
+                "timestamp": datetime.now().isoformat()
             })
+        except Exception as e:
+            logger.warning(f"Could not fetch initial status: {e}")
 
-            # Broadcast system updates
-            await manager.broadcast({
-                "type": "status_update",
-                "timestamp": datetime.now().isoformat(),
-                "data": {
-                    "price": 95000.0,  # Mock data
-                    "sentiment": 0.5
-                }
-            })
+        # Counters for update intervals
+        tick = 0
 
-            await asyncio.sleep(1)
+        # Keep connection alive and send updates
+        while True:
+            try:
+                # Check for client messages (non-blocking)
+                try:
+                    client_msg = await asyncio.wait_for(
+                        websocket.receive_json(),
+                        timeout=0.1
+                    )
+
+                    # Handle client commands
+                    await handle_websocket_command(websocket, client_msg, sigmax_manager)
+
+                except asyncio.TimeoutError:
+                    # No message from client, continue with broadcasts
+                    pass
+
+                # Market prices update every 2 seconds (tick % 2 == 0)
+                if tick % 2 == 0:
+                    await broadcast_market_data(websocket, sigmax_manager)
+
+                # Portfolio update every 3 seconds (tick % 3 == 0)
+                if tick % 3 == 0:
+                    await broadcast_portfolio_update(websocket, sigmax_manager)
+
+                # System status every 5 seconds (tick % 5 == 0)
+                if tick % 5 == 0:
+                    await broadcast_system_status(websocket, sigmax_manager)
+
+                # System health every 10 seconds (tick % 10 == 0)
+                if tick % 10 == 0:
+                    await broadcast_system_health(websocket)
+
+                # Check for immediate events (trade executions, agent decisions)
+                await broadcast_pending_events(websocket, sigmax_manager)
+
+                # Increment tick counter
+                tick += 1
+                if tick > 30:  # Reset every 30 seconds to avoid overflow
+                    tick = 0
+
+                # Sleep 1 second between ticks
+                await asyncio.sleep(1)
+
+            except Exception as e:
+                logger.error(f"Error in WebSocket broadcast loop: {e}")
+                await asyncio.sleep(1)  # Prevent tight loop on error
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        logger.info("WebSocket client disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
+
+
+async def handle_websocket_command(
+    websocket: WebSocket,
+    command: dict,
+    sigmax_manager
+):
+    """Handle commands from WebSocket client"""
+    cmd_type = command.get("type", "")
+
+    try:
+        if cmd_type == "ping":
+            # Respond to ping
+            await websocket.send_json({
+                "type": "pong",
+                "timestamp": datetime.now().isoformat()
+            })
+
+        elif cmd_type == "subscribe":
+            # Client wants to subscribe to specific updates
+            channels = command.get("channels", [])
+            await websocket.send_json({
+                "type": "subscribed",
+                "channels": channels,
+                "timestamp": datetime.now().isoformat()
+            })
+
+        elif cmd_type == "get_status":
+            # Client requests immediate status update
+            status = await sigmax_manager.get_status()
+            await websocket.send_json({
+                "type": "status",
+                "data": status,
+                "timestamp": datetime.now().isoformat()
+            })
+
+        else:
+            # Unknown command
+            await websocket.send_json({
+                "type": "error",
+                "message": f"Unknown command: {cmd_type}",
+                "timestamp": datetime.now().isoformat()
+            })
+
+    except Exception as e:
+        logger.error(f"Error handling WebSocket command: {e}")
+        await websocket.send_json({
+            "type": "error",
+            "message": str(e),
+            "timestamp": datetime.now().isoformat()
+        })
+
+
+async def broadcast_market_data(websocket: WebSocket, sigmax_manager):
+    """Broadcast current market prices and data"""
+    try:
+        if not sigmax_manager.is_initialized():
+            return
+
+        # Get market data for tracked symbols
+        symbols = ["BTC/USDT", "ETH/USDT"]  # Could be configurable
+
+        market_data = []
+        for symbol in symbols:
+            try:
+                # Get data from data module if available
+                if sigmax_manager._sigmax and sigmax_manager._sigmax.data_module:
+                    data = await sigmax_manager._sigmax.data_module.get_market_data(symbol)
+                    market_data.append({
+                        "symbol": symbol,
+                        "price": data.get("price", 0),
+                        "volume_24h": data.get("volume_24h", 0),
+                        "change_24h": data.get("change_24h", 0),
+                        "timestamp": data.get("timestamp", datetime.now().isoformat())
+                    })
+            except Exception as e:
+                logger.debug(f"Could not fetch market data for {symbol}: {e}")
+
+        if market_data:
+            await websocket.send_json({
+                "type": "market_update",
+                "data": market_data,
+                "timestamp": datetime.now().isoformat()
+            })
+
+    except Exception as e:
+        logger.debug(f"Error broadcasting market data: {e}")
+
+
+async def broadcast_portfolio_update(websocket: WebSocket, sigmax_manager):
+    """Broadcast portfolio changes"""
+    try:
+        if not sigmax_manager.is_initialized():
+            return
+
+        # Get portfolio from execution module
+        portfolio = await sigmax_manager.get_portfolio()
+
+        await websocket.send_json({
+            "type": "portfolio_update",
+            "data": portfolio,
+            "timestamp": datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.debug(f"Error broadcasting portfolio: {e}")
+
+
+async def broadcast_system_status(websocket: WebSocket, sigmax_manager):
+    """Broadcast system status"""
+    try:
+        status = await sigmax_manager.get_status()
+
+        await websocket.send_json({
+            "type": "system_status",
+            "data": status,
+            "timestamp": datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.debug(f"Error broadcasting system status: {e}")
+
+
+async def broadcast_system_health(websocket: WebSocket):
+    """Broadcast system health metrics"""
+    try:
+        health_data = {
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "disk_percent": psutil.disk_usage('/').percent,
+            "process_count": len(psutil.pids()),
+        }
+
+        await websocket.send_json({
+            "type": "health_update",
+            "data": health_data,
+            "timestamp": datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.debug(f"Error broadcasting health: {e}")
+
+
+async def broadcast_pending_events(websocket: WebSocket, sigmax_manager):
+    """
+    Broadcast pending events from event queue
+
+    Events include:
+    - trade_execution: Immediate notification when trades execute
+    - agent_decision: Immediate notification when agents make decisions
+    - alert: System alerts and warnings
+    """
+    try:
+        # Get all pending events
+        events = sigmax_manager.get_pending_events()
+
+        # Broadcast each event
+        for event in events:
+            await websocket.send_json(event)
+            logger.info(f"Broadcasted event: {event['type']}")
+
+    except Exception as e:
+        logger.debug(f"Error broadcasting pending events: {e}")
 
 
 @app.post("/api/control/start", tags=["Control"], dependencies=[Depends(verify_api_key)])
@@ -742,13 +956,29 @@ async def start_trading():
     """
     try:
         logger.info("Starting trading system")
-        # TODO: Connect to SIGMAX instance
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Start trading
+        success = await manager.start()
+
+        if not success:
+            raise RuntimeError("Failed to start trading system")
+
+        # Get current status
+        status = await manager.get_status()
+
         return {
             "success": True,
             "message": "Trading started successfully",
             "timestamp": datetime.now().isoformat(),
-            "mode": "paper"
+            "mode": status.get("mode", "paper"),
+            "risk_profile": status.get("risk_profile", "conservative")
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error starting trading: {e}")
         raise HTTPException(status_code=500, detail="Failed to start trading")
@@ -764,12 +994,24 @@ async def pause_trading():
     """
     try:
         logger.info("Pausing trading system")
-        # TODO: Connect to SIGMAX instance
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Pause trading
+        success = await manager.pause()
+
+        if not success:
+            raise RuntimeError("Failed to pause trading system")
+
         return {
             "success": True,
             "message": "Trading paused successfully",
             "timestamp": datetime.now().isoformat()
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error pausing trading: {e}")
         raise HTTPException(status_code=500, detail="Failed to pause trading")
@@ -785,12 +1027,24 @@ async def stop_trading():
     """
     try:
         logger.info("Stopping trading system")
-        # TODO: Connect to SIGMAX instance
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Stop trading
+        success = await manager.stop()
+
+        if not success:
+            raise RuntimeError("Failed to stop trading system")
+
         return {
             "success": True,
             "message": "Trading stopped successfully",
             "timestamp": datetime.now().isoformat()
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error stopping trading: {e}")
         raise HTTPException(status_code=500, detail="Failed to stop trading")
@@ -811,14 +1065,23 @@ async def emergency_stop():
     """
     try:
         logger.critical("🚨 EMERGENCY STOP INITIATED")
-        # TODO: Connect to SIGMAX instance and execute emergency stop
+
+        # Get SIGMAX manager
+        manager = await get_sigmax_manager()
+
+        # Execute emergency stop
+        result = await manager.emergency_stop()
+
         return {
             "success": True,
             "message": "Emergency stop executed - All positions closed",
             "timestamp": datetime.now().isoformat(),
-            "positions_closed": 0,
-            "orders_cancelled": 0
+            "positions_closed": result.get("positions_closed", 0),
+            "orders_cancelled": result.get("orders_cancelled", 0)
         }
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         logger.error(f"Error during emergency stop: {e}")
         raise HTTPException(status_code=500, detail="Emergency stop failed")

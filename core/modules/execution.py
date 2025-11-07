@@ -326,6 +326,38 @@ class ExecutionModule:
                 "failed_count": len(errors)
             }
 
+    async def get_portfolio(self) -> Dict[str, Any]:
+        """
+        Get current portfolio state for optimization
+
+        Returns:
+            Portfolio dictionary with:
+            - balances: Current holdings
+            - positions: Open positions with details
+            - total_value: Total portfolio value in USDT
+            - available_capital: Free capital for trading
+        """
+        portfolio = {
+            "balances": self.paper_balance.copy(),
+            "positions": [],
+            "total_value": 0.0,
+            "available_capital": self.paper_balance.get("USDT", 0.0)
+        }
+
+        # Calculate total value (simplified - would need current prices in production)
+        portfolio["total_value"] = sum(self.paper_balance.values())
+
+        # Build positions list from open orders
+        for order in self.open_orders:
+            portfolio["positions"].append({
+                "symbol": order.get("symbol"),
+                "size": order.get("size"),
+                "entry_price": order.get("price"),
+                "current_value": order.get("size", 0) * order.get("price", 0)
+            })
+
+        return portfolio
+
     async def get_status(self) -> Dict[str, Any]:
         """Get execution module status"""
         return {

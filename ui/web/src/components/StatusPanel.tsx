@@ -1,6 +1,16 @@
-import { Activity, TrendingUp, DollarSign, AlertCircle } from 'lucide-react'
+import { Activity, TrendingUp, DollarSign, AlertCircle, Cpu, HardDrive } from 'lucide-react'
 
-export default function StatusPanel({ status }: { status: any }) {
+interface StatusPanelProps {
+  status: any
+  health?: {
+    cpu_percent?: number
+    memory_percent?: number
+    disk_percent?: number
+    process_count?: number
+  } | null
+}
+
+export default function StatusPanel({ status, health }: StatusPanelProps) {
   if (!status) {
     return (
       <div className="rounded-2xl border border-white/10 backdrop-blur-lg bg-white/5 p-6">
@@ -60,6 +70,71 @@ export default function StatusPanel({ status }: { status: any }) {
           ))}
         </div>
       </div>
+
+      {/* System Health */}
+      {health && (
+        <div className="pt-4 border-t border-white/10">
+          <h4 className="text-sm font-semibold mb-3">System Health</h4>
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center space-x-2">
+                  <Cpu className="w-3 h-3 text-cyan-400" />
+                  <span className="text-xs text-gray-400">CPU</span>
+                </div>
+                <span className="text-xs font-semibold">{health.cpu_percent?.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-gray-700/50 rounded-full h-1.5">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    (health.cpu_percent || 0) > 80 ? 'bg-red-500' :
+                    (health.cpu_percent || 0) > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${health.cpu_percent || 0}%` }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center space-x-2">
+                  <HardDrive className="w-3 h-3 text-purple-400" />
+                  <span className="text-xs text-gray-400">Memory</span>
+                </div>
+                <span className="text-xs font-semibold">{health.memory_percent?.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-gray-700/50 rounded-full h-1.5">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    (health.memory_percent || 0) > 80 ? 'bg-red-500' :
+                    (health.memory_percent || 0) > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${health.memory_percent || 0}%` }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center space-x-2">
+                  <HardDrive className="w-3 h-3 text-blue-400" />
+                  <span className="text-xs text-gray-400">Disk</span>
+                </div>
+                <span className="text-xs font-semibold">{health.disk_percent?.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-gray-700/50 rounded-full h-1.5">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    (health.disk_percent || 0) > 80 ? 'bg-red-500' :
+                    (health.disk_percent || 0) > 50 ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${health.disk_percent || 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

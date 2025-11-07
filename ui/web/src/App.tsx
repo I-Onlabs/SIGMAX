@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Activity, Brain, TrendingUp, Shield, Zap } from 'lucide-react'
+import { useState } from 'react'
+import { Activity, Brain, TrendingUp, Shield, Zap, AlertTriangle } from 'lucide-react'
 import NeuralSwarm3D from './components/NeuralSwarm3D'
 import StatusPanel from './components/StatusPanel'
 import TradingPanel from './components/TradingPanel'
@@ -8,86 +8,63 @@ import QuantumCircuit from './components/QuantumCircuit'
 import RiskDashboard from './components/RiskDashboard'
 import AlertPanel from './components/AlertPanel'
 import PerformanceChart from './components/PerformanceChart'
+import { useWebSocket } from './hooks/useWebSocket'
+import api from './services/api'
 
 function App() {
-  const [status, setStatus] = useState<any>(null)
-  const [ws, setWs] = useState<WebSocket | null>(null)
-  const [wsConnected, setWsConnected] = useState(false)
-  const reconnectTimeoutRef = useRef<number | null>(null)
-  const reconnectAttemptsRef = useRef(0)
+  const {
+    connected,
+    systemStatus,
+    marketData,
+    portfolio,
+    systemHealth,
+    tradeExecutions,
+    agentDecisions,
+  } = useWebSocket()
 
-  const connectWebSocket = useCallback(() => {
-    // Clear any existing reconnect timeout
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
+  const [controlLoading, setControlLoading] = useState<string | null>(null)
+
+  // Control actions
+  const handleStartTrading = async () => {
+    setControlLoading('start')
+    try {
+      await api.startTrading()
+    } catch (error) {
+      console.error('Failed to start trading:', error)
+      alert('Failed to start trading: ' + (error as Error).message)
+    } finally {
+      setControlLoading(null)
+    }
+  }
+
+  const handlePauseTrading = async () => {
+    setControlLoading('pause')
+    try {
+      await api.pauseTrading()
+    } catch (error) {
+      console.error('Failed to pause trading:', error)
+      alert('Failed to pause trading: ' + (error as Error).message)
+    } finally {
+      setControlLoading(null)
+    }
+  }
+
+  const handleEmergencyStop = async () => {
+    if (!confirm('⚠️ Emergency Stop will close ALL positions immediately. Continue?')) {
+      return
     }
 
-    const websocket = new WebSocket('ws://localhost:8000/ws')
-
-    websocket.onopen = () => {
-      console.log('WebSocket connected')
-      setWsConnected(true)
-      reconnectAttemptsRef.current = 0 // Reset on successful connection
+    setControlLoading('stop')
+    try {
+      const result = await api.emergencyStop()
+      alert(`Emergency stop executed. Positions closed: ${result.positions_closed || 0}`)
+    } catch (error) {
+      console.error('Emergency stop failed:', error)
+      alert('Emergency stop failed: ' + (error as Error).message)
+    } finally {
+      setControlLoading(null)
     }
-
-    websocket.onmessage = (event) => {
-      const data = JSON.parse(event.data)
-      console.log('WebSocket message:', data)
-
-      if (data.type === 'status_update') {
-        setStatus(data.payload)
-      }
-    }
-
-    websocket.onerror = (error) => {
-      console.error('WebSocket error:', error)
-      setWsConnected(false)
-    }
-
-    websocket.onclose = () => {
-      console.log('WebSocket disconnected')
-      setWsConnected(false)
-
-      // Attempt to reconnect with exponential backoff
-      reconnectAttemptsRef.current += 1
-      const maxAttempts = 10
-
-      if (reconnectAttemptsRef.current <= maxAttempts) {
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000)
-        console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${maxAttempts})`)
-
-        reconnectTimeoutRef.current = window.setTimeout(() => {
-          connectWebSocket()
-        }, delay)
-      } else {
-        console.error('Max reconnection attempts reached. Please refresh the page.')
-      }
-    }
-
-    setWs(websocket)
-  }, [])
-
-  useEffect(() => {
-    // Fetch initial status
-    fetch('/api/status')
-      .then(res => res.json())
-      .then(data => setStatus(data))
-      .catch(err => console.error('Failed to fetch status:', err))
-
-    // Connect WebSocket
-    connectWebSocket()
-
-    return () => {
-      // Cleanup
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current)
-      }
-      if (ws) {
-        ws.close()
-      }
-    }
-  }, [connectWebSocket])
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
@@ -109,14 +86,28 @@ function App() {
 
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur">
-                <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-                <span className="text-sm">{wsConnected ? 'Connected' : 'Disconnected'}</span>
+                <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+                <span className="text-sm">{connected ? 'Connected' : 'Disconnected'}</span>
               </div>
 
               <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-white/5 backdrop-blur">
                 <Activity className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm">Paper Mode</span>
+                <span className="text-sm capitalize">{systemStatus?.mode || 'Paper'} Mode</span>
               </div>
+
+              {systemStatus?.running && (
+                <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span className="text-sm text-green-400">Trading Active</span>
+                </div>
+              )}
+
+              {systemStatus?.paused && (
+                <div className="flex items-center space-x-2 px-4 py-2 rounded-full bg-yellow-500/20 border border-yellow-500/30">
+                  <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm text-yellow-400">Paused</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -146,25 +137,25 @@ function App() {
             </div>
 
             {/* Trading Panel */}
-            <TradingPanel />
+            <TradingPanel marketData={marketData} agentDecisions={agentDecisions} />
 
             {/* Performance Chart */}
-            <PerformanceChart />
+            <PerformanceChart portfolio={portfolio} />
 
             {/* Agent Debate Log */}
-            <AgentDebateLog />
+            <AgentDebateLog decisions={agentDecisions} />
 
             {/* Alert Panel */}
-            <AlertPanel />
+            <AlertPanel trades={tradeExecutions} />
           </div>
 
           {/* Right Column */}
           <div className="space-y-6">
             {/* Status Panel */}
-            <StatusPanel status={status} />
+            <StatusPanel status={systemStatus} health={systemHealth} />
 
             {/* Risk Dashboard */}
-            <RiskDashboard />
+            <RiskDashboard portfolio={portfolio} status={systemStatus} />
 
             {/* Quantum Circuit */}
             <QuantumCircuit />
@@ -176,15 +167,28 @@ function App() {
                 <span>Quick Actions</span>
               </h3>
               <div className="space-y-3">
-                <button className="w-full px-4 py-3 rounded-xl bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 transition-colors">
+                <button
+                  onClick={handleStartTrading}
+                  disabled={controlLoading !== null || systemStatus?.running}
+                  className="w-full px-4 py-3 rounded-xl bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <TrendingUp className="w-4 h-4 inline mr-2" />
-                  Start Trading
+                  {controlLoading === 'start' ? 'Starting...' : systemStatus?.running ? 'Trading Active' : 'Start Trading'}
                 </button>
-                <button className="w-full px-4 py-3 rounded-xl bg-yellow-500/20 border border-yellow-500/30 hover:bg-yellow-500/30 transition-colors">
-                  Pause
+                <button
+                  onClick={handlePauseTrading}
+                  disabled={controlLoading !== null || !systemStatus?.running}
+                  className="w-full px-4 py-3 rounded-xl bg-yellow-500/20 border border-yellow-500/30 hover:bg-yellow-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {controlLoading === 'pause' ? 'Pausing...' : 'Pause'}
                 </button>
-                <button className="w-full px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 transition-colors">
-                  Emergency Stop
+                <button
+                  onClick={handleEmergencyStop}
+                  disabled={controlLoading !== null}
+                  className="w-full px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <AlertTriangle className="w-4 h-4 inline mr-2" />
+                  {controlLoading === 'stop' ? 'Stopping...' : 'Emergency Stop'}
                 </button>
               </div>
             </div>

@@ -1,35 +1,63 @@
-import { useState } from 'react'
-import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { TrendingUp, TrendingDown, DollarSign, Zap } from 'lucide-react'
+import api from '../services/api'
 
-export default function TradingPanel() {
+interface TradingPanelProps {
+  marketData?: Array<{ symbol: string; price: number; change_24h: number }>;
+  agentDecisions?: Array<any>;
+}
+
+export default function TradingPanel({ marketData, agentDecisions }: TradingPanelProps) {
   const [symbol, setSymbol] = useState('BTC/USDT')
   const [analyzing, setAnalyzing] = useState(false)
   const [decision, setDecision] = useState<any>(null)
+
+  // Update decision when agentDecisions changes
+  useEffect(() => {
+    if (agentDecisions && agentDecisions.length > 0) {
+      const latestForSymbol = agentDecisions.find(d => d.symbol === symbol)
+      if (latestForSymbol) {
+        setDecision(latestForSymbol)
+      }
+    }
+  }, [agentDecisions, symbol])
 
   const handleAnalyze = async () => {
     setAnalyzing(true)
 
     try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol })
-      })
-
-      const data = await response.json()
+      const data = await api.analyzeSymbol({ symbol, include_debate: false })
       setDecision(data)
     } catch (error) {
       console.error('Analysis failed:', error)
+      alert('Analysis failed: ' + (error as Error).message)
     } finally {
       setAnalyzing(false)
     }
   }
 
+  // Get current price from market data
+  const currentPrice = marketData?.find(m => m.symbol === symbol)?.price
+  const priceChange = marketData?.find(m => m.symbol === symbol)?.change_24h
+
   return (
     <div className="rounded-2xl border border-white/10 backdrop-blur-lg bg-white/5 p-6">
-      <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2">
-        <TrendingUp className="w-5 h-5 text-green-400" />
-        <span>Trading Analysis</span>
+      <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <TrendingUp className="w-5 h-5 text-green-400" />
+          <span>Trading Analysis</span>
+        </div>
+        {currentPrice && (
+          <div className="text-right">
+            <div className="text-2xl font-bold">${currentPrice.toLocaleString()}</div>
+            {priceChange !== undefined && (
+              <div className={`text-sm flex items-center justify-end ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {priceChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
+              </div>
+            )}
+          </div>
+        )}
       </h3>
 
       <div className="space-y-4">
@@ -38,7 +66,7 @@ export default function TradingPanel() {
           <input
             type="text"
             value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
             className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-cyan-500 focus:outline-none"
             placeholder="BTC/USDT"
           />
