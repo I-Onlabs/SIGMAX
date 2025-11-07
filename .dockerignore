@@ -1,0 +1,95 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Documentation
+*.md
+docs/
+examples/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+*.log
+
+# Data & Logs
+data/
+logs/
+*.db
+*.sqlite
+
+# Secrets
+.env
+.env.local
+*.key
+*.pem
+secrets/
+*.sops
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Profiling
+*.prof
+*.lprof
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Development tools
+Makefile
+pyproject.toml
+setup.py
+setup.cfg
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# Backups
+*.bak
+*.backup
+*~

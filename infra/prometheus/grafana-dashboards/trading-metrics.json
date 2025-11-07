@@ -1,0 +1,300 @@
+{
+  "dashboard": {
+    "title": "SIGMAX Trading Metrics",
+    "tags": ["sigmax", "trading"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Orders Per Second",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_orders_total[1m])",
+            "legendFormat": "{{status}} orders/s",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Orders/sec", "format": "short"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Fill Rate",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_fills_total[1m]) / rate(sigmax_orders_total{status=\"sent\"}[1m])",
+            "legendFormat": "Fill rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Fill rate", "format": "percentunit", "min": 0, "max": 1},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Realized P&L",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sigmax_pnl_realized",
+            "legendFormat": "{{symbol}} P&L",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "P&L (USD)", "format": "currencyUSD"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Current Positions",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sigmax_position_qty",
+            "legendFormat": "{{symbol}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Position (BTC)", "format": "short"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Risk Rejections",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_risk_checks_total{result=\"reject\"}[1m])",
+            "legendFormat": "{{reason}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Rejections/sec", "format": "short"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Tick-to-Trade Latency (p99)",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(sigmax_latency_us_bucket{stage=\"tick_to_trade\"}[1m]))",
+            "legendFormat": "p99 latency",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(sigmax_latency_us_bucket{stage=\"tick_to_trade\"}[1m]))",
+            "legendFormat": "p50 latency",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"label": "Latency (µs)", "format": "µs"},
+          {"format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [20000], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "1m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "High Tick-to-Trade Latency",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 7,
+        "title": "Trade Volume (USD)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_fill_notional_usd[5m])",
+            "legendFormat": "{{symbol}} volume/5m",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Volume (USD)", "format": "currencyUSD"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Signal Counts by Strategy",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_signals_total[1m])",
+            "legendFormat": "{{strategy}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Signals/sec", "format": "short"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Decision Layer Breakdown",
+        "type": "piechart",
+        "gridPos": {"x": 0, "y": 32, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by(layer) (rate(sigmax_decision_actions_total[5m]))",
+            "legendFormat": "{{layer}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Market Data Feed Health",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 32, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_ticks_received_total[1m])",
+            "legendFormat": "{{exchange}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "text": {},
+          "textMode": "auto"
+        }
+      },
+      {
+        "id": 11,
+        "title": "Risk Gate Latency (p99)",
+        "type": "gauge",
+        "gridPos": {"x": 16, "y": 32, "w": 8, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(sigmax_latency_us_bucket{stage=\"risk_gate\"}[1m]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "orientation": "auto",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "text": {}
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 50},
+                {"color": "red", "value": 100}
+              ]
+            },
+            "unit": "µs",
+            "min": 0,
+            "max": 200
+          }
+        }
+      },
+      {
+        "id": 12,
+        "title": "Pipeline Stage Latencies",
+        "type": "heatmap",
+        "gridPos": {"x": 0, "y": 40, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_latency_us_bucket[1m])",
+            "legendFormat": "{{stage}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "calculate": false,
+          "cellGap": 2,
+          "cellValues": {},
+          "color": {
+            "exponent": 0.5,
+            "fill": "dark-orange",
+            "mode": "scheme",
+            "reverse": false,
+            "scale": "exponential",
+            "scheme": "Spectral",
+            "steps": 128
+          },
+          "exemplars": {
+            "color": "rgba(255,0,255,0.7)"
+          },
+          "filterValues": {
+            "le": 1e-9
+          },
+          "legend": {
+            "show": true
+          },
+          "rowsFrame": {
+            "layout": "auto"
+          },
+          "showValue": "never",
+          "tooltip": {
+            "show": true,
+            "yHistogram": false
+          },
+          "yAxis": {
+            "axisPlacement": "left",
+            "reverse": false,
+            "unit": "µs"
+          }
+        }
+      }
+    ]
+  }
+}

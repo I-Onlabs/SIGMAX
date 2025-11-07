@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # Trading bot services
+  sigmax:
+    build: .
+    container_name: sigmax-trading
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - clickhouse
+      - redis
+      - prometheus
+    networks:
+      - sigmax-network
+    command: python tools/runner.py --profile=a
+
+  # Database services (from infra/compose/docker-compose.yml)
+  postgres:
+    image: postgres:16-alpine
+    container_name: sigmax-postgres-dev
+    environment:
+      POSTGRES_DB: sigmax
+      POSTGRES_USER: sigmax
+      POSTGRES_PASSWORD: sigmax
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - sigmax-network
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: sigmax-clickhouse-dev
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    volumes:
+      - clickhouse_dev_data:/var/lib/clickhouse
+    networks:
+      - sigmax-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: sigmax-redis-dev
+    ports:
+      - "6379:6379"
+    networks:
+      - sigmax-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sigmax-prometheus-dev
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_dev_data:/prometheus
+    networks:
+      - sigmax-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sigmax-grafana-dev
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+    networks:
+      - sigmax-network
+
+volumes:
+  postgres_dev_data:
+  clickhouse_dev_data:
+  prometheus_dev_data:
+  grafana_dev_data:
+
+networks:
+  sigmax-network:
+    driver: bridge
