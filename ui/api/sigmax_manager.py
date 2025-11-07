@@ -6,9 +6,10 @@ Provides singleton access to SIGMAX trading system
 import asyncio
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from loguru import logger
+from collections import deque
 
 # Add core to path
 core_path = Path(__file__).parent.parent.parent / "core"
@@ -27,6 +28,7 @@ class SIGMAXManager:
     _sigmax: Optional[SIGMAX] = None
     _initialized: bool = False
     _lock: asyncio.Lock = asyncio.Lock()
+    _event_queue: deque = deque(maxlen=100)  # Store last 100 events
 
     def __new__(cls):
         if cls._instance is None:
@@ -217,6 +219,16 @@ class SIGMAXManager:
             # Run analysis through orchestrator
             result = await self._sigmax.orchestrator.analyze_symbol(symbol)
 
+            # Add agent decision event to queue for WebSocket broadcast
+            self.add_event("agent_decision", {
+                "symbol": symbol,
+                "decision": result.get("final_decision", {}).get("action", "hold"),
+                "confidence": result.get("confidence", 0),
+                "bull_score": result.get("bull_argument", ""),
+                "bear_score": result.get("bear_argument", ""),
+                "reasoning": result.get("final_decision", {}).get("reasoning", "")
+            })
+
             if not include_debate:
                 # Remove detailed messages to keep response concise
                 result.pop("messages", None)
@@ -258,6 +270,17 @@ class SIGMAXManager:
                 result = await self._sigmax.execution_module.sell(symbol, size)
             else:
                 raise ValueError(f"Invalid action: {action}")
+
+            # Add trade execution event to queue for WebSocket broadcast
+            self.add_event("trade_execution", {
+                "symbol": symbol,
+                "action": action,
+                "size": size,
+                "order_id": result.get("order_id"),
+                "status": result.get("status"),
+                "filled_price": result.get("filled_price"),
+                "fee": result.get("fee")
+            })
 
             return result
 
@@ -332,6 +355,50 @@ class SIGMAXManager:
     def is_running(self) -> bool:
         """Check if SIGMAX is running"""
         return self._sigmax.running if self._sigmax else False
+
+    def add_event(self, event_type: str, data: Dict[str, Any]):
+        """
+        Add an event to the broadcast queue
+
+        Events are automatically broadcast to all WebSocket clients
+
+        Args:
+            event_type: Type of event (trade_execution, agent_decision, alert, etc.)
+            data: Event data
+        """
+        event = {
+            "type": event_type,
+            "data": data,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        self._event_queue.append(event)
+        logger.debug(f"Event added to queue: {event_type}")
+
+    def get_pending_events(self) -> List[Dict[str, Any]]:
+        """
+        Get all pending events and clear the queue
+
+        Returns:
+            List of events to broadcast
+        """
+        events = list(self._event_queue)
+        self._event_queue.clear()
+        return events
+
+    def peek_events(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Peek at recent events without removing them
+
+        Args:
+            limit: Maximum number of events to return
+
+        Returns:
+            List of recent events (most recent first)
+        """
+        events = list(self._event_queue)
+        events.reverse()  # Most recent first
+        return events[:limit]
 
 
 # Global instance
