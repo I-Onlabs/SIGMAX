@@ -1,394 +1,554 @@
 # SIGMAX Quick Start Guide
-
-Welcome to **SIGMAX** - your autonomous multi-agent AI trading operating system! 🚀
-
-## What Did We Build?
-
-SIGMAX is a **production-ready, open-source autonomous trading platform** that combines:
-
-✅ **Multi-Agent AI System** - Bull/Bear debate with LangGraph orchestration
-✅ **Quantum Computing** - Portfolio optimization with Qiskit VQE/QAOA
-✅ **Freqtrade Integration** - Professional-grade execution engine
-✅ **Neural Cockpit UI** - Futuristic 3D visualization with React + Three.js
-✅ **Zero-Trust Security** - Comprehensive safety rails and compliance
-✅ **One-Command Deploy** - Get running in minutes
-
-## Repository Structure
-
-```
-SIGMAX/
-├── core/                    # 🧠 Multi-agent brain
-│   ├── agents/             # Bull, Bear, Researcher, etc.
-│   ├── modules/            # Trading, Quantum, RL, Arbitrage
-│   └── utils/              # Telegram bot, Health checker
-├── trading/                # 📈 Freqtrade integration
-├── ui/                     # 🎨 Neural Cockpit
-│   ├── api/               # FastAPI backend
-│   └── web/               # React + Three.js frontend
-├── infra/                  # 🐳 Deployment configs
-├── docs/                   # 📚 Documentation
-└── deploy.sh              # 🚀 One-click deployment
-```
-
-## Quick Start (5 minutes)
-
-### 1. Clone and Enter
-
-```bash
-git clone <your-repo-url>
-cd SIGMAX
-```
-
-### 2. Configure Environment
-
-```bash
-cp .env.example .env
-# Edit .env with your exchange API keys (optional for paper trading)
-```
-
-### 3. Deploy Everything
-
-```bash
-bash deploy.sh
-```
-
-This will:
-- Install all dependencies (Python, Node.js)
-- Set up virtual environments
-- Start backend services (PostgreSQL, Redis, NATS, Prometheus, Grafana)
-- Launch the FastAPI server
-- Start the Neural Cockpit UI
-- Open your browser automatically
-
-### 4. Access the System
-
-🎨 **Neural Cockpit**: http://localhost:3000
-🔌 **API Server**: http://localhost:8000
-📊 **API Docs**: http://localhost:8000/docs
-📈 **Grafana**: http://localhost:3001 (admin/admin)
-🔍 **Prometheus**: http://localhost:9090
-
-## Key Features
-
-### 1. Multi-Agent Debate System
-
-Six specialized agents collaborate to make trading decisions:
-
-- **🔍 Researcher**: Gathers market intelligence from news, social, on-chain
-- **🐂 Bull Agent**: Presents bullish case with evidence
-- **🐻 Bear Agent**: Counters with bearish arguments and risks
-- **📊 Analyzer**: Technical analysis (RSI, MACD, Bollinger Bands)
-- **🛡️ Risk Agent**: Validates against policy constraints
-- **🔒 Privacy Agent**: Detects PII and collusion patterns
-
-**Watch them debate in real-time** via the Agent Debate Log panel!
-
-### 2. Quantum Portfolio Optimization
-
-Uses **Qiskit VQE/QAOA** algorithms to optimize:
-- Portfolio weights across assets
-- Risk-adjusted position sizing
-- Dynamic rebalancing
-
-**See live quantum circuits** rendering in the UI!
-
-### 3. Neural Cockpit UI
-
-**Futuristic glass-morphic interface** with:
-- 🌐 **3D Agent Swarm**: Watch agents orbit and pulse with activity
-- ⚛️ **Quantum Circuit Viewer**: Interactive circuit simulation
-- 📊 **Real-time Trading Panel**: Analyze any symbol instantly
-- 🎙️ **Voice Control**: "Show me Bitcoin" (coming soon)
-- 📱 **Responsive Design**: Works on all devices
-
-### 4. Safety-First Architecture
-
-**Zero-Trust Model** with:
-
-✅ Max $50 total capital ($10-15 per position)
-✅ -1.5% stop loss per trade
-✅ Auto-pause on 3 losses or $10 daily loss
-✅ Policy validation (OPA) for every trade
-✅ Two-man rule for critical actions
-✅ ZK-SNARK audit trails
-✅ PII detection and anti-collusion
-
-**You CANNOT lose more than your limits allow.**
-
-### 5. Telegram Bot Control
-
-Natural language control via Telegram:
-
-```
-/status               # Check current state
-/start balanced       # Start trading with balanced risk
-/pause 2h            # Pause for 2 hours
-/panic               # Emergency stop
-/why BTC/USDT        # Explain last decision
-```
-
-## Usage Examples
-
-### Analyze a Symbol
-
-```python
-from sigmax import SIGMAX
-
-bot = SIGMAX(mode='paper', risk_profile='conservative')
-await bot.initialize()
-
-# Let agents debate
-decision = await bot.analyze_symbol('BTC/USDT')
-print(f"Decision: {decision['action']}")
-print(f"Confidence: {decision['confidence']:.1%}")
-print(f"Reasoning: {decision['reasoning']}")
-```
-
-### Via UI
-
-1. Open Neural Cockpit at http://localhost:3000
-2. Enter symbol (e.g., "BTC/USDT") in Trading Panel
-3. Click "Analyze"
-4. Watch agents debate in real-time
-5. See quantum optimization visualized
-6. Get actionable decision with confidence score
-
-### Via Telegram
-
-```
-You: Should I buy Bitcoin?
-Bot: Analyzing BTC/USDT...
-
-🐂 Bull: Strong momentum, RSI at 65, volume increasing
-🐻 Bear: Resistance at $96k, potential pullback
-🔍 Researcher: Sentiment score 0.45 (moderately bullish)
-📊 Analyzer: MACD bullish crossover
-⚛️ Optimizer: Quantum VQE suggests 8% position size
-
-Decision: BUY with 72% confidence
-```
-
-## Configuration
-
-### Risk Profiles
-
-**Conservative** (default):
-- Max 3 open trades
-- $10-15 per position
-- -1.5% stop loss
-- 1x leverage only
-
-**Balanced**:
-- Max 5 open trades
-- $15-20 per position
-- -2% stop loss
-- Up to 2x leverage
-
-**Aggressive**:
-- Max 7 open trades
-- $20-30 per position
-- -3% stop loss
-- Up to 3x leverage (requires approval)
-
-### Exchanges Supported
-
-Via CCXT:
-- Binance (recommended)
-- Coinbase
-- Kraken
-- Bybit
-- OKX
-- And 100+ more...
-
-### Assets
-
-**Phase 0 (Paper)**: BTC/USDT only
-**Phase 1 (Live $50)**: BTC, ETH
-**Phase 2 (Expand)**: SOL, MATIC, ARB, BASE, and memecoins
-
-## Monitoring & Observability
-
-### Grafana Dashboards
-
-Pre-configured dashboards for:
-- Trading performance (PnL, win rate, Sharpe)
-- Agent activity (debate frequency, decision distribution)
-- System health (CPU, memory, latency)
-- Risk metrics (exposure, drawdown, consecutive losses)
-
-### Logs
-
-All logs stored in:
-- `logs/sigmax.log` - Core orchestrator
-- `logs/api.log` - FastAPI server
-- `logs/ui.log` - Frontend dev server
-
-### Alerts
-
-Telegram alerts for:
-- Trades executed
-- Auto-pause triggers
-- System errors
-- Daily performance summary
-
-## Testing
-
-### Run Unit Tests
-
-```bash
-cd core
-source venv/bin/activate
-pytest tests/ -v
-```
-
-### Run Backtests
-
-```bash
-python core/main.py --backtest --start 2024-01-01 --end 2024-12-31
-```
-
-### Safety Tests
-
-```bash
-pytest tests/safety/ -v
-```
-
-## Troubleshooting
-
-### Issue: Dependencies won't install
-
-**Solution**: Ensure you have Python 3.11+ and Node 20+
-```bash
-python --version  # Should be 3.11+
-node --version    # Should be 20+
-```
-
-### Issue: Podman containers won't start
-
-**Solution**: Try Docker Compose instead
-```bash
-docker-compose up -d
-```
-
-Or skip containers:
-```bash
-SKIP_CONTAINERS=true bash deploy.sh
-```
-
-### Issue: UI won't connect to API
-
-**Solution**: Check if API is running
-```bash
-curl http://localhost:8000/health
-```
-
-If not running, start manually:
-```bash
-cd ui/api
-uvicorn main:app --reload
-```
-
-### Issue: Quantum module fails
-
-**Solution**: Quantum is optional. Disable in `.env`:
-```bash
-QUANTUM_ENABLED=false
-```
-
-### Issue: Out of memory
-
-**Solution**: Increase Docker memory or disable heavy features:
-```bash
-FEATURE_QUANTUM=false
-FEATURE_ARBITRAGE=false
-```
-
-## Phased Rollout Plan
-
-### Week 1-2: Paper Trading
-
-**Goal**: Validate all safety mechanisms
-**Capital**: Virtual $50
-**Assets**: BTC/USDT only
-**Success**: 100% safety gate triggers work
-
-### Week 3-4: Live $50
-
-**Goal**: Real-world validation
-**Capital**: Real $50 (sub-account)
-**Assets**: BTC, ETH
-**Success**: No losses beyond risk caps
-
-### Week 5-8: Scale Up
-
-**Goal**: Expand proven strategies
-**Capital**: Up to $200
-**Assets**: Add SOL, MATIC, ARB
-**Features**: Narrative trading, arbitrage
-
-## Next Steps
-
-1. ✅ **Review the documentation**
-   - [Architecture](docs/ARCHITECTURE.md)
-   - [Safety & Risk](docs/SAFETY.md)
-
-2. ✅ **Run in paper mode for 14 days**
-   - Validate all safety triggers
-   - Review agent debates
-   - Check decision quality
-
-3. ✅ **Optimize strategies**
-   - Backtest on historical data
-   - Tune hyperparameters
-   - Compare risk profiles
-
-4. ✅ **Go live (carefully!)**
-   - Start with $50 on sub-account
-   - Monitor closely for first week
-   - Scale only after proven safe
-
-## Contributing
-
-We welcome contributions!
-
-1. Fork the repo
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open Pull Request
-
-## License
-
-MIT License - see [LICENSE](LICENSE)
-
-## Support
-
-- 📧 Email: support@sigmax.dev
-- 💬 Discord: [Join Community](https://discord.gg/sigmax)
-- 🐦 Twitter: [@SIGMAXTrading](https://twitter.com/SIGMAXTrading)
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/SIGMAX/issues)
-
-## Disclaimer
-
-⚠️ **TRADING INVOLVES SUBSTANTIAL RISK OF LOSS**
-
-- SIGMAX is for educational and research purposes
-- Past performance does NOT guarantee future results
-- You are responsible for your own trading decisions
-- Never invest more than you can afford to lose
-- Always start with paper trading
-- SIGMAX developers assume NO liability for losses
-
-**USE AT YOUR OWN RISK**
+**Get up and running in 10 minutes!**
 
 ---
 
-## Ready to Trade?
+## 📋 Prerequisites
+
+### Required
+- **Python 3.11+** - `python3 --version`
+- **Node.js 18+** - `node --version`
+- **npm or yarn** - Package manager
+
+### Recommended (Optional)
+- **Ollama** - Local LLM inference (free)
+  - Install: https://ollama.ai
+  - Run: `ollama pull llama3.1`
+- **OPA** - Policy-as-code engine (optional)
+  - Install: https://www.openpolicyagent.org/docs/latest/#running-opa
+- **Docker** - For containerized deployment (optional)
+
+---
+
+## 🚀 Quick Start (Paper Trading)
+
+### Step 1: Install Dependencies
 
 ```bash
-bash deploy.sh
+# Backend dependencies
+cd /home/user/SIGMAX
+pip install -r core/requirements.txt
+
+# Note: If pandas-ta fails, it's okay - we use pure NumPy implementations
+# You can skip it: pip install $(grep -v pandas-ta core/requirements.txt)
+
+# API dependencies
+pip install -r ui/api/requirements.txt
+
+# Frontend dependencies
+cd ui/web
+npm install
 ```
 
-**Welcome to the future of autonomous trading.** 🚀
+### Step 2: Configuration
 
-*Built with ❤️ by the SIGMAX Community*
+The `.env` file has been created with safe defaults for paper trading:
+
+```bash
+# Already configured in .env:
+TRADING_MODE=paper          # Safe paper trading
+TOTAL_CAPITAL=50            # Virtual $50 starting capital
+MAX_POSITION_SIZE=15        # Max $15 per position
+LLM_PROVIDER=ollama         # Free local LLM (requires Ollama installed)
+```
+
+**Optional API Keys** (enhance functionality but not required):
+
+```bash
+# Get free API keys (optional):
+NEWSAPI_KEY=                # https://newsapi.org (free tier)
+GOLDRUSH_API_KEY=           # https://goldrush.dev (free tier)
+
+# Fear & Greed Index - No key required ✓
+# Reddit API - No key required ✓
+# CoinGecko - No key required ✓
+# DexScreener - No key required ✓
+# Honeypot.is - No key required ✓
+```
+
+### Step 3: Start Ollama (Recommended)
+
+```bash
+# Install Ollama from https://ollama.ai
+# Then pull the model:
+ollama pull llama3.1
+
+# Start Ollama (runs on localhost:11434 by default)
+# It will auto-start on macOS/Linux
+```
+
+**Alternative**: Use OpenAI or Anthropic by setting in `.env`:
+```bash
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+```
+
+### Step 4: Start the Backend
+
+```bash
+cd /home/user/SIGMAX
+
+# Start FastAPI backend (with auto-reload)
+uvicorn ui.api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Backend will be running at**: `http://localhost:8000`
+
+**API Documentation**: `http://localhost:8000/docs`
+
+### Step 5: Start the Frontend
+
+Open a **new terminal**:
+
+```bash
+cd /home/user/SIGMAX/ui/web
+
+# Start React development server
+npm run dev
+```
+
+**Frontend will be running at**: `http://localhost:5173`
+
+### Step 6: Open Dashboard
+
+Visit **http://localhost:5173** in your browser!
+
+You should see:
+- ✅ System status panel
+- ✅ Real-time market data
+- ✅ Trading panel
+- ✅ Performance chart
+- ✅ Risk dashboard
+- ✅ Agent debate log
+- ✅ Alert panel
+
+---
+
+## 🎮 Using the Dashboard
+
+### 1. System Status
+- **Connection Status**: Green = WebSocket connected
+- **Trading Mode**: Shows "Paper Mode"
+- **System Health**: CPU, Memory, Disk usage
+
+### 2. Quick Actions
+
+**Start Trading:**
+1. Click "Start Trading" button
+2. System initializes all agents
+3. Status changes to "Trading Active"
+
+**Analyze a Symbol:**
+1. Enter symbol (e.g., BTC/USDT)
+2. Click "Analyze"
+3. View multi-agent debate results
+4. See technical indicators and patterns
+
+**Execute Trade** (Paper Mode):
+1. Enter symbol and amount
+2. Select Buy or Sell
+3. Click "Execute Trade"
+4. See trade in Alert Panel
+
+**Emergency Stop:**
+1. Click "Emergency Stop"
+2. Confirm in dialog
+3. All positions closed immediately
+
+### 3. Monitoring
+
+- **Performance Chart**: Live portfolio value (last 100 updates)
+- **Risk Dashboard**: Exposure, PnL, open positions
+- **Agent Debate Log**: Multi-agent decision process
+- **Alert Panel**: Trade executions and notifications
+
+---
+
+## 🧪 Testing the System
+
+### Test 1: Sentiment Analysis
+
+```bash
+# In Python console:
+cd /home/user/SIGMAX
+python3
+
+>>> import asyncio
+>>> from core.agents.sentiment import SentimentAgent
+>>>
+>>> agent = SentimentAgent(None)
+>>> await agent.initialize()
+>>> result = await agent.analyze("BTC")
+>>> print(result)
+```
+
+**Expected**: Sentiment scores from Fear & Greed Index, Reddit, etc.
+
+### Test 2: Technical Analysis
+
+```python
+>>> from core.agents.analyzer import AnalyzerAgent
+>>>
+>>> analyzer = AnalyzerAgent(None, None)
+>>> market_data = {
+>>>     "price": 45000,
+>>>     "prices": [44000, 44500, 45000, 45200, 45100],
+>>>     "volumes": [1000000, 1100000, 1050000, 980000, 1020000]
+>>> }
+>>> result = await analyzer.analyze("BTC/USDT", market_data)
+>>> print(result['indicators'])
+>>> print(result['patterns'])
+```
+
+**Expected**: RSI, MACD, Bollinger Bands, detected patterns
+
+### Test 3: Scam Checker
+
+```python
+>>> from core.utils.scam_checker import ScamChecker
+>>>
+>>> checker = ScamChecker()
+>>> # Example with known safe token (USDC on Ethereum)
+>>> result = await checker.check(
+>>>     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+>>>     "ethereum"
+>>> )
+>>> print(f"Risk Score: {result['risk_score']}")
+>>> print(f"Recommendation: {result['recommendation']}")
+```
+
+**Expected**: Low risk score, "SAFE" recommendation
+
+### Test 4: API Endpoints
+
+```bash
+# System status
+curl http://localhost:8000/api/status
+
+# Analyze symbol
+curl -X POST http://localhost:8000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"symbol": "BTC/USDT", "include_debate": true}'
+
+# Portfolio status
+curl http://localhost:8000/api/portfolio
+```
+
+---
+
+## 📊 Understanding the Output
+
+### Agent Debate Format
+
+When you analyze a symbol, you'll see a multi-agent debate:
+
+```
+🔍 RESEARCHER:
+  "Gathering market intelligence for BTC/USDT..."
+  [News sentiment, social signals, on-chain metrics]
+
+📈 BULL AGENT:
+  "Positive factors: Strong uptrend, increasing volume..."
+  Confidence: 75%
+
+📉 BEAR AGENT:
+  "Risk factors: Overbought RSI, resistance at $46k..."
+  Confidence: 60%
+
+📊 ANALYZER:
+  RSI: 72.3 (Overbought)
+  MACD: Bullish
+  Patterns: Ascending Triangle (Bullish)
+
+🛡️ RISK AGENT:
+  Risk Level: Medium
+  Volatility: 45% (Medium)
+  Liquidity: Very High
+  APPROVED ✓
+
+⚛️ OPTIMIZER:
+  Recommended action: BUY
+  Position size: $12.50 (25% of max)
+  Quantum confidence: 0.78
+```
+
+### Trade Execution Flow
+
+```
+1. User clicks "Execute Trade"
+   ↓
+2. Compliance check (OPA policies)
+   ↓
+3. Risk validation (size, leverage, blacklist)
+   ↓
+4. Paper trade execution
+   ↓
+5. Portfolio update
+   ↓
+6. WebSocket broadcast to UI
+   ↓
+7. Alert displayed in Alert Panel
+```
+
+---
+
+## 🔧 Advanced Configuration
+
+### Enable OPA (Policy-as-Code)
+
+```bash
+# 1. Install OPA
+# macOS: brew install opa
+# Linux: https://www.openpolicyagent.org/docs/latest/#running-opa
+
+# 2. Start OPA server
+opa run --server --addr :8181
+
+# 3. Load SIGMAX policies
+opa load core/config/opa_policies.rego
+
+# 4. OPA is now running!
+# SIGMAX will auto-detect and use it
+```
+
+**Benefits**:
+- Centralized policy management
+- Real-time policy updates
+- Compliance audit trails
+- No code changes for policy updates
+
+### Enable Additional APIs
+
+**NewsAPI** (crypto news sentiment):
+```bash
+# Get free key: https://newsapi.org
+NEWSAPI_KEY=your_key_here
+```
+
+**GoldRush** (on-chain metrics):
+```bash
+# Get free key: https://goldrush.dev
+GOLDRUSH_API_KEY=your_key_here
+```
+
+### Adjust Risk Profiles
+
+Edit `.env`:
+```bash
+# Conservative (default)
+MAX_POSITION_SIZE=15
+MAX_LEVERAGE=1
+MAX_DAILY_LOSS=10
+
+# Balanced
+MAX_POSITION_SIZE=25
+MAX_LEVERAGE=2
+MAX_DAILY_LOSS=15
+
+# Aggressive (not recommended for beginners)
+MAX_POSITION_SIZE=40
+MAX_LEVERAGE=3
+MAX_DAILY_LOSS=25
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Backend won't start
+
+**Error**: `ModuleNotFoundError: No module named 'X'`
+
+**Solution**:
+```bash
+pip install -r core/requirements.txt
+pip install -r ui/api/requirements.txt
+```
+
+### Frontend won't start
+
+**Error**: `npm ERR! code ENOENT`
+
+**Solution**:
+```bash
+cd ui/web
+npm install
+npm run dev
+```
+
+### "Connection Failed" in UI
+
+**Issue**: WebSocket not connecting
+
+**Solution**:
+1. Check backend is running: `http://localhost:8000/health`
+2. Check no firewall blocking port 8000
+3. Check browser console for errors
+
+### Ollama not found
+
+**Error**: `Connection refused to localhost:11434`
+
+**Solution**:
+```bash
+# Install Ollama: https://ollama.ai
+# Start Ollama (auto-starts on most systems)
+ollama serve
+
+# Alternative: Use OpenAI/Anthropic instead
+# Edit .env: LLM_PROVIDER=openai
+```
+
+### No market data
+
+**Issue**: Empty charts, no prices
+
+**Explanation**: Paper mode uses simulated data by default
+
+**Solution**: Wait 2-5 seconds for WebSocket broadcasts to populate
+
+### OPA not detected
+
+**Issue**: "Using embedded policies" in logs
+
+**Check**:
+```bash
+# Is OPA running?
+curl http://localhost:8181/health
+
+# Start OPA if not running
+opa run --server --addr :8181
+```
+
+---
+
+## 📈 Next Steps After Quick Start
+
+### 1. Paper Trading Practice
+
+- Start the system and let it run for a few hours
+- Analyze various symbols (BTC/USDT, ETH/USDT, SOL/USDT)
+- Execute some paper trades
+- Monitor performance metrics
+- Test emergency stop functionality
+
+### 2. Explore Advanced Features
+
+**Arbitrage Scanner**:
+```python
+from core.modules.arbitrage import ArbitrageModule
+
+arb = ArbitrageModule(min_profit_percentage=0.5)
+await arb.initialize()
+opportunities = await arb.scan_opportunities()
+```
+
+**Scam Detection**:
+```python
+from core.utils.scam_checker import ScamChecker
+
+checker = ScamChecker()
+result = await checker.check("0x...", "ethereum")
+```
+
+**Quantum Portfolio Optimization**:
+- Available in optimizer agent
+- Uses Qiskit for portfolio allocation
+- Integrated into trading decisions
+
+### 3. Monitor Performance
+
+- Track portfolio value over time
+- Analyze win/loss ratio
+- Review agent debate accuracy
+- Check risk metrics (Sharpe ratio, drawdown)
+
+### 4. Customize Strategies
+
+**Edit Risk Limits**: `.env` file
+**Edit Policies**: `core/config/opa_policies.rego`
+**Add Indicators**: `core/agents/analyzer.py`
+**Add Sentiment Sources**: `core/agents/sentiment.py`
+
+### 5. Production Deployment (When Ready)
+
+⚠️ **Only after extensive paper trading!**
+
+1. Set up exchange API keys (testnet first!)
+2. Change `TRADING_MODE=live` in `.env`
+3. Start with small position sizes
+4. Monitor closely
+5. Use stop-losses
+6. Enable OPA for strict policy enforcement
+
+---
+
+## 📚 Additional Resources
+
+- **Full Documentation**: `/docs/`
+- **API Reference**: `http://localhost:8000/docs`
+- **Development Status**: `/DEVELOPMENT_STATUS.md`
+- **Troubleshooting**: `/docs/TROUBLESHOOTING.md`
+- **Architecture**: `/docs/ARCHITECTURE.md`
+
+---
+
+## 🆘 Getting Help
+
+**Logs Location**:
+```bash
+# Backend logs (in terminal where you ran uvicorn)
+# Frontend logs (browser console: F12)
+# System logs: core/logs/ (if configured)
+```
+
+**Common Commands**:
+```bash
+# Check system health
+curl http://localhost:8000/health
+
+# View WebSocket events (in browser console)
+# F12 → Network → WS → Select connection → Messages
+
+# Check Ollama
+curl http://localhost:11434/api/tags
+
+# Check OPA
+curl http://localhost:8181/health
+```
+
+---
+
+## ✅ Verification Checklist
+
+After completing this guide, you should have:
+
+- [x] Backend running on `http://localhost:8000`
+- [x] Frontend running on `http://localhost:5173`
+- [x] Dashboard displaying with real-time updates
+- [x] "Connected" status in header (green dot)
+- [x] Paper trading mode active
+- [x] Ollama running (or alternative LLM configured)
+- [x] Able to analyze symbols
+- [x] Able to execute paper trades
+- [x] WebSocket receiving updates every 2-10 seconds
+
+---
+
+## 🎉 You're Ready!
+
+SIGMAX is now running in paper trading mode. You can:
+
+- ✅ Analyze any crypto symbol
+- ✅ See multi-agent debates
+- ✅ Execute paper trades
+- ✅ Monitor performance in real-time
+- ✅ Test arbitrage detection
+- ✅ Check tokens for scams
+- ✅ View technical indicators and patterns
+
+**Happy Trading!** 🚀
+
+---
+
+*For issues or questions, check `/docs/TROUBLESHOOTING.md` or review the logs.*
