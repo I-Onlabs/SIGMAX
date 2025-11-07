@@ -1,11 +1,9 @@
-"""
-Sentiment Agent - Advanced Multi-Source Sentiment Analysis
-"""
+"""Sentiment Agent - Advanced Multi-Source Sentiment Analysis"""
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any, List
+from datetime import datetime
 from loguru import logger
-import re
+from math import tanh, sqrt
 
 
 class SentimentAgent:
@@ -80,7 +78,7 @@ class SentimentAgent:
         )
 
         # Classify sentiment
-        sentiment_label = self._classify_sentiment(aggregate_score)
+        classification = self._classify_sentiment(aggregate_score)
 
         # Generate LLM-based summary if available
         summary = await self._generate_summary(
@@ -95,7 +93,8 @@ class SentimentAgent:
         result = {
             "symbol": symbol,
             "aggregate_score": aggregate_score,
-            "sentiment_label": sentiment_label,
+            "classification": classification,
+            "sentiment_label": classification,
             "confidence": self._calculate_confidence(
                 news_sentiment,
                 social_sentiment,
@@ -210,7 +209,7 @@ class SentimentAgent:
 
         # Calculate sentiment from flows
         net_flow = mock_metrics['exchange_outflow'] - mock_metrics['exchange_inflow']
-        flow_score = np.tanh(net_flow / 1000)  # Normalize with tanh
+        flow_score = tanh(net_flow / 1000)  # Normalize with tanh
 
         # Whale activity (neutral to bullish if accumulating)
         whale_score = 0.3 if mock_metrics['whale_transactions'] > 40 else 0
@@ -223,6 +222,11 @@ class SentimentAgent:
         return {
             "score": total_score,
             "metrics": mock_metrics,
+            "exchange_flow": {
+                "inflow": mock_metrics["exchange_inflow"],
+                "outflow": mock_metrics["exchange_outflow"],
+                "net": net_flow
+            },
             "interpretation": {
                 "flow": "bullish" if net_flow > 0 else "bearish",
                 "whale_activity": "active" if whale_score > 0 else "quiet",
@@ -272,7 +276,7 @@ class SentimentAgent:
                 score += weight  # Already negative
 
         # Normalize to -1 to 1 range
-        normalized_score = np.tanh(score / 5)
+        normalized_score = tanh(score / 5)
 
         return normalized_score
 
@@ -300,7 +304,7 @@ class SentimentAgent:
         scores = [news['score'], social['score'], onchain['score']]
 
         # Check agreement (low variance = high confidence)
-        variance = np.var(scores)
+        variance = _variance(scores)
         confidence = 1 / (1 + variance)
 
         # Boost confidence if there's a lot of data
@@ -323,6 +327,8 @@ class SentimentAgent:
         fear_greed: Dict[str, Any]
     ) -> str:
         """Generate LLM-based sentiment summary"""
+
+        classification = self._classify_sentiment(aggregate_score)
 
         if self.llm:
             try:
@@ -351,30 +357,28 @@ Provide a 2-3 sentence summary of overall market sentiment and what it means for
                 logger.warning(f"LLM summary failed: {e}")
 
         # Fallback summary
-        sentiment_label = self._classify_sentiment(aggregate_score)
-
         return f"""
 {symbol} Sentiment Analysis:
 
-Overall: {sentiment_label.upper().replace('_', ' ')} ({aggregate_score:+.2f})
+Overall: {classification.upper().replace('_', ' ')} ({aggregate_score:+.2f})
 
-Market mood is {sentiment_label.replace('_', ' ')} with Fear & Greed at {fear_greed['index']}/100.
+Market mood is {classification.replace('_', ' ')} with Fear & Greed at {fear_greed['index']}/100.
 News coverage is {('positive' if news['score'] > 0 else 'negative')},
 social media is {('bullish' if social['score'] > 0 else 'bearish')},
 and on-chain metrics show {onchain['interpretation']['flow']} flow.
 """
 
-    def get_sentiment_trend(self, periods: int = 10) -> Dict[str, Any]:
+    async def get_sentiment_trend(self, periods: int = 10) -> Dict[str, Any]:
         """Get sentiment trend over recent periods"""
         if len(self.sentiment_history) < 2:
-            return {"trend": "unknown", "change": 0}
+            return {"trend": "unknown", "direction": "unknown", "change": 0}
 
         recent = self.sentiment_history[-periods:]
         scores = [s['aggregate_score'] for s in recent]
 
         # Calculate trend
         if len(scores) < 2:
-            return {"trend": "unknown", "change": 0}
+            return {"trend": "unknown", "direction": "unknown", "change": 0}
 
         change = scores[-1] - scores[0]
 
@@ -386,12 +390,21 @@ and on-chain metrics show {onchain['interpretation']['flow']} flow.
 
         return {
             "trend": trend,
+            "direction": trend,
             "change": change,
             "current": scores[-1],
             "previous": scores[0],
-            "volatility": np.std(scores)
+            "volatility": _std(scores)
         }
 
 
-# Helper function for numpy operations
-import numpy as np
+def _variance(values: List[float]) -> float:
+    if not values:
+        return 0.0
+
+    mean = sum(values) / len(values)
+    return sum((value - mean) ** 2 for value in values) / len(values)
+
+
+def _std(values: List[float]) -> float:
+    return sqrt(_variance(values))

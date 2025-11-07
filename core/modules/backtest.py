@@ -3,6 +3,7 @@ Advanced Backtesting Framework with Performance Analytics
 """
 
 from typing import Dict, Any, List, Optional, Tuple
+import inspect
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 import numpy as np
@@ -36,7 +37,7 @@ class BacktestResult:
     total_return_pct: float
     sharpe_ratio: float
     sortino_ratio: float
-    max_drawdown: float
+    max_drawdown_amount: float
     max_drawdown_pct: float
     profit_factor: float
     avg_win: float
@@ -51,6 +52,23 @@ class BacktestResult:
     initial_capital: float
     final_capital: float
 
+    @property
+    def total_return(self) -> float:
+        """Return total return as a decimal for legacy compatibility."""
+        return self.total_return_pct / 100
+
+    @property
+    def max_drawdown(self) -> float:
+        """Return max drawdown as a decimal ratio."""
+        return abs(self.max_drawdown_pct) / 100
+
+    @property
+    def avg_trade_duration_hours(self) -> float:
+        """Return average trade duration in hours."""
+        if self.avg_trade_duration.total_seconds() == 0:
+            return 0.0
+        return self.avg_trade_duration.total_seconds() / 3600
+
 
 class Backtester:
     """
@@ -63,6 +81,8 @@ class Backtester:
     - Performance analytics
     - Walk-forward optimization
     """
+
+    DEFAULT_SYMBOL = "BTC/USDT"
 
     def __init__(
         self,
@@ -78,15 +98,19 @@ class Backtester:
         self.equity_curve = [initial_capital]
         self.trades: List[Trade] = []
         self.open_positions: Dict[str, Trade] = {}
+        self._default_symbol: Optional[str] = self.DEFAULT_SYMBOL
+        self.last_result: Optional[BacktestResult] = None
 
         logger.info(f"✓ Backtester initialized with ${initial_capital} capital")
 
     async def run(
         self,
-        strategy_func,
-        data: Dict[str, np.ndarray],
-        start_date: datetime,
-        end_date: datetime
+        strategy_func=None,
+        data: Optional[Dict[str, np.ndarray]] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        *,
+        strategy=None,
     ) -> BacktestResult:
         """
         Run backtest
@@ -100,6 +124,12 @@ class Backtester:
         Returns:
             Comprehensive backtest results
         """
+        strategy_callable = strategy or strategy_func
+        if strategy_callable is None:
+            raise ValueError("A strategy function must be provided")
+        if data is None or start_date is None or end_date is None:
+            raise ValueError("Data and date range are required for backtesting")
+
         logger.info(f"🔄 Running backtest from {start_date} to {end_date}...")
 
         self.capital = self.initial_capital
@@ -107,15 +137,27 @@ class Backtester:
         self.trades = []
         self.open_positions = {}
 
+        normalized_data, raw_data_map = self._normalize_input_data(data)
+        self._default_symbol = next(iter(normalized_data))
+
+        strategy_mode = self._detect_strategy_mode(strategy_callable)
+
         # Iterate through time
-        timestamps = self._get_timestamps(data, start_date, end_date)
+        timestamps = self._get_timestamps(normalized_data, start_date, end_date)
 
-        for i, timestamp in enumerate(timestamps):
+        for index, timestamp in enumerate(timestamps):
             # Get current market data
-            market_data = self._get_market_data_at(data, i)
+            market_data = self._get_market_data_at(normalized_data, index)
 
-            # Get strategy signals
-            signals = await strategy_func(market_data, timestamp)
+            # Get strategy signals (modern timestamp-aware or legacy index-based)
+            signals = await self._invoke_strategy(
+                strategy_callable,
+                strategy_mode,
+                market_data,
+                timestamp,
+                index,
+                raw_data_map,
+            )
 
             # Execute trades based on signals
             for symbol, signal in signals.items():
@@ -125,16 +167,117 @@ class Backtester:
             self._update_equity(market_data, timestamp)
 
         # Close any remaining open positions
-        final_data = self._get_market_data_at(data, len(timestamps) - 1)
+        final_data = self._get_market_data_at(normalized_data, len(timestamps) - 1)
         await self._close_all_positions(final_data, end_date)
 
         # Calculate performance metrics
         result = self._calculate_metrics(start_date, end_date)
+        self.last_result = result
 
         logger.info(f"✓ Backtest complete: {result.total_trades} trades, "
                    f"{result.win_rate:.1%} win rate, {result.total_return_pct:+.2%} return")
 
         return result
+
+    def _normalize_input_data(
+        self,
+        data: Any
+    ) -> Tuple[Dict[str, np.ndarray], Dict[str, List[List[float]]]]:
+        """Normalize incoming market data into internal structures."""
+        if isinstance(data, dict):
+            normalized: Dict[str, np.ndarray] = {}
+            raw: Dict[str, List[List[float]]] = {}
+            for symbol, values in data.items():
+                array = np.array(values)
+                normalized[symbol] = array
+                if isinstance(values, list):
+                    raw[symbol] = values
+                else:
+                    raw[symbol] = array.tolist()
+            return normalized, raw
+
+        if isinstance(data, list):
+            symbol = self._default_symbol or self.DEFAULT_SYMBOL
+            array = np.array(data)
+            return {symbol: array}, {symbol: data}
+
+        raise TypeError("Backtester data must be a dict or list of OHLCV rows.")
+
+    def _detect_strategy_mode(self, strategy_callable: Any) -> str:
+        """Inspect a strategy callable to determine the expected signature."""
+        try:
+            params = list(inspect.signature(strategy_callable).parameters.values())
+        except (TypeError, ValueError):
+            return "modern"
+
+        # Skip the first parameter (typically market_data or data)
+        for param in params[1:]:
+            name = param.name.lower()
+            if "index" in name or name in {"idx", "position"}:
+                return "legacy"
+        return "modern"
+
+    async def _invoke_strategy(
+        self,
+        strategy_callable: Any,
+        strategy_mode: str,
+        market_data: Dict[str, np.ndarray],
+        timestamp: datetime,
+        index: int,
+        raw_data_map: Dict[str, List[List[float]]]
+    ) -> Dict[str, Dict[str, Any]]:
+        """Call strategy with support for modern and legacy signatures."""
+        default_symbol = self._default_symbol or self.DEFAULT_SYMBOL
+
+        if strategy_mode == "legacy":
+            legacy_payload = self._select_legacy_series(raw_data_map, default_symbol)
+            legacy_signals = await strategy_callable(legacy_payload, index)
+            return self._normalize_signals(legacy_signals, default_symbol)
+
+        try:
+            modern_signals = await strategy_callable(market_data, timestamp)
+            return self._normalize_signals(modern_signals, default_symbol)
+        except TypeError as exc:
+            # Fallback to legacy signature if callable rejects timestamp form
+            legacy_payload = self._select_legacy_series(raw_data_map, default_symbol)
+            try:
+                legacy_signals = await strategy_callable(legacy_payload, index)
+            except TypeError:
+                raise exc
+            return self._normalize_signals(legacy_signals, default_symbol)
+
+    def _select_legacy_series(
+        self,
+        raw_data_map: Dict[str, List[List[float]]],
+        default_symbol: str
+    ) -> List[List[float]]:
+        """Choose the appropriate OHLCV series for legacy strategies."""
+        if default_symbol in raw_data_map:
+            return raw_data_map[default_symbol]
+        return next(iter(raw_data_map.values()))
+
+    def _normalize_signals(
+        self,
+        signals: Any,
+        default_symbol: str
+    ) -> Dict[str, Dict[str, Any]]:
+        """Ensure strategy signals are keyed by symbol."""
+        if not signals:
+            return {}
+
+        if isinstance(signals, dict):
+            if "action" in signals:
+                return {default_symbol: dict(signals)}
+
+            normalized: Dict[str, Dict[str, Any]] = {}
+            for symbol, payload in signals.items():
+                if isinstance(payload, dict):
+                    normalized[symbol] = dict(payload)
+                else:
+                    normalized[symbol] = {"action": payload}
+            return normalized
+
+        raise TypeError("Strategy must return a dictionary of signals.")
 
     async def _execute_signal(
         self,
@@ -252,7 +395,7 @@ class Backtester:
                 total_return_pct=0,
                 sharpe_ratio=0,
                 sortino_ratio=0,
-                max_drawdown=0,
+                max_drawdown_amount=0,
                 max_drawdown_pct=0,
                 profit_factor=0,
                 avg_win=0,
@@ -298,7 +441,7 @@ class Backtester:
         sortino_ratio = self._calculate_sortino(returns)
 
         # Drawdown
-        max_drawdown, max_drawdown_pct = self._calculate_max_drawdown()
+        max_drawdown_amount, max_drawdown_pct = self._calculate_max_drawdown()
 
         # Average trade duration
         durations = [
@@ -320,7 +463,7 @@ class Backtester:
             total_return_pct=total_return_pct,
             sharpe_ratio=sharpe_ratio,
             sortino_ratio=sortino_ratio,
-            max_drawdown=max_drawdown,
+            max_drawdown_amount=max_drawdown_amount,
             max_drawdown_pct=max_drawdown_pct,
             profit_factor=profit_factor,
             avg_win=avg_win,
@@ -359,7 +502,8 @@ class Backtester:
         mean_return = np.mean(returns) * 252
 
         # Downside deviation
-        negative_returns = returns[returns < 0]
+        returns_list = returns.tolist() if hasattr(returns, "tolist") else list(returns)
+        negative_returns = [value for value in returns_list if value < 0]
         downside_std = np.std(negative_returns) * np.sqrt(252) if len(negative_returns) > 0 else 0
 
         if downside_std == 0:
@@ -375,9 +519,9 @@ class Backtester:
 
         equity = np.array(self.equity_curve)
         running_max = np.maximum.accumulate(equity)
-        drawdown = equity - running_max
-        max_drawdown = np.min(drawdown)
-        max_drawdown_pct = (max_drawdown / self.initial_capital) * 100
+        drawdown = running_max - equity
+        max_drawdown = np.max(drawdown)
+        max_drawdown_pct = (max_drawdown / self.initial_capital) * 100 if self.initial_capital else 0
 
         return float(max_drawdown), float(max_drawdown_pct)
 
@@ -389,10 +533,11 @@ class Backtester:
     ) -> List[datetime]:
         """Extract timestamps from data"""
         # Get first symbol's timestamps
-        first_symbol = list(data.keys())[0]
+        first_symbol = next(iter(data))
+        symbol_data = data[first_symbol]
         timestamps = [
-            datetime.fromtimestamp(ts / 1000)  # Assuming milliseconds
-            for ts in data[first_symbol][:, 0]
+            datetime.fromtimestamp(row[0] / 1000)  # Assuming milliseconds
+            for row in symbol_data
         ]
 
         # Filter by date range
@@ -415,62 +560,54 @@ class Backtester:
             if index < len(ohlcv)
         }
 
-    def generate_report(self, result: BacktestResult) -> str:
-        """Generate detailed backtest report"""
-        report = f"""
-╔══════════════════════════════════════════════════════════════╗
-║              SIGMAX BACKTEST REPORT                          ║
-╚══════════════════════════════════════════════════════════════╝
+    def generate_report(self, result: Optional[BacktestResult] = None) -> str:
+        """Generate detailed backtest report."""
+        result = result or self.last_result
+        if result is None:
+            raise ValueError("No backtest results available. Run a backtest first or provide a result.")
 
-Period: {result.start_date.strftime('%Y-%m-%d')} to {result.end_date.strftime('%Y-%m-%d')}
-Initial Capital: ${result.initial_capital:,.2f}
-Final Capital: ${result.final_capital:,.2f}
+        lines = [
+            "=== BACKTEST RESULTS ===",
+            f"Period: {result.start_date.strftime('%Y-%m-%d')} to {result.end_date.strftime('%Y-%m-%d')}",
+            f"Initial Capital: ${result.initial_capital:,.2f}",
+            f"Final Capital: ${result.final_capital:,.2f}",
+            "",
+            "Performance Metrics",
+            "-------------------",
+            f"Total Return: {result.total_return:.2%}",
+            f"Total PnL: ${result.total_pnl:+,.2f}",
+            f"Sharpe Ratio: {result.sharpe_ratio:.2f}",
+            f"Sortino Ratio: {result.sortino_ratio:.2f}",
+            "",
+            "Risk Metrics",
+            "------------",
+            f"Max Drawdown: {result.max_drawdown:.2%}",
+            f"Max Drawdown ($): ${result.max_drawdown_amount:+,.2f}",
+            "",
+            "Trade Statistics",
+            "----------------",
+            f"Total Trades: {result.total_trades}",
+            f"Winning Trades: {result.winning_trades}",
+            f"Losing Trades: {result.losing_trades}",
+            f"Win Rate: {result.win_rate:.2%}",
+            f"Profit Factor: {result.profit_factor:.2f}",
+            f"Average Win: ${result.avg_win:+,.2f}",
+            f"Average Loss: ${result.avg_loss:+,.2f}",
+            f"Largest Win: ${result.largest_win:+,.2f}",
+            f"Largest Loss: ${result.largest_loss:+,.2f}",
+            f"Average Trade Duration: {result.avg_trade_duration}",
+        ]
 
-═══════════════════════════════════════════════════════════════
+        if result.trades:
+            lines.append("")
+            lines.append("Recent Trades")
+            lines.append("-------------")
+            for trade in result.trades[-10:]:
+                lines.append(f"{trade.symbol} {trade.direction.upper()} @ ${trade.entry_price:.2f}")
+                exit_info = trade.exit_time.strftime('%Y-%m-%d %H:%M') if trade.exit_time else 'Open'
+                exit_price = trade.exit_price if trade.exit_price is not None else 0
+                lines.append(f"Exit: {exit_info} @ ${exit_price:.2f}")
+                lines.append(f"PnL: ${trade.pnl:+,.2f} ({trade.pnl_pct:+.2f}%)")
+                lines.append("")
 
-PERFORMANCE SUMMARY
-═══════════════════════════════════════════════════════════════
-
-Total Return:        {result.total_return_pct:+.2f}%
-Total PnL:           ${result.total_pnl:+,.2f}
-
-Sharpe Ratio:        {result.sharpe_ratio:.2f}
-Sortino Ratio:       {result.sortino_ratio:.2f}
-
-Max Drawdown:        ${result.max_drawdown:,.2f} ({result.max_drawdown_pct:.2f}%)
-
-═══════════════════════════════════════════════════════════════
-
-TRADING STATISTICS
-═══════════════════════════════════════════════════════════════
-
-Total Trades:        {result.total_trades}
-Winning Trades:      {result.winning_trades} ({result.win_rate:.1%})
-Losing Trades:       {result.losing_trades}
-
-Profit Factor:       {result.profit_factor:.2f}
-
-Average Win:         ${result.avg_win:+,.2f}
-Average Loss:        ${result.avg_loss:+,.2f}
-Largest Win:         ${result.largest_win:+,.2f}
-Largest Loss:        ${result.largest_loss:+,.2f}
-
-Avg Trade Duration:  {result.avg_trade_duration}
-
-═══════════════════════════════════════════════════════════════
-
-RECENT TRADES (Last 10)
-═══════════════════════════════════════════════════════════════
-"""
-
-        for trade in result.trades[-10:]:
-            report += f"""
-{trade.symbol}: {trade.direction.upper()}
-Entry: {trade.entry_time.strftime('%Y-%m-%d %H:%M')} @ ${trade.entry_price:.2f}
-Exit:  {trade.exit_time.strftime('%Y-%m-%d %H:%M') if trade.exit_time else 'Open'} @ ${trade.exit_price:.2f if trade.exit_price else 0}
-PnL:   ${trade.pnl:+,.2f} ({trade.pnl_pct:+.2f}%)
-"""
-
-        report += "\n═══════════════════════════════════════════════════════════════\n"
-
-        return report
+        return "\n".join(line for line in lines if line is not None)
