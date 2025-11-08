@@ -165,6 +165,92 @@ services:
       timeout: 10s
       retries: 3
 
+  # SigNoz OpenTelemetry Collector (Observability)
+  signoz-otel-collector:
+    image: signoz/signoz-otel-collector:0.88.11
+    container_name: sigmax-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./deploy/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    networks:
+      - sigmax-network
+    profiles:
+      - observability
+
+  # SigNoz Query Service
+  signoz-query-service:
+    image: signoz/query-service:0.39.0
+    container_name: sigmax-query-service
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - STORAGE=clickhouse
+      - ClickHouseUrl=tcp://clickhouse:9000/?database=signoz_traces
+    networks:
+      - sigmax-network
+    depends_on:
+      - clickhouse
+    profiles:
+      - observability
+
+  # ClickHouse for SigNoz
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.11-alpine
+    container_name: sigmax-clickhouse
+    restart: unless-stopped
+    environment:
+      - CLICKHOUSE_DB=signoz_traces
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - sigmax-network
+    profiles:
+      - observability
+
+  # SigNoz Frontend
+  signoz-frontend:
+    image: signoz/frontend:0.39.0
+    container_name: sigmax-signoz-frontend
+    restart: unless-stopped
+    ports:
+      - "3301:3301"
+    environment:
+      - SIGNOZ_BACKEND=http://signoz-query-service:8080
+    networks:
+      - sigmax-network
+    depends_on:
+      - signoz-query-service
+    profiles:
+      - observability
+
+  # Federated Learning Server (optional)
+  fl-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sigmax:latest
+    container_name: sigmax-fl-server
+    restart: unless-stopped
+    command: ["python", "-m", "scripts.fl_server"]
+    environment:
+      - FL_SERVER_ADDRESS=0.0.0.0:8082
+      - FL_NUM_ROUNDS=20
+      - FL_MIN_CLIENTS=2
+    ports:
+      - "8082:8082"
+    networks:
+      - sigmax-network
+    profiles:
+      - federated-learning
+
 volumes:
   postgres_data:
     driver: local
@@ -173,6 +259,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  clickhouse_data:
     driver: local
 
 networks:
