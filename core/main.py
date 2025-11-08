@@ -28,6 +28,12 @@ from modules.quantum import QuantumModule
 from modules.rl import RLModule
 from modules.arbitrage import ArbitrageModule
 from modules.compliance import ComplianceModule
+from modules.observability import (
+    initialize_observability,
+    shutdown_observability,
+    SigNozConfig,
+    OTEL_AVAILABLE
+)
 from utils.healthcheck import HealthChecker
 from utils.telegram_bot import TelegramBot
 
@@ -103,6 +109,7 @@ class SIGMAX:
         self.rl_module: Optional[RLModule] = None
         self.arbitrage_module: Optional[ArbitrageModule] = None
         self.compliance_module: Optional[ComplianceModule] = None
+        self.observability_manager = None
         self.telegram_bot: Optional[TelegramBot] = None
         self.health_checker: Optional[HealthChecker] = None
 
@@ -125,6 +132,23 @@ class SIGMAX:
                 TextColumn("[progress.description]{task.description}"),
                 console=console
             ) as progress:
+
+                # Initialize observability (OpenTelemetry + SigNoz)
+                if os.getenv("OBSERVABILITY_ENABLED", "true").lower() == "true" and OTEL_AVAILABLE:
+                    task = progress.add_task("Initializing observability (SigNoz)...", total=None)
+                    config = SigNozConfig(
+                        endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318"),
+                        service_name=os.getenv("OTEL_SERVICE_NAME", "sigmax"),
+                        service_version=os.getenv("SIGMAX_VERSION", "1.0.0"),
+                        environment=os.getenv("ENVIRONMENT", self.mode),
+                        enable_traces=os.getenv("OTEL_TRACES_ENABLED", "true").lower() == "true",
+                        enable_metrics=os.getenv("OTEL_METRICS_ENABLED", "true").lower() == "true",
+                        enable_logs=os.getenv("OTEL_LOGS_ENABLED", "true").lower() == "true",
+                        enable_console=os.getenv("OTEL_CONSOLE_ENABLED", "false").lower() == "true"
+                    )
+                    self.observability_manager = initialize_observability(config)
+                    progress.remove_task(task)
+                    logger.info("✓ Observability initialized")
 
                 # Initialize data module
                 task = progress.add_task("Initializing data module...", total=None)
@@ -274,6 +298,11 @@ class SIGMAX:
         # Stop health checker
         if self.health_checker:
             await self.health_checker.stop()
+
+        # Shutdown observability
+        if self.observability_manager:
+            shutdown_observability()
+            logger.info("✓ Observability shutdown complete")
 
         # Generate session report
         await self._generate_session_report()

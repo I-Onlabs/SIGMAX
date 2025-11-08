@@ -36,6 +36,18 @@ from .optimizer import OptimizerAgent
 from .risk import RiskAgent
 from .privacy import PrivacyAgent
 
+# Import decision history
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+from decision_history import DecisionHistory
+
+# Import autonomous strategy engine (optional)
+try:
+    from .finrobot_integration import AutonomousStrategyEngine
+    AUTONOMOUS_ENGINE_AVAILABLE = True
+except ImportError:
+    AUTONOMOUS_ENGINE_AVAILABLE = False
+    logger.warning("Autonomous strategy engine not available")
+
 
 class AgentState(TypedDict):
     """State shared across all agents in the debate"""
@@ -79,7 +91,8 @@ class SIGMAXOrchestrator:
         rl_module: Optional[RLModuleProtocol],
         arbitrage_module: Optional[ArbitrageModuleProtocol],
         compliance_module: ComplianceModuleProtocol,
-        risk_profile: str = "conservative"
+        risk_profile: str = "conservative",
+        enable_autonomous_engine: bool = True
     ):
         """
         Initialize SIGMAX Orchestrator with dependency injection
@@ -92,6 +105,7 @@ class SIGMAXOrchestrator:
             arbitrage_module: Optional module implementing ArbitrageModuleProtocol
             compliance_module: Module implementing ComplianceModuleProtocol
             risk_profile: Risk profile ('conservative', 'balanced', 'aggressive')
+            enable_autonomous_engine: Enable FinRobot+RD-Agent autonomous strategy evolution
         """
         self.data_module = data_module
         self.execution_module = execution_module
@@ -111,6 +125,15 @@ class SIGMAXOrchestrator:
         self.risk_agent = RiskAgent(self.llm, compliance_module)
         self.privacy_agent = PrivacyAgent(self.llm)
 
+        # Initialize autonomous strategy engine (optional)
+        self.autonomous_engine = None
+        if enable_autonomous_engine and AUTONOMOUS_ENGINE_AVAILABLE:
+            try:
+                self.autonomous_engine = AutonomousStrategyEngine()
+                logger.info("✓ Autonomous strategy engine enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize autonomous engine: {e}")
+
         # LangGraph workflow
         self.workflow: Optional[StateGraph] = None
         self.app = None
@@ -118,6 +141,9 @@ class SIGMAXOrchestrator:
         # State
         self.running = False
         self.paused = False
+
+        # Decision history for explainability
+        self.decision_history = DecisionHistory(max_history_per_symbol=20)
 
         logger.info("✓ SIGMAX Orchestrator created")
 
@@ -434,6 +460,19 @@ Be skeptical and risk-focused. Cite specific concerns.
         logger.info(f"📊 Decision: {decision['action'].upper()} {state['symbol']} "
                    f"(confidence: {decision.get('confidence', 0):.2%})")
 
+        # Store decision in history for explainability
+        agent_debate = {
+            "bull_argument": state.get("bull_argument", ""),
+            "bear_argument": state.get("bear_argument", ""),
+            "research_summary": state.get("research_summary", ""),
+            "technical_analysis": state.get("technical_analysis", "")
+        }
+        self.decision_history.add_decision(
+            symbol=state['symbol'],
+            decision=decision,
+            agent_debate=agent_debate
+        )
+
         return {
             "messages": [{"role": "decision", "content": json.dumps(decision)}],
             "final_decision": decision,
@@ -605,5 +644,87 @@ Be skeptical and risk-focused. Cite specific concerns.
                 "optimizer": "active",
                 "risk": "active",
                 "privacy": "active"
+            },
+            "autonomous_engine": {
+                "enabled": self.autonomous_engine is not None,
+                "finrobot": self.autonomous_engine.finrobot.using_finrobot if self.autonomous_engine else False,
+                "rdagent": self.autonomous_engine.rdagent.using_rdagent if self.autonomous_engine else False
             }
         }
+
+    async def analyze_with_autonomous_engine(
+        self,
+        symbol: str,
+        portfolio: Dict[str, Any],
+        market_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Enhanced analysis using FinRobot + RD-Agent autonomous engine
+
+        This provides:
+        - Advanced market analysis (FinRobot)
+        - Risk assessment (FinRobot)
+        - Portfolio optimization (FinRobot)
+        - Strategy evolution suggestions (RD-Agent)
+
+        Args:
+            symbol: Trading symbol
+            portfolio: Current portfolio state
+            market_data: Market data for analysis
+
+        Returns:
+            Enhanced analysis with recommendations
+        """
+        if not self.autonomous_engine:
+            logger.warning("Autonomous engine not enabled, falling back to standard analysis")
+            return await self.analyze_symbol(symbol, market_data)
+
+        try:
+            # Run autonomous analysis
+            result = await self.autonomous_engine.analyze_and_decide(
+                symbol=symbol,
+                portfolio=portfolio,
+                market_data=market_data
+            )
+
+            logger.info(f"✓ Autonomous engine analysis complete for {symbol}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Autonomous engine error: {e}, falling back to standard analysis")
+            return await self.analyze_symbol(symbol, market_data)
+
+    async def evolve_strategy(
+        self,
+        current_strategy: Dict[str, Any],
+        performance_history: List[Dict[str, Any]],
+        market_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Evolve trading strategy using RD-Agent
+
+        Args:
+            current_strategy: Current strategy configuration
+            performance_history: Historical performance metrics
+            market_data: Current market conditions
+
+        Returns:
+            Evolved strategy with evaluation
+        """
+        if not self.autonomous_engine:
+            logger.warning("Autonomous engine not enabled, cannot evolve strategy")
+            return current_strategy
+
+        try:
+            result = await self.autonomous_engine.evolve_and_improve(
+                current_strategy=current_strategy,
+                performance_history=performance_history,
+                market_data=market_data
+            )
+
+            logger.info(f"✓ Strategy evolved to v{result['evolved_strategy'].get('version', 'unknown')}")
+            return result
+
+        except Exception as e:
+            logger.error(f"Strategy evolution error: {e}")
+            return {"error": str(e), "strategy": current_strategy}

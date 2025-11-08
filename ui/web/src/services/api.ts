@@ -119,6 +119,57 @@ export interface QuantumCircuit {
   };
 }
 
+// Exchange Management Types
+export interface ExchangeCredential {
+  id: string;
+  exchange: string;
+  name: string;
+  api_key: string; // Masked
+  api_secret: string; // Masked
+  passphrase?: string | null; // Masked
+  network: string;
+  enabled: boolean;
+  testnet: boolean;
+  created_at?: string;
+  updated_at?: string;
+  last_connected?: string | null;
+  connection_status: string; // 'unknown' | 'connected' | 'failed'
+}
+
+export interface AddExchangeRequest {
+  exchange: string;
+  name: string;
+  api_key: string;
+  api_secret: string;
+  passphrase?: string;
+  testnet: boolean;
+  enabled: boolean;
+}
+
+export interface UpdateExchangeRequest {
+  name?: string;
+  api_key?: string;
+  api_secret?: string;
+  passphrase?: string;
+  testnet?: boolean;
+  enabled?: boolean;
+}
+
+export interface ConnectionTestResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+  balance?: Record<string, any>;
+  network?: string;
+}
+
+export interface SupportedExchange {
+  id: string;
+  name: string;
+  testnet_available: boolean;
+  requires_passphrase: boolean;
+}
+
 /**
  * API Client Class
  */
@@ -284,6 +335,63 @@ class SIGMAXApiClient {
    */
   async emergencyStop(): Promise<any> {
     return this.request('/api/control/panic', { method: 'POST' });
+  }
+
+  // === Exchange Management Endpoints ===
+
+  /**
+   * Get all exchange credentials
+   */
+  async getExchanges(): Promise<ExchangeCredential[]> {
+    return this.request<ExchangeCredential[]>('/api/exchanges');
+  }
+
+  /**
+   * Get supported exchanges list
+   */
+  async getSupportedExchanges(): Promise<{ exchanges: SupportedExchange[] }> {
+    return this.request('/api/exchanges/supported/list');
+  }
+
+  /**
+   * Add new exchange credentials
+   */
+  async addExchange(request: AddExchangeRequest): Promise<ExchangeCredential> {
+    return this.request<ExchangeCredential>('/api/exchanges', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Update exchange credentials
+   */
+  async updateExchange(
+    id: string,
+    request: UpdateExchangeRequest
+  ): Promise<ExchangeCredential> {
+    return this.request<ExchangeCredential>(`/api/exchanges/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    });
+  }
+
+  /**
+   * Delete exchange credentials
+   */
+  async deleteExchange(id: string): Promise<void> {
+    await this.request(`/api/exchanges/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /**
+   * Test exchange connection
+   */
+  async testExchangeConnection(id: string): Promise<ConnectionTestResult> {
+    return this.request<ConnectionTestResult>(`/api/exchanges/${id}/test`, {
+      method: 'POST',
+    });
   }
 }
 

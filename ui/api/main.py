@@ -25,6 +25,9 @@ import psutil
 # Import SIGMAX manager
 from sigmax_manager import get_sigmax_manager
 
+# Import API routes
+from routes.exchanges import router as exchanges_router
+
 # Connection manager for WebSocket clients
 class ConnectionManager:
     def __init__(self):
@@ -194,6 +197,7 @@ app = FastAPI(
         {"name": "Analysis", "description": "Market analysis and agent debate"},
         {"name": "Control", "description": "System control operations"},
         {"name": "Monitoring", "description": "Metrics and monitoring"},
+        {"name": "exchanges", "description": "Exchange API credential management"},
     ]
 )
 
@@ -280,6 +284,11 @@ async def log_requests(request: Request, call_next):
                 "error": str(e) if os.getenv("DEBUG") else "An error occurred"
             }
         )
+
+
+# Include API routers
+app.include_router(exchanges_router)
+logger.info("✓ Exchange API routes registered")
 
 
 # Request models with validation

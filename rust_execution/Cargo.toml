@@ -1,0 +1,17 @@
+[package]
+name = "sigmax_rust_execution"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "sigmax_rust_execution"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true
