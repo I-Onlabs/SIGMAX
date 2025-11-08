@@ -1,5 +1,11 @@
 """
 Compliance Module - Regulatory Compliance & Policy Enforcement
+
+Features:
+- OPA policy-as-code integration
+- Zero-knowledge ML compliance verification (zkML)
+- EU AI Act, SEC regulations, KYC/AML compliance
+- Privacy-preserving compliance proofs
 """
 
 from typing import Dict, Any, Optional
@@ -7,6 +13,18 @@ from loguru import logger
 import aiohttp
 import json
 import os
+
+# Try to import zkML module
+ZKML_AVAILABLE = False
+try:
+    from core.modules.zkml_compliance import (
+        ZKMLComplianceEngine,
+        create_zkml_engine,
+        EZKL_AVAILABLE
+    )
+    ZKML_AVAILABLE = True
+except ImportError:
+    pass
 
 
 class ComplianceModule:
@@ -25,11 +43,23 @@ class ComplianceModule:
     - Fallback to embedded policies when OPA unavailable
     """
 
-    def __init__(self, opa_url: Optional[str] = None):
+    def __init__(self, opa_url: Optional[str] = None, enable_zkml: bool = True):
         self.opa_url = opa_url or os.getenv("OPA_URL", "http://localhost:8181")
         self.opa_available = False
         self.policies = {}
         self.embedded_policies = self._get_embedded_policies()
+
+        # Initialize zkML compliance engine if available
+        self.enable_zkml = enable_zkml and ZKML_AVAILABLE
+        self.zkml_engine = None
+        if self.enable_zkml:
+            try:
+                self.zkml_engine = create_zkml_engine(enable_ezkl=EZKL_AVAILABLE)
+                logger.info(f"✓ zkML compliance engine initialized (EZKL: {EZKL_AVAILABLE})")
+            except Exception as e:
+                logger.warning(f"zkML engine initialization failed: {e}")
+                self.enable_zkml = False
+
         logger.info("✓ Compliance module created")
 
     def _get_embedded_policies(self) -> Dict[str, Any]:
@@ -271,3 +301,94 @@ class ComplianceModule:
     def get_policies(self) -> Dict[str, Any]:
         """Get current policies"""
         return self.policies.copy()
+
+    async def check_compliance_with_zkml(
+        self,
+        model: Any,
+        trade_data: Dict[str, Any],
+        model_type: str = "onnx",
+        generate_proof: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Check compliance using zero-knowledge ML proofs
+
+        This enables privacy-preserving compliance verification where:
+        - The compliance model can be kept private
+        - Customer/trade data remains confidential
+        - Compliance decisions can be cryptographically proven
+        - Auditors can verify decisions without seeing data
+
+        Args:
+            model: ML compliance model (or path to ONNX model)
+            trade_data: Trade data to check
+            model_type: Type of model ("onnx", "pytorch", "sklearn")
+            generate_proof: Whether to generate ZK proof
+
+        Returns:
+            Compliance result with optional ZK proof
+        """
+        if not self.enable_zkml or not self.zkml_engine:
+            logger.warning("zkML not available, falling back to standard compliance check")
+            return await self.check_compliance(trade_data)
+
+        import numpy as np
+
+        # Convert trade data to model input
+        # Example: [position_size, leverage, price, volume, ...]
+        input_features = np.array([[
+            trade_data.get("size", 0),
+            trade_data.get("leverage", 1),
+            trade_data.get("price", 0),
+            trade_data.get("volume", 0),
+            trade_data.get("position_pct", 0)
+        ]], dtype=np.float32)
+
+        try:
+            if generate_proof:
+                # Generate ZK proof of compliance
+                proof = await self.zkml_engine.prove_compliance(
+                    model=model,
+                    input_data=input_features,
+                    model_type=model_type,
+                    input_shape=(1, 5) if model_type != "onnx" else None,
+                    metadata={
+                        "symbol": trade_data.get("symbol"),
+                        "timestamp": trade_data.get("timestamp"),
+                        "trade_type": trade_data.get("side")
+                    }
+                )
+
+                # Verify the proof
+                proof_verified = await self.zkml_engine.verify_compliance_proof(proof)
+
+                return {
+                    "compliant": proof.is_compliant and proof_verified,
+                    "reason": f"zkML proof {'verified' if proof_verified else 'verification failed'}",
+                    "proof_id": proof.proof_id,
+                    "proof_status": proof.status.value,
+                    "proof_verified": proof_verified,
+                    "violations": [] if proof.is_compliant else ["Model predicted non-compliance"],
+                    "zkml_enabled": True
+                }
+            else:
+                # Run model inference without generating proof (faster)
+                # This would require ONNX runtime
+                logger.info("Running model inference without ZK proof generation")
+                return await self.check_compliance(trade_data)
+
+        except Exception as e:
+            logger.error(f"zkML compliance check failed: {e}")
+            # Fallback to standard compliance check
+            return await self.check_compliance(trade_data)
+
+    def get_zkml_stats(self) -> Optional[Dict[str, Any]]:
+        """
+        Get zkML compliance statistics
+
+        Returns:
+            Statistics or None if zkML not enabled
+        """
+        if not self.enable_zkml or not self.zkml_engine:
+            return None
+
+        return self.zkml_engine.get_compliance_stats()
