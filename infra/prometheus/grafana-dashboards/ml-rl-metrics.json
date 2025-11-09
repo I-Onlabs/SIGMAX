@@ -1,0 +1,262 @@
+{
+  "dashboard": {
+    "title": "SIGMAX ML & RL Metrics",
+    "tags": ["sigmax", "ml", "rl", "ai"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "RL Model Status",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_rl_model_initialized",
+            "legendFormat": "Model Initialized",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "center",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "NOT READY"}}},
+              {"type": "value", "options": {"1": {"text": "READY"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "RL Training Timesteps",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_rl_training_timesteps_total",
+            "legendFormat": "Total Timesteps",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 0
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "RL Training Episodes",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_rl_training_episodes_total",
+            "legendFormat": "Total Episodes",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 0
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Last Training Reward",
+        "type": "gauge",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_rl_training_reward",
+            "legendFormat": "Episode Reward",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 0},
+                {"color": "green", "value": 100}
+              ]
+            },
+            "min": -1000,
+            "max": 1000
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "RL Prediction Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 4, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_rl_predictions_total[1m])",
+            "legendFormat": "Predictions/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Predictions/sec", "format": "short"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "RL Action Distribution",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 4, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_rl_actions_total{action=\"buy\"}[5m])",
+            "legendFormat": "Buy actions/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(sigmax_rl_actions_total{action=\"sell\"}[5m])",
+            "legendFormat": "Sell actions/sec",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(sigmax_rl_actions_total{action=\"hold\"}[5m])",
+            "legendFormat": "Hold actions/sec",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"label": "Actions/sec", "format": "short"},
+          {"format": "short"}
+        ],
+        "fill": 1,
+        "stack": true
+      },
+      {
+        "id": 7,
+        "title": "RL Prediction Latency (p99)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 12, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(sigmax_rl_prediction_duration_seconds_bucket[5m]))",
+            "legendFormat": "p99 latency",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(sigmax_rl_prediction_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95 latency",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(sigmax_rl_prediction_duration_seconds_bucket[5m]))",
+            "legendFormat": "p50 latency",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"label": "Latency (seconds)", "format": "s", "min": 0},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "RL Model Load Errors",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 12, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "increase(sigmax_rl_model_load_errors_total[1h])",
+            "legendFormat": "Load Errors (1h)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 1},
+                {"color": "red", "value": 5}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Trading Environment State",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 20, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "sigmax_rl_env_price",
+            "legendFormat": "Price",
+            "refId": "A"
+          },
+          {
+            "expr": "sigmax_rl_env_position",
+            "legendFormat": "Position",
+            "refId": "B",
+            "yAxisIndex": 1
+          },
+          {
+            "expr": "sigmax_rl_env_pnl",
+            "legendFormat": "P&L",
+            "refId": "C",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"label": "Price", "format": "currencyUSD"},
+          {"label": "Position / P&L", "format": "short"}
+        ]
+      }
+    ]
+  }
+}
