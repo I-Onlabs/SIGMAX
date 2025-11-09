@@ -12,6 +12,7 @@ Production-ready automation scripts for SIGMAX deployment, monitoring, and opera
 | `health_check.py` | Comprehensive health monitoring | Manual or automated health checks |
 | `emergency_shutdown.py` | Emergency trading shutdown | Critical incident response |
 | `backup_restore.py` | Database backup and restoration | Data protection and recovery |
+| `security_check.py` | Security vulnerability scanning | Dependency & code security audits |
 
 ---
 
@@ -375,6 +376,165 @@ python scripts/deploy.py --env <environment>
 
 ---
 
+## 🔒 security_check.py
+
+**Purpose:** Comprehensive security vulnerability scanning and auditing.
+
+### Usage
+
+```bash
+# Run all security checks
+python scripts/security_check.py --all
+
+# Check dependencies only
+python scripts/security_check.py --dependencies
+
+# Check for committed secrets
+python scripts/security_check.py --secrets
+
+# Code security scan
+python scripts/security_check.py --code
+
+# Configuration audit
+python scripts/security_check.py --config
+
+# File permissions check
+python scripts/security_check.py --permissions
+```
+
+### Security Checks
+
+1. **Dependency Vulnerabilities**
+   - Uses `pip-audit` to scan for known CVEs
+   - Checks all packages in requirements.txt
+   - Reports vulnerable packages with fix versions
+   - Categorizes by severity (critical/high/medium/low)
+
+2. **Secrets Detection**
+   - Scans code for accidentally committed secrets
+   - Patterns: API keys, passwords, tokens, private keys
+   - Checks .env files not in .gitignore
+   - Validates environment variable usage
+
+3. **Code Security**
+   - Uses `bandit` to scan Python code
+   - Detects common security anti-patterns
+   - SQL injection vulnerabilities
+   - XSS, command injection, insecure deserialization
+   - Hardcoded credentials, weak crypto
+
+4. **Configuration Audit**
+   - Checks .env.example for secure defaults
+   - Docker configuration review
+   - Debug mode detection
+   - Weak default credentials
+
+5. **File Permissions**
+   - Checks scripts for proper permissions
+   - Validates sensitive file permissions (.env, .pem, .key)
+   - World-writable file detection
+   - Recommends chmod fixes
+
+### Output
+
+```
+[INFO] Starting SIGMAX Security Check
+[INFO] Checking dependencies for vulnerabilities...
+[SUCCESS] ✓ No known vulnerabilities found in dependencies
+[INFO] Checking for committed secrets...
+[SUCCESS] ✓ No secrets found in code
+[INFO] Checking code for security issues...
+[WARNING] ✗ Found 2 code security issues
+[INFO] Checking configurations...
+[SUCCESS] ✓ No configuration issues found
+[INFO] Checking file permissions...
+[SUCCESS] ✓ File permissions look good
+
+SECURITY CHECK SUMMARY
+======================================================================
+
+Total Findings: 2
+
+  MEDIUM: 2
+
+MEDIUM Severity Issues:
+----------------------------------------------------------------------
+
+1. Code security issue (B608)
+   Description: core/agents/researcher.py:45 - Possible SQL injection
+   Recommendation: Review code and apply security best practices
+
+2. Using ':latest' tag in Dockerfile
+   Description: Docker image uses ':latest' tag which is not reproducible
+   Recommendation: Pin specific version tags for reproducibility
+
+======================================================================
+For detailed remediation steps, see: docs/SECURITY_ASSESSMENT.md
+======================================================================
+```
+
+### Exit Codes
+
+- `0`: No issues found (all clear)
+- `1`: Medium severity issues found
+- `2`: Critical or high severity issues found
+
+### Integration
+
+**CI/CD Pipeline:**
+```yaml
+# .github/workflows/security.yml
+name: Security Scan
+
+on: [push, pull_request]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Security Check
+        run: python scripts/security_check.py --all
+```
+
+**Pre-commit Hook:**
+```bash
+# .git/hooks/pre-commit
+#!/bin/bash
+python scripts/security_check.py --secrets --permissions
+if [ $? -eq 2 ]; then
+    echo "Critical security issues found. Commit aborted."
+    exit 1
+fi
+```
+
+**Scheduled Scan (Cron):**
+```bash
+# Weekly security scan
+0 2 * * 0 cd /opt/sigmax && python scripts/security_check.py --all >> logs/security_scan.log
+```
+
+### Dependencies
+
+Required tools (auto-installed if missing):
+- `pip-audit` - Dependency vulnerability scanner
+- `bandit` - Python code security scanner
+
+Install manually:
+```bash
+pip install pip-audit bandit
+```
+
+### Remediation
+
+See `docs/SECURITY_ASSESSMENT.md` for:
+- Detailed vulnerability explanations
+- Step-by-step remediation guides
+- Security best practices
+- Ongoing maintenance procedures
+
+---
+
 ## 🔄 Common Workflows
 
 ### Daily Operations
@@ -394,16 +554,19 @@ python scripts/backup_restore.py backup --all --tag daily
 ### Pre-Deployment
 
 ```bash
-# 1. Create pre-deployment backup
+# 1. Run security scan
+python scripts/security_check.py --all
+
+# 2. Create pre-deployment backup
 python scripts/backup_restore.py backup --all --tag pre-deploy-v1.2.0
 
-# 2. Run health check
+# 3. Run health check
 python scripts/health_check.py --detailed
 
-# 3. Deploy
+# 4. Deploy
 python scripts/deploy.py --env production
 
-# 4. Post-deployment validation
+# 5. Post-deployment validation
 sleep 30
 python scripts/health_check.py --detailed
 ```
