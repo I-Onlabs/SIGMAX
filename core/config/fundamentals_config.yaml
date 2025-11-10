@@ -1,0 +1,456 @@
+# SIGMAX Fundamental Analysis Configuration
+# Phase 3: Fundamental Analysis Settings
+
+# =============================================================================
+# General Settings
+# =============================================================================
+
+fundamentals:
+  enabled: true
+
+  # Timeout for fundamental analysis (seconds)
+  analysis_timeout: 10.0
+
+  # Cache TTL for fundamental data (seconds)
+  cache_ttl: 3600  # 1 hour
+
+  # Enable/disable specific data sources
+  data_sources:
+    defillama: true       # DeFi TVL and metrics
+    coingecko: true       # Market and token data
+    github: true          # Development activity
+    token_terminal: false # Financial metrics (requires API key)
+    dune: false           # On-chain analytics (requires API key)
+
+# =============================================================================
+# Quality Scoring Weights
+# =============================================================================
+
+scoring:
+  # Weight for each category (must sum to 1.0)
+  weights:
+    onchain_health: 0.30    # TVL, revenue, fees
+    token_economics: 0.25   # Supply, inflation
+    project_metrics: 0.25   # GitHub, community
+    financial_ratios: 0.20  # P/F, MC/TVL, etc.
+
+  # Minimum score to pass (0-1)
+  min_passing_score: 0.40
+
+  # Score thresholds for interpretations
+  thresholds:
+    excellent: 0.75
+    good: 0.60
+    fair: 0.45
+    poor: 0.30
+
+# =============================================================================
+# On-Chain Fundamentals
+# =============================================================================
+
+onchain:
+  # Metrics to collect
+  metrics:
+    - tvl
+    - tvl_change_7d
+    - tvl_change_30d
+    - protocol_revenue
+    - fees_24h
+    - active_addresses
+    - transaction_volume
+
+  # TVL change thresholds (%)
+  tvl_growth:
+    strong: 20      # > 20% = strong growth
+    good: 10        # > 10% = good growth
+    neutral: 0      # > 0% = positive
+    declining: -10  # < -10% = significant decline
+
+  # Active address thresholds (for scoring)
+  active_addresses:
+    btc: 800000     # Healthy BTC active addresses
+    eth: 400000     # Healthy ETH active addresses
+    default: 50000  # Default for other assets
+
+# =============================================================================
+# Token Economics
+# =============================================================================
+
+token_economics:
+  # Supply inflation thresholds (%)
+  inflation:
+    healthy_max: 5      # < 5% = healthy
+    moderate_max: 10    # < 10% = moderate
+    high_max: 20        # < 20% = high
+    # > 20% = very high (red flag)
+
+  # Circulating supply percentage thresholds
+  circulating_supply:
+    high: 80         # > 80% circulating = mature
+    medium: 50       # > 50% = moderate
+    low: 30          # < 30% = heavy unlocks ahead
+
+  # Market cap categories (USD)
+  market_cap_tiers:
+    mega: 100_000_000_000    # > $100B
+    large: 10_000_000_000    # > $10B
+    medium: 1_000_000_000    # > $1B
+    small: 100_000_000       # > $100M
+    micro: 10_000_000        # > $10M
+
+# =============================================================================
+# Project Metrics
+# =============================================================================
+
+project:
+  # GitHub metrics
+  github:
+    # Star thresholds
+    stars:
+      excellent: 50000
+      good: 10000
+      fair: 1000
+      poor: 100
+
+    # Commit thresholds (30 day)
+    commits_30d:
+      excellent: 100
+      good: 50
+      fair: 20
+      poor: 10
+
+    # Development activity score calculation
+    activity_weights:
+      stars: 0.40      # 40% weight
+      commits: 0.30    # 30% weight
+      forks: 0.20      # 20% weight
+      watchers: 0.10   # 10% weight
+
+  # Community metrics (future)
+  community:
+    enabled: false
+    sources:
+      - twitter
+      - discord
+      - telegram
+
+# =============================================================================
+# Financial Ratios
+# =============================================================================
+
+ratios:
+  # Valuation ratio benchmarks
+  valuation:
+    price_to_fees:
+      excellent: 30
+      good: 50
+      fair: 100
+      poor: 200
+
+    price_to_sales:
+      excellent: 10
+      good: 20
+      fair: 50
+      poor: 100
+
+    mc_to_tvl:
+      undervalued: 1.5
+      fair: 3.0
+      overvalued: 6.0
+      very_overvalued: 10.0
+
+  # Network ratio benchmarks
+  network:
+    nvt_ratio:
+      btc:
+        healthy_min: 20
+        healthy_max: 60
+      eth:
+        healthy_min: 30
+        healthy_max: 100
+      default:
+        healthy_min: 20
+        healthy_max: 120
+
+    token_velocity:
+      high: 5.0       # High usage
+      moderate: 2.0   # Moderate usage
+      low: 1.0        # Low usage
+
+  # DeFi-specific benchmarks
+  defi:
+    revenue_yield:
+      excellent: 10.0   # > 10% annual yield
+      good: 5.0         # > 5% annual yield
+      fair: 2.0         # > 2% annual yield
+
+    fee_yield:
+      excellent: 8.0
+      good: 4.0
+      fair: 1.5
+
+    tvl_to_revenue:
+      efficient: 5.0    # < 5x = efficient
+      moderate: 15.0    # < 15x = moderate
+      inefficient: 30.0 # > 30x = inefficient
+
+# =============================================================================
+# Risk Profile Configurations
+# =============================================================================
+
+risk_profiles:
+  conservative:
+    # More stringent thresholds
+    min_fundamental_score: 0.60
+    min_development_score: 60
+    min_market_cap: 1_000_000_000  # $1B+
+    max_inflation_rate: 5.0
+    max_mc_tvl: 3.0
+    require_github_activity: true
+
+  balanced:
+    # Moderate thresholds
+    min_fundamental_score: 0.45
+    min_development_score: 40
+    min_market_cap: 100_000_000  # $100M+
+    max_inflation_rate: 10.0
+    max_mc_tvl: 6.0
+    require_github_activity: true
+
+  aggressive:
+    # Relaxed thresholds (willing to take risks)
+    min_fundamental_score: 0.30
+    min_development_score: 20
+    min_market_cap: 10_000_000  # $10M+
+    max_inflation_rate: 20.0
+    max_mc_tvl: 15.0
+    require_github_activity: false
+
+# =============================================================================
+# Data Source Configuration
+# =============================================================================
+
+data_sources:
+  defillama:
+    base_url: "https://api.llama.fi"
+    timeout: 5.0
+    retry_count: 2
+    retry_delay: 1.0
+
+  coingecko:
+    base_url: "https://api.coingecko.com/api/v3"
+    timeout: 5.0
+    retry_count: 2
+    retry_delay: 1.0
+    rate_limit: 50  # Calls per minute (free tier)
+
+  github:
+    base_url: "https://api.github.com"
+    timeout: 5.0
+    retry_count: 2
+    retry_delay: 1.0
+    rate_limit: 60  # Calls per hour (unauthenticated)
+
+  token_terminal:
+    enabled: false
+    base_url: "https://api.tokenterminal.com/v2"
+    timeout: 5.0
+
+  dune:
+    enabled: false
+    base_url: "https://api.dune.com/api/v1"
+    timeout: 10.0
+
+# =============================================================================
+# Protocol Mapping
+# =============================================================================
+
+protocols:
+  # Map trading symbols to protocol IDs for various data sources
+
+  layer1:
+    BTC:
+      defillama: null  # Bitcoin doesn't have DeFi TVL
+      coingecko: "bitcoin"
+      github: "bitcoin/bitcoin"
+      category: "store_of_value"
+
+    ETH:
+      defillama: "ethereum"
+      coingecko: "ethereum"
+      github: "ethereum/go-ethereum"
+      category: "smart_contract_platform"
+
+    SOL:
+      defillama: "solana"
+      coingecko: "solana"
+      github: "solana-labs/solana"
+      category: "smart_contract_platform"
+
+    AVAX:
+      defillama: "avalanche"
+      coingecko: "avalanche-2"
+      github: "ava-labs/avalanchego"
+      category: "smart_contract_platform"
+
+  layer2:
+    ARB:
+      defillama: "arbitrum"
+      coingecko: "arbitrum"
+      github: "offchainlabs/arbitrum"
+      category: "layer2"
+
+    OP:
+      defillama: "optimism"
+      coingecko: "optimism"
+      github: "ethereum-optimism/optimism"
+      category: "layer2"
+
+    MATIC:
+      defillama: "polygon"
+      coingecko: "matic-network"
+      github: "maticnetwork/bor"
+      category: "layer2"
+
+  defi:
+    UNI:
+      defillama: "uniswap"
+      coingecko: "uniswap"
+      github: "Uniswap/v3-core"
+      category: "dex"
+
+    AAVE:
+      defillama: "aave"
+      coingecko: "aave"
+      github: "aave/aave-v3-core"
+      category: "lending"
+
+    LINK:
+      defillama: "chainlink"
+      coingecko: "chainlink"
+      github: "smartcontractkit/chainlink"
+      category: "oracle"
+
+    MKR:
+      defillama: "makerdao"
+      coingecko: "maker"
+      github: "makerdao/dss"
+      category: "stablecoin"
+
+# =============================================================================
+# Alert Thresholds
+# =============================================================================
+
+alerts:
+  # Trigger alerts for significant fundamental changes
+
+  tvl_change:
+    critical_drop: -30  # > 30% TVL drop
+    warning_drop: -15   # > 15% TVL drop
+
+  development_activity:
+    critical_threshold: 20  # < 20 score
+    warning_threshold: 40   # < 40 score
+
+  valuation:
+    overvalued_mc_tvl: 12   # MC/TVL > 12
+    overvalued_pf: 300      # P/F > 300
+
+  token_economics:
+    high_inflation: 25      # > 25% inflation
+    low_circulating: 30     # < 30% circulating
+
+# =============================================================================
+# Caching Strategy
+# =============================================================================
+
+cache:
+  enabled: true
+
+  # Cache TTL by data type (seconds)
+  ttl:
+    onchain_metrics: 1800    # 30 minutes
+    token_economics: 3600    # 1 hour
+    github_metrics: 7200     # 2 hours (changes slowly)
+    financial_ratios: 1800   # 30 minutes
+
+  # Max cache size per type
+  max_size:
+    per_symbol: 10  # Keep 10 most recent per symbol
+
+# =============================================================================
+# Feature Flags
+# =============================================================================
+
+features:
+  # Enable/disable specific features
+  enable_fundamental_analysis: true
+  enable_ratio_calculation: true
+  enable_quality_scoring: true
+  enable_benchmark_comparison: true
+  enable_alert_system: false  # Future feature
+  enable_historical_tracking: false  # Future feature
+
+  # Use mock data when APIs unavailable
+  fallback_to_mock: true
+
+  # Log detailed analysis
+  verbose_logging: false
+
+# =============================================================================
+# Performance Settings
+# =============================================================================
+
+performance:
+  # Parallel execution
+  max_concurrent_api_calls: 5
+
+  # Timeouts
+  default_timeout: 5.0
+  max_timeout: 15.0
+
+  # Retry settings
+  max_retries: 2
+  retry_delay: 1.0
+  backoff_multiplier: 2.0
+
+# =============================================================================
+# Integration Settings
+# =============================================================================
+
+integration:
+  # How fundamentals affect trading decisions
+
+  decision_weights:
+    fundamental_score: 0.25      # 25% weight in composite
+    technical_score: 0.35        # 35% weight
+    sentiment_score: 0.25        # 25% weight
+    validation_score: 0.15       # 15% weight
+
+  # Skip trading if fundamentals are too weak
+  skip_if_score_below: 0.30
+
+  # Reduce position size for weak fundamentals
+  reduce_position_if_below: 0.45
+  position_reduction_factor: 0.5  # 50% reduction
+
+  # Increase position size for strong fundamentals
+  increase_position_if_above: 0.75
+  position_increase_factor: 1.2  # 20% increase
+
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+
+  # What to log
+  log_api_calls: true
+  log_calculations: false
+  log_scoring: true
+  log_errors: true
+
+  # Format
+  include_timestamps: true
+  include_symbol: true
