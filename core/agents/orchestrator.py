@@ -37,6 +37,7 @@ from .optimizer import OptimizerAgent
 from .risk import RiskAgent
 from .privacy import PrivacyAgent
 from .validator import ValidationAgent
+from .planner import PlanningAgent
 
 # Import decision history
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -74,6 +75,11 @@ class AgentState(TypedDict):
     data_gaps: List[str]
     validation_checks: Dict[str, Any]
     research_data: Optional[Dict[str, Any]]
+    # NEW: Planning fields (Phase 2)
+    research_plan: Optional[Dict[str, Any]]
+    planned_tasks: List[Dict[str, Any]]
+    completed_task_ids: List[str]
+    task_execution_results: Dict[str, Any]
 
 
 class SIGMAXOrchestrator:
@@ -151,6 +157,14 @@ class SIGMAXOrchestrator:
             'max_research_time_seconds': 120
         }
         self.research_safety = ResearchSafety(config=safety_config)
+
+        # NEW: Initialize planning agent (Phase 2)
+        planning_config = {
+            'enable_parallel_tasks': True,
+            'max_parallel_tasks': 3,
+            'include_optional_tasks': risk_profile != 'aggressive'  # Skip optional for aggressive
+        }
+        self.planner = PlanningAgent(self.llm, config=planning_config)
 
         # Initialize autonomous strategy engine (optional)
         self.autonomous_engine = None
