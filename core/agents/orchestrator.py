@@ -37,7 +37,11 @@ from .optimizer import OptimizerAgent
 from .risk import RiskAgent
 from .privacy import PrivacyAgent
 from .validator import ValidationAgent
-from .planner import PlanningAgent
+from .planner import PlanningAgent, ResearchTask, TaskPriority
+
+# Import task execution system
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+from task_queue import TaskExecutor
 
 # Import decision history
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -166,6 +170,15 @@ class SIGMAXOrchestrator:
         }
         self.planner = PlanningAgent(self.llm, config=planning_config)
 
+        # NEW: Initialize task executor for parallel execution (Phase 2)
+        self.task_executor = TaskExecutor(
+            max_parallel=planning_config['max_parallel_tasks'],
+            retry_failed=True,
+            max_retries=2
+        )
+        # Register task handlers for the researcher
+        self._register_task_handlers()
+
         # Initialize autonomous strategy engine (optional)
         self.autonomous_engine = None
         if enable_autonomous_engine and AUTONOMOUS_ENGINE_AVAILABLE:
@@ -207,6 +220,57 @@ class SIGMAXOrchestrator:
             logger.warning("No LLM configured, using mock responses")
 
         return llm
+
+    def _register_task_handlers(self):
+        """
+        Register task handlers for parallel execution
+        Maps task data sources to execution functions
+        """
+        # Register handler for news/sentiment tasks
+        async def sentiment_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle sentiment analysis tasks"""
+            symbol = context.get('symbol', '')
+            news_data = await self.researcher._get_news_sentiment(symbol)
+            social_data = await self.researcher._get_social_sentiment(symbol)
+            return {
+                'news': news_data,
+                'social': social_data,
+                'sentiment': (news_data.get('score', 0.0) + social_data.get('score', 0.0)) / 2
+            }
+
+        # Register handler for on-chain metrics
+        async def onchain_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle on-chain metrics tasks"""
+            symbol = context.get('symbol', '')
+            return await self.researcher._get_onchain_metrics(symbol)
+
+        # Register handler for technical analysis
+        async def technical_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle technical analysis tasks"""
+            # Use existing market data or fetch new
+            market_data = context.get('market_data', {})
+            return {
+                'price': market_data.get('current_price', 0),
+                'volume': market_data.get('volume', 0),
+                'indicators': market_data.get('indicators', {})
+            }
+
+        # Register handler for macro factors
+        async def macro_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle macro factor analysis"""
+            return await self.researcher._get_macro_factors()
+
+        # Register handlers with task executor
+        self.task_executor.register_handler('news', sentiment_handler)
+        self.task_executor.register_handler('social', sentiment_handler)
+        self.task_executor.register_handler('fear_greed', sentiment_handler)
+        self.task_executor.register_handler('onchain', onchain_handler)
+        self.task_executor.register_handler('coingecko', onchain_handler)
+        self.task_executor.register_handler('price_data', technical_handler)
+        self.task_executor.register_handler('volume_data', technical_handler)
+        self.task_executor.register_handler('macro_data', macro_handler)
+
+        logger.info("✓ Task handlers registered for parallel execution")
 
     async def initialize(self):
         """Initialize the LangGraph workflow"""
@@ -300,34 +364,124 @@ class SIGMAXOrchestrator:
             }
 
     async def _researcher_node(self, state: AgentState) -> AgentState:
-        """Research agent node - gathers market intelligence"""
+        """
+        Research agent node - gathers market intelligence
+        ENHANCED: Executes planned tasks in parallel if plan exists (Phase 2)
+        """
         logger.info(f"🔍 Researcher analyzing {state['symbol']}")
 
         try:
-            research = await self.researcher.research(
-                symbol=state["symbol"],
-                market_data=state["market_data"]
-            )
+            # Check if we have a research plan to execute
+            research_plan = state.get('research_plan')
 
-            # NEW: Capture full research data for validation
-            research_data = {
-                'news': research.get("news", {}),
-                'social': research.get("social", {}),
-                'onchain': research.get("onchain", {}),
-                'macro': research.get("macro", {}),
-                'sentiment': research.get("sentiment", 0.0),
-                'timestamp': research.get("timestamp", datetime.now().isoformat())
-            }
+            if research_plan and research_plan.get('tasks'):
+                # Phase 2: Execute planned tasks in parallel
+                logger.info(f"📋 Executing {len(research_plan['tasks'])} planned tasks")
 
-            return {
-                "messages": [{"role": "researcher", "content": research["summary"]}],
-                "research_summary": research["summary"],
-                "sentiment_score": research.get("sentiment", 0.0),
-                "research_data": research_data  # NEW: Full data for validation
-            }
+                # Convert task dicts to ResearchTask objects
+                tasks = []
+                for task_dict in research_plan['tasks']:
+                    task = ResearchTask(
+                        task_id=task_dict['task_id'],
+                        name=task_dict['name'],
+                        description=task_dict['description'],
+                        priority=TaskPriority(task_dict['priority']),
+                        data_sources=task_dict['data_sources'],
+                        dependencies=task_dict.get('dependencies', []),
+                        estimated_cost=task_dict.get('estimated_cost', 0.0),
+                        timeout_seconds=task_dict.get('timeout_seconds', 30)
+                    )
+                    tasks.append(task)
+
+                # Execute plan with parallel execution
+                execution_summary = await self.task_executor.execute_plan(
+                    tasks=tasks,
+                    execution_order=research_plan['execution_order'],
+                    context={
+                        'symbol': state['symbol'],
+                        'market_data': state.get('market_data', {})
+                    }
+                )
+
+                # Aggregate results from completed tasks
+                task_results = execution_summary.get('task_results', {})
+                research_data = {
+                    'news': {},
+                    'social': {},
+                    'onchain': {},
+                    'macro': {},
+                    'sentiment': 0.0,
+                    'timestamp': datetime.now().isoformat()
+                }
+
+                # Extract data from task results
+                sentiment_scores = []
+                for task_id, result in task_results.items():
+                    if result.get('status') == 'completed':
+                        data = result.get('result', {})
+                        if 'news' in data:
+                            research_data['news'] = data['news']
+                        if 'social' in data:
+                            research_data['social'] = data['social']
+                        if 'sentiment' in data:
+                            sentiment_scores.append(data['sentiment'])
+                        # Merge other data types
+                        for key in ['onchain', 'macro', 'price', 'volume']:
+                            if key in data:
+                                research_data[key] = data.get(key, {})
+
+                # Calculate aggregate sentiment
+                if sentiment_scores:
+                    research_data['sentiment'] = sum(sentiment_scores) / len(sentiment_scores)
+
+                # Generate summary from aggregated results
+                summary = f"""Research completed using parallel execution:
+- Completed: {execution_summary.get('completed', 0)}/{execution_summary.get('total_tasks', 0)} tasks
+- Sentiment: {research_data['sentiment']:.2f}
+- Duration: {execution_summary.get('duration_seconds', 0):.1f}s
+- Speedup: {research_plan.get('speedup', 1.0):.1f}x
+"""
+
+                logger.info(f"✓ Parallel research completed: {execution_summary['completed']}/{execution_summary['total_tasks']} tasks")
+
+                return {
+                    "messages": [{"role": "researcher", "content": summary}],
+                    "research_summary": summary,
+                    "sentiment_score": research_data['sentiment'],
+                    "research_data": research_data,
+                    "task_execution_results": task_results,
+                    "completed_task_ids": list(task_results.keys())
+                }
+
+            else:
+                # Fallback: Use traditional sequential research (backward compatibility)
+                logger.info("📝 Using traditional sequential research (no plan)")
+                research = await self.researcher.research(
+                    symbol=state["symbol"],
+                    market_data=state["market_data"]
+                )
+
+                # NEW: Capture full research data for validation
+                research_data = {
+                    'news': research.get("news", {}),
+                    'social': research.get("social", {}),
+                    'onchain': research.get("onchain", {}),
+                    'macro': research.get("macro", {}),
+                    'sentiment': research.get("sentiment", 0.0),
+                    'timestamp': research.get("timestamp", datetime.now().isoformat())
+                }
+
+                return {
+                    "messages": [{"role": "researcher", "content": research["summary"]}],
+                    "research_summary": research["summary"],
+                    "sentiment_score": research.get("sentiment", 0.0),
+                    "research_data": research_data  # NEW: Full data for validation
+                }
 
         except Exception as e:
             logger.error(f"Researcher error: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 "messages": [{"role": "researcher", "content": f"Research failed: {e}"}],
                 "research_summary": "Unable to complete research",
