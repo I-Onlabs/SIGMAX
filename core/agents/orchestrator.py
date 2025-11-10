@@ -29,12 +29,14 @@ from modules.protocols import (
     RLModuleProtocol,
     ArbitrageModuleProtocol
 )
+from modules.research_safety import ResearchSafety
 
 from .researcher import ResearcherAgent
 from .analyzer import AnalyzerAgent
 from .optimizer import OptimizerAgent
 from .risk import RiskAgent
 from .privacy import PrivacyAgent
+from .validator import ValidationAgent
 
 # Import decision history
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -66,6 +68,12 @@ class AgentState(TypedDict):
     confidence: float
     iteration: int
     max_iterations: int
+    # NEW: Validation fields
+    validation_score: float
+    validation_passed: bool
+    data_gaps: List[str]
+    validation_checks: Dict[str, Any]
+    research_data: Optional[Dict[str, Any]]
 
 
 class SIGMAXOrchestrator:
@@ -125,6 +133,25 @@ class SIGMAXOrchestrator:
         self.risk_agent = RiskAgent(self.llm, compliance_module)
         self.privacy_agent = PrivacyAgent(self.llm)
 
+        # NEW: Initialize validation agent
+        validation_config = {
+            'validation_threshold': 0.7,
+            'data_freshness_seconds': 300,  # 5 minutes
+            'required_data_sources': ['news', 'social', 'onchain', 'technical']
+        }
+        self.validator = ValidationAgent(self.llm, config=validation_config)
+
+        # NEW: Initialize research safety module
+        safety_config = {
+            'max_research_iterations': 5,
+            'max_api_calls_per_minute': 30,
+            'max_llm_cost_per_decision': 0.50,
+            'max_daily_research_cost': 10.0,
+            'data_freshness_threshold': 300,
+            'max_research_time_seconds': 120
+        }
+        self.research_safety = ResearchSafety(config=safety_config)
+
         # Initialize autonomous strategy engine (optional)
         self.autonomous_engine = None
         if enable_autonomous_engine and AUTONOMOUS_ENGINE_AVAILABLE:
@@ -176,6 +203,7 @@ class SIGMAXOrchestrator:
 
         # Add nodes for each agent
         workflow.add_node("researcher", self._researcher_node)
+        workflow.add_node("validator", self._validator_node)  # NEW
         workflow.add_node("bull", self._bull_node)
         workflow.add_node("bear", self._bear_node)
         workflow.add_node("analyzer", self._analyzer_node)
@@ -184,9 +212,20 @@ class SIGMAXOrchestrator:
         workflow.add_node("optimizer", self._optimizer_node)
         workflow.add_node("decide", self._decision_node)
 
-        # Define the flow
+        # Define the flow (ENHANCED with validation)
         workflow.set_entry_point("researcher")
-        workflow.add_edge("researcher", "bull")
+        workflow.add_edge("researcher", "validator")  # NEW: Validate after research
+
+        # NEW: Conditional edge after validation
+        workflow.add_conditional_edges(
+            "validator",
+            self._validation_router,
+            {
+                "re_research": "researcher",  # Loop back if validation fails
+                "proceed": "bull"             # Continue if validation passes
+            }
+        )
+
         workflow.add_edge("bull", "bear")
         workflow.add_edge("bear", "analyzer")
         workflow.add_edge("analyzer", "risk")
@@ -194,12 +233,13 @@ class SIGMAXOrchestrator:
         workflow.add_edge("privacy", "optimizer")
         workflow.add_edge("optimizer", "decide")
 
-        # Add conditional edge from decide
+        # ENHANCED: Conditional edge from decide with validation awareness
         workflow.add_conditional_edges(
             "decide",
-            self._should_continue,
+            self._should_continue_enhanced,
             {
-                "continue": "researcher",  # Loop back for another iteration
+                "iterate": "researcher",      # Full loop for low confidence
+                "refine_research": "researcher",  # Re-research only
                 "end": END
             }
         )
@@ -220,17 +260,29 @@ class SIGMAXOrchestrator:
                 market_data=state["market_data"]
             )
 
+            # NEW: Capture full research data for validation
+            research_data = {
+                'news': research.get("news", {}),
+                'social': research.get("social", {}),
+                'onchain': research.get("onchain", {}),
+                'macro': research.get("macro", {}),
+                'sentiment': research.get("sentiment", 0.0),
+                'timestamp': research.get("timestamp", datetime.now().isoformat())
+            }
+
             return {
                 "messages": [{"role": "researcher", "content": research["summary"]}],
                 "research_summary": research["summary"],
-                "sentiment_score": research.get("sentiment", 0.0)
+                "sentiment_score": research.get("sentiment", 0.0),
+                "research_data": research_data  # NEW: Full data for validation
             }
 
         except Exception as e:
             logger.error(f"Researcher error: {e}")
             return {
                 "messages": [{"role": "researcher", "content": f"Research failed: {e}"}],
-                "research_summary": "Unable to complete research"
+                "research_summary": "Unable to complete research",
+                "research_data": {"error": str(e)}  # NEW: Capture error
             }
 
     async def _bull_node(self, state: AgentState) -> AgentState:
@@ -316,6 +368,44 @@ Be skeptical and risk-focused. Cite specific concerns.
             return {
                 "messages": [{"role": "bear", "content": f"Bear agent failed: {e}"}],
                 "bear_argument": "Unable to generate bear case"
+            }
+
+    async def _validator_node(self, state: AgentState) -> AgentState:
+        """
+        NEW: Validator node - checks research quality and completeness
+        Inspired by Dexter's validation approach
+        """
+        logger.info(f"✅ Validating research for {state['symbol']}")
+
+        try:
+            # Add technical analysis to research data if available
+            research_data = state.get("research_data", {})
+            if state.get("technical_analysis"):
+                research_data["technical"] = {"summary": state["technical_analysis"]}
+
+            validation = await self.validator.validate(
+                research_summary=state.get("research_summary"),
+                technical_analysis=state.get("technical_analysis"),
+                market_data=state.get("market_data"),
+                research_data=research_data
+            )
+
+            return {
+                "messages": [{"role": "validator", "content": validation["summary"]}],
+                "validation_score": validation["score"],
+                "validation_passed": validation["passed"],
+                "data_gaps": validation.get("gaps", []),
+                "validation_checks": validation.get("checks", {})
+            }
+
+        except Exception as e:
+            logger.error(f"Validation error: {e}")
+            return {
+                "messages": [{"role": "validator", "content": f"Validation failed: {e}"}],
+                "validation_score": 0.0,
+                "validation_passed": False,
+                "data_gaps": [f"Validation error: {str(e)}"],
+                "validation_checks": {}
             }
 
     async def _analyzer_node(self, state: AgentState) -> AgentState:
@@ -479,17 +569,76 @@ Be skeptical and risk-focused. Cite specific concerns.
             "iteration": state.get("iteration", 0) + 1
         }
 
-    def _should_continue(self, state: AgentState) -> str:
-        """Decide whether to continue iterating or end"""
+    def _validation_router(self, state: AgentState) -> str:
+        """
+        NEW: Route based on validation results
+        Implements Dexter-style iterative refinement
+        """
+        validation_passed = state.get("validation_passed", False)
+        data_gaps = state.get("data_gaps", [])
         iteration = state.get("iteration", 0)
-        max_iterations = state.get("max_iterations", 1)
-        confidence = state.get("confidence", 0.0)
+        max_iterations = state.get("max_iterations", 3)  # Increased from 1
 
-        # End if max iterations reached or high confidence
-        if iteration >= max_iterations or confidence > 0.8:
+        # If validation passed OR max iterations reached, proceed
+        if validation_passed:
+            logger.info("✓ Validation passed - proceeding to debate")
+            return "proceed"
+
+        if iteration >= max_iterations:
+            logger.warning(f"⚠ Max iterations ({max_iterations}) reached - proceeding anyway")
+            return "proceed"
+
+        # If data gaps exist and we have iterations left, re-research
+        if data_gaps and iteration < max_iterations:
+            logger.info(f"🔄 Data gaps detected ({len(data_gaps)}), re-researching...")
+            for i, gap in enumerate(data_gaps[:3], 1):
+                logger.info(f"   {i}. {gap}")
+            return "re_research"
+
+        # Default: proceed
+        return "proceed"
+
+    def _should_continue_enhanced(self, state: AgentState) -> str:
+        """
+        ENHANCED: Decide whether to continue iterating or end
+        Now considers validation scores alongside confidence
+        """
+        iteration = state.get("iteration", 0)
+        max_iterations = state.get("max_iterations", 3)  # Increased from 1
+        confidence = state.get("confidence", 0.0)
+        validation_score = state.get("validation_score", 0.0)
+
+        # End conditions
+        if iteration >= max_iterations:
+            logger.info(f"📊 Max iterations ({max_iterations}) reached - ending")
             return "end"
 
-        return "continue"
+        # High confidence AND high validation = end
+        if confidence > 0.85 and validation_score > 0.8:
+            logger.info(f"✅ High confidence ({confidence:.2%}) and quality ({validation_score:.2%}) - ending")
+            return "end"
+
+        # Low confidence = full iteration
+        if confidence < 0.5:
+            logger.info(f"🔄 Low confidence ({confidence:.2%}) - full iteration")
+            return "iterate"
+
+        # Low validation score = refine research
+        if validation_score < 0.6:
+            logger.info(f"🔄 Low validation score ({validation_score:.2%}) - refining research")
+            return "refine_research"
+
+        # Moderate confidence and validation = end
+        logger.info(f"✓ Moderate confidence ({confidence:.2%}) and quality ({validation_score:.2%}) - ending")
+        return "end"
+
+    # Keep old function for backward compatibility
+    def _should_continue(self, state: AgentState) -> str:
+        """
+        DEPRECATED: Use _should_continue_enhanced instead
+        Kept for backward compatibility
+        """
+        return self._should_continue_enhanced(state)
 
     def _extract_score(self, argument: str) -> float:
         """
@@ -576,7 +725,7 @@ Be skeptical and risk-focused. Cite specific concerns.
         if not market_data:
             market_data = await self.data_module.get_market_data(symbol)
 
-        # Initial state
+        # Initial state (ENHANCED with validation fields)
         initial_state = {
             "messages": [],
             "symbol": symbol,
@@ -592,7 +741,13 @@ Be skeptical and risk-focused. Cite specific concerns.
             "final_decision": None,
             "confidence": 0.0,
             "iteration": 0,
-            "max_iterations": 1
+            "max_iterations": 3,  # INCREASED from 1 to 3 for iterative refinement
+            # NEW: Validation fields
+            "validation_score": 0.0,
+            "validation_passed": False,
+            "data_gaps": [],
+            "validation_checks": {},
+            "research_data": None
         }
 
         # Run the workflow
@@ -633,13 +788,14 @@ Be skeptical and risk-focused. Cite specific concerns.
         logger.info("🛑 Orchestrator stopped")
 
     async def get_status(self) -> Dict[str, Any]:
-        """Get orchestrator status"""
+        """Get orchestrator status (ENHANCED with validation and safety)"""
         return {
             "running": self.running,
             "paused": self.paused,
             "risk_profile": self.risk_profile,
             "agents": {
                 "researcher": "active",
+                "validator": "active",  # NEW
                 "analyzer": "active",
                 "optimizer": "active",
                 "risk": "active",
@@ -649,7 +805,11 @@ Be skeptical and risk-focused. Cite specific concerns.
                 "enabled": self.autonomous_engine is not None,
                 "finrobot": self.autonomous_engine.finrobot.using_finrobot if self.autonomous_engine else False,
                 "rdagent": self.autonomous_engine.rdagent.using_rdagent if self.autonomous_engine else False
-            }
+            },
+            # NEW: Validation status
+            "validation": self.validator.get_config(),
+            # NEW: Research safety status
+            "research_safety": self.research_safety.get_safety_status()
         }
 
     async def analyze_with_autonomous_engine(
