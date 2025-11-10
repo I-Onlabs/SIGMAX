@@ -423,6 +423,9 @@ PROMETHEUS_URL=http://localhost:9090
 - [API Reference](docs/API.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
+
+### Enhancement Documentation
+- **⭐ [Complete Enhancement Summary](docs/ENHANCEMENTS_SUMMARY.md)** - Overview of all three phases
 - **🆕 [Phase 1: Validation Enhancement](docs/PHASE1_VALIDATION.md)** - Self-validation and quality checks
 - **🆕 [Phase 2: Planning System](docs/PHASE2_PLANNING.md)** - Task decomposition & parallel execution
 - **🆕 [Phase 3: Fundamental Analysis](docs/PHASE3_FUNDAMENTALS.md)** - On-chain metrics & financial ratios
