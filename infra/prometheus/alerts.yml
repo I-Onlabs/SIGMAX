@@ -136,3 +136,226 @@ groups:
         annotations:
           summary: "PTP time offset too high"
           description: "PTP offset is {{ $value }}ns (threshold: 250ns)"
+
+  # ======================================
+  # NEW FEATURE ALERTS (Week 1 Implementation)
+  # ======================================
+
+  - name: sigmax_rl_module
+    interval: 30s
+    rules:
+      # RL model not initialized
+      - alert: RLModelNotInitialized
+        expr: sigmax_rl_model_initialized == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RL model not initialized"
+          description: "RL module has not been initialized for 5 minutes"
+
+      # RL prediction latency too high
+      - alert: RLPredictionLatencyHigh
+        expr: histogram_quantile(0.99, rate(sigmax_rl_prediction_duration_seconds_bucket[5m])) > 1.0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RL prediction latency too high"
+          description: "p99 RL prediction latency is {{ $value }}s (threshold: 1s)"
+
+      # RL model load errors
+      - alert: RLModelLoadErrors
+        expr: rate(sigmax_rl_model_load_errors_total[10m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RL model failing to load"
+          description: "RL model load errors at {{ $value }}/sec"
+
+      # RL predictions stopped
+      - alert: RLPredictionsStopped
+        expr: rate(sigmax_rl_predictions_total[5m]) == 0 AND sigmax_safety_paused == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RL predictions have stopped"
+          description: "No RL predictions in the last 5 minutes while trading is active"
+
+  - name: sigmax_sentiment_research
+    interval: 30s
+    rules:
+      # News sentiment extremely negative
+      - alert: NewsSentimentExtremelyNegative
+        expr: sigmax_news_sentiment_score < -0.7
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Extremely negative news sentiment for {{ $labels.symbol }}"
+          description: "News sentiment score is {{ $value }} (threshold: -0.7)"
+
+      # Social sentiment extremely negative
+      - alert: SocialSentimentExtremelyNegative
+        expr: sigmax_social_sentiment_score < -0.7
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Extremely negative social sentiment for {{ $labels.symbol }}"
+          description: "Social sentiment score is {{ $value }} (threshold: -0.7)"
+
+      # Research API high error rate
+      - alert: ResearchAPIHighErrorRate
+        expr: rate(sigmax_research_api_errors_total[5m]) / rate(sigmax_research_api_requests_total[5m]) > 0.3
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate for {{ $labels.api }} API"
+          description: "{{ $value | humanizePercentage }} error rate for {{ $labels.api }}"
+
+      # Research API timeout spike
+      - alert: ResearchAPITimeoutSpike
+        expr: histogram_quantile(0.95, rate(sigmax_research_api_duration_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency for {{ $labels.api }} API"
+          description: "p95 latency is {{ $value }}s for {{ $labels.api }} (threshold: 10s)"
+
+      # RSS feed fetch failures
+      - alert: RSSFeedFetchFailed
+        expr: sigmax_rss_feed_fetch_success == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RSS feed {{ $labels.feed_url }} failing"
+          description: "Cannot fetch RSS feed for 15 minutes"
+
+      # Sentiment data stale
+      - alert: SentimentDataStale
+        expr: (time() - sigmax_sentiment_last_update_timestamp) > 600
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sentiment data is stale"
+          description: "Sentiment data has not been updated for {{ $value }}s (threshold: 600s)"
+
+      # Fear & Greed extreme fear
+      - alert: FearGreedExtremeFear
+        expr: sigmax_fear_greed_index < 20
+        for: 30m
+        labels:
+          severity: info
+        annotations:
+          summary: "Market in extreme fear"
+          description: "Fear & Greed Index is {{ $value }} (extreme fear zone)"
+
+  - name: sigmax_safety_mechanisms
+    interval: 10s
+    rules:
+      # System auto-paused
+      - alert: SystemAutoPaused
+        expr: sigmax_safety_paused == 1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "⚠️ TRADING AUTO-PAUSED"
+          description: "System automatically paused trading. Check pause reason and investigate immediately."
+
+      # Consecutive losses approaching limit
+      - alert: ConsecutiveLossesHigh
+        expr: sigmax_consecutive_losses >= 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Consecutive losses approaching limit"
+          description: "{{ $value }} consecutive losses detected (limit: 3)"
+
+      # Daily loss approaching limit
+      - alert: DailyLossApproachingLimit
+        expr: sigmax_daily_loss_usd < -8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Daily loss approaching $10 limit"
+          description: "Daily loss is ${{ $value }} (limit: -$10)"
+
+      # Daily loss limit exceeded (should already be paused)
+      - alert: DailyLossLimitExceeded
+        expr: sigmax_daily_loss_usd < -10
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "⚠️ Daily loss limit EXCEEDED"
+          description: "Daily loss is ${{ $value }} (limit: -$10). System should be paused."
+
+      # Auto-pause triggers frequent
+      - alert: AutoPauseTriggersFrequent
+        expr: rate(sigmax_safety_pause_count_total[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Frequent auto-pause triggers"
+          description: "{{ $value }} auto-pauses per hour. System may be unstable."
+
+      # Position approaching limit
+      - alert: PositionApproachingLimit
+        expr: abs(sigmax_position_size) / sigmax_position_limit > 0.85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Position size at {{ $value | humanizePercentage }} of limit for {{ $labels.symbol }}"
+          description: "Position approaching limit. Consider reducing exposure."
+
+      # API error burst detected
+      - alert: APIErrorBurst
+        expr: rate(sigmax_api_errors_total[1m]) * 60 > 5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API error burst detected"
+          description: "{{ $value }} API errors per minute for {{ $labels.api }}"
+
+      # Circuit breaker opened
+      - alert: CircuitBreakerOpened
+        expr: sigmax_circuit_breaker_open == 1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "⚠️ Circuit breaker OPEN"
+          description: "Circuit breaker has opened. Trading is blocked."
+
+      # Slippage violations frequent
+      - alert: SlippageViolationsFrequent
+        expr: rate(sigmax_slippage_violations_total[10m]) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Frequent slippage violations"
+          description: "{{ $value }}/sec slippage violations. Market conditions may be poor."
+
+      # Risk rejections spike
+      - alert: RiskRejectionsSpike
+        expr: rate(sigmax_risk_rejections_total[5m]) > 2
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High risk rejection rate"
+          description: "{{ $value }}/sec risk rejections. Review trading logic."

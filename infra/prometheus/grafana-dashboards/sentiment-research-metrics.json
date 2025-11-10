@@ -1,0 +1,290 @@
+{
+  "dashboard": {
+    "title": "SIGMAX Sentiment & Research",
+    "tags": ["sigmax", "sentiment", "research", "news"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-12h",
+      "to": "now"
+    },
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "News Sentiment Score",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sigmax_news_sentiment_score",
+            "legendFormat": "{{symbol}} sentiment",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Sentiment Score", "format": "short", "min": -1, "max": 1},
+          {"format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [-0.5], "type": "lt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "Negative sentiment alert",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 2,
+        "title": "Social Media Sentiment",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sigmax_social_sentiment_score",
+            "legendFormat": "{{symbol}} social",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Social Sentiment", "format": "short", "min": -1, "max": 1},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "News Articles Processed",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "increase(sigmax_news_articles_processed_total[1h])",
+            "legendFormat": "Articles (1h)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "decimals": 0
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "RSS Feeds Health",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_rss_feed_fetch_success",
+            "legendFormat": "{{feed_url}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "FAILED"}}},
+              {"type": "value", "options": {"1": {"text": "OK"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Research API Latency",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(sigmax_research_api_duration_seconds_bucket{api=\"cryptopanic\"}[5m]))",
+            "legendFormat": "CryptoPanic p95",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(sigmax_research_api_duration_seconds_bucket{api=\"reddit\"}[5m]))",
+            "legendFormat": "Reddit p95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(sigmax_research_api_duration_seconds_bucket{api=\"coingecko\"}[5m]))",
+            "legendFormat": "CoinGecko p95",
+            "refId": "C"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(sigmax_research_api_duration_seconds_bucket{api=\"feargreed\"}[5m]))",
+            "legendFormat": "Fear&Greed p95",
+            "refId": "D"
+          }
+        ],
+        "yaxes": [
+          {"label": "Latency (seconds)", "format": "s", "min": 0},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Research API Errors",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_research_api_errors_total[5m])",
+            "legendFormat": "{{api}} errors/s",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Errors/sec", "format": "short", "min": 0},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Research API Success Rate",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_research_api_requests_total{status=\"success\"}[5m]) / rate(sigmax_research_api_requests_total[5m])",
+            "legendFormat": "{{api}} success rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Success Rate", "format": "percentunit", "min": 0, "max": 1},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "On-Chain Metrics - Whale Activity",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 24, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_onchain_whale_activity",
+            "legendFormat": "{{symbol}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": null},
+                {"color": "yellow", "value": 1},
+                {"color": "green", "value": 2}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "Bearish"}}},
+              {"type": "value", "options": {"1": {"text": "Neutral"}}},
+              {"type": "value", "options": {"2": {"text": "Bullish"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Fear & Greed Index",
+        "type": "gauge",
+        "gridPos": {"x": 8, "y": 24, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_fear_greed_index",
+            "legendFormat": "Fear & Greed",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "orange", "value": 25},
+                {"color": "yellow", "value": 45},
+                {"color": "green", "value": 55},
+                {"color": "blue", "value": 75}
+              ]
+            },
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Sentiment Data Freshness",
+        "type": "stat",
+        "gridPos": {"x": 16, "y": 24, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "time() - sigmax_sentiment_last_update_timestamp",
+            "legendFormat": "Data age (seconds)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 300},
+                {"color": "red", "value": 600}
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

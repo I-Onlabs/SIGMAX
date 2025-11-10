@@ -1,0 +1,355 @@
+{
+  "dashboard": {
+    "title": "SIGMAX Safety & Risk Controls",
+    "tags": ["sigmax", "safety", "risk", "compliance"],
+    "timezone": "browser",
+    "editable": true,
+    "graphTooltip": 1,
+    "time": {
+      "from": "now-3h",
+      "to": "now"
+    },
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Pause Status",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sigmax_safety_paused",
+            "legendFormat": "Trading Paused",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "center",
+          "textMode": "value_and_name",
+          "orientation": "horizontal"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "TRADING ACTIVE", "color": "green"}}},
+              {"type": "value", "options": {"1": {"text": "⚠️ PAUSED", "color": "red"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Last Pause Reason",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sigmax_safety_pause_reason",
+            "legendFormat": "{{reason}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "none",
+          "textMode": "name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "None"}}},
+              {"type": "value", "options": {"1": {"text": "Consecutive Losses"}}},
+              {"type": "value", "options": {"2": {"text": "Daily Loss Limit"}}},
+              {"type": "value", "options": {"3": {"text": "Position Limit"}}},
+              {"type": "value", "options": {"4": {"text": "API Error Burst"}}},
+              {"type": "value", "options": {"5": {"text": "Sentiment Drop"}}},
+              {"type": "value", "options": {"6": {"text": "Manual Override"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Auto-Pause Trigger Count (24h)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 6, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "increase(sigmax_safety_pause_count_total{reason=\"consecutive_losses\"}[24h])",
+            "legendFormat": "Consecutive Losses",
+            "refId": "A"
+          },
+          {
+            "expr": "increase(sigmax_safety_pause_count_total{reason=\"daily_loss_limit\"}[24h])",
+            "legendFormat": "Daily Loss Limit",
+            "refId": "B"
+          },
+          {
+            "expr": "increase(sigmax_safety_pause_count_total{reason=\"position_limit\"}[24h])",
+            "legendFormat": "Position Limit",
+            "refId": "C"
+          },
+          {
+            "expr": "increase(sigmax_safety_pause_count_total{reason=\"api_error_burst\"}[24h])",
+            "legendFormat": "API Error Burst",
+            "refId": "D"
+          },
+          {
+            "expr": "increase(sigmax_safety_pause_count_total{reason=\"sentiment_drop\"}[24h])",
+            "legendFormat": "Sentiment Drop",
+            "refId": "E"
+          }
+        ],
+        "yaxes": [
+          {"label": "Trigger Count", "format": "short", "min": 0},
+          {"format": "short"}
+        ],
+        "fill": 0,
+        "stack": false
+      },
+      {
+        "id": 4,
+        "title": "Consecutive Losses Tracker",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 6, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sigmax_consecutive_losses",
+            "legendFormat": "Consecutive Losses",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Count", "format": "short", "min": 0},
+          {"format": "short"}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [2], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "1m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "10s",
+          "handler": 1,
+          "name": "Consecutive losses alert",
+          "noDataState": "no_data",
+          "notifications": []
+        },
+        "thresholds": [
+          {
+            "value": 3,
+            "colorMode": "critical",
+            "op": "gt",
+            "fill": true,
+            "line": true,
+            "yaxis": "left"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Daily Loss Amount",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 14, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sigmax_daily_loss_usd",
+            "legendFormat": "Daily Loss",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Loss (USD)", "format": "currencyUSD"},
+          {"format": "short"}
+        ],
+        "thresholds": [
+          {
+            "value": -10,
+            "colorMode": "critical",
+            "op": "lt",
+            "fill": true,
+            "line": true,
+            "yaxis": "left"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Position Size vs Limit",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 14, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "abs(sigmax_position_size)",
+            "legendFormat": "{{symbol}} position",
+            "refId": "A"
+          },
+          {
+            "expr": "sigmax_position_limit",
+            "legendFormat": "{{symbol}} limit",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"label": "Position Size (USD)", "format": "currencyUSD"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "API Error Rate (per minute)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 22, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "rate(sigmax_api_errors_total[1m]) * 60",
+            "legendFormat": "{{api}} errors/min",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"label": "Errors/min", "format": "short", "min": 0},
+          {"format": "short"}
+        ],
+        "thresholds": [
+          {
+            "value": 3,
+            "colorMode": "critical",
+            "op": "gt",
+            "fill": true,
+            "line": true,
+            "yaxis": "left"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Safety Violations by Type",
+        "type": "piechart",
+        "gridPos": {"x": 12, "y": 22, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum by (violation_type) (increase(sigmax_safety_violations_total[24h]))",
+            "legendFormat": "{{violation_type}}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "pieType": "pie",
+          "displayLabels": ["name", "percent"],
+          "legend": {
+            "displayMode": "table",
+            "placement": "right"
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Risk Check Rejections",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 30, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "increase(sigmax_risk_rejections_total[1h])",
+            "legendFormat": "Rejections (1h)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 10},
+                {"color": "red", "value": 50}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Circuit Breaker Status",
+        "type": "stat",
+        "gridPos": {"x": 8, "y": 30, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "sigmax_circuit_breaker_open",
+            "legendFormat": "Circuit Breaker",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "red", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"type": "value", "options": {"0": {"text": "CLOSED (Normal)"}}},
+              {"type": "value", "options": {"1": {"text": "⚠️ OPEN (Blocked)"}}}
+            ]
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Slippage Violations",
+        "type": "stat",
+        "gridPos": {"x": 16, "y": 30, "w": 8, "h": 4},
+        "targets": [
+          {
+            "expr": "increase(sigmax_slippage_violations_total[1h])",
+            "legendFormat": "Slippage Violations (1h)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 5},
+                {"color": "red", "value": 20}
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}
