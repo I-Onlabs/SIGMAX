@@ -425,6 +425,7 @@ PROMETHEUS_URL=http://localhost:9090
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - **🆕 [Phase 1: Validation Enhancement](docs/PHASE1_VALIDATION.md)** - Self-validation and quality checks
 - **🆕 [Phase 2: Planning System](docs/PHASE2_PLANNING.md)** - Task decomposition & parallel execution
+- **🆕 [Phase 3: Fundamental Analysis](docs/PHASE3_FUNDAMENTALS.md)** - On-chain metrics & financial ratios
 - **🆕 [Integration Testing Guide](docs/INTEGRATION_TESTING.md)** - Testing all phases end-to-end
 
 ---
