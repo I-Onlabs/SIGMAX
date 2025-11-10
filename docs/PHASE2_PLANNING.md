@@ -697,6 +697,25 @@ Building on the planning system, Phase 3 will add:
 
 ## Changelog
 
+### 2025-11-10 - Phase 2 Integration Fix (CRITICAL)
+
+**Fixed**:
+- ✅ **CRITICAL**: Integrated TaskExecutor with ResearcherAgent
+  - Planner was creating plans but researcher wasn't executing them
+  - Added TaskExecutor initialization in orchestrator
+  - Registered task handlers mapping data sources to researcher methods
+  - Updated _researcher_node to execute planned tasks in parallel
+  - Maintained backward compatibility with sequential fallback
+- Now Phase 2 works **end-to-end**: Plan → Execute → Aggregate → Validate
+- Parallel execution speedup (1.8-2.4x) now **actually achievable**
+
+**Integration Details**:
+- Task handlers map data sources (news, social, onchain, etc.) to researcher methods
+- Tasks execute in parallel batches according to dependency order
+- Results aggregated and passed to validator for quality checks
+- Full error handling with graceful degradation
+- 175 lines added to orchestrator.py
+
 ### 2025-11-10 - Phase 2 Complete
 
 **Added**:
