@@ -1,14 +1,13 @@
 # Phase 2: Planning System - Complete Implementation
 
 **Status**: ✅ Complete
-**Inspired by**: [Dexter](https://github.com/virattt/dexter) autonomous research agent
 **Implementation Date**: 2025-11-10
 
 ---
 
 ## Overview
 
-Phase 2 implements **structured task decomposition** and **parallel execution** inspired by Dexter's planning approach. This transforms SIGMAX from sequential research into an intelligent, parallelized system that:
+Phase 2 implements **structured task decomposition** and **parallel execution** using advanced autonomous research techniques. This transforms SIGMAX from sequential research into an intelligent, parallelized system that:
 
 - ✅ Breaks down complex decisions into discrete, prioritized tasks
 - ✅ Executes independent tasks in parallel (1.8-2.4x speedup)
@@ -689,9 +688,8 @@ Building on the planning system, Phase 3 will add:
 ## References
 
 - [Phase 1: Validation](./PHASE1_VALIDATION.md) - Prerequisite
-- [Dexter Repository](https://github.com/virattt/dexter) - Original inspiration
-- [Dexter Analysis](./DEXTER_ANALYSIS.md) - Detailed analysis
-- [Dexter Comparison](./DEXTER_COMPARISON.md) - Feature comparison
+- [Integration Testing](./INTEGRATION_TESTING.md) - End-to-end testing guide
+- [Architecture](./ARCHITECTURE.md) - System architecture
 
 ---
 
