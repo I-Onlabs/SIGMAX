@@ -38,10 +38,14 @@ from .risk import RiskAgent
 from .privacy import PrivacyAgent
 from .validator import ValidationAgent
 from .planner import PlanningAgent, ResearchTask, TaskPriority
+from .fundamental_analyzer import FundamentalAnalyzer
 
 # Import task execution system
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 from task_queue import TaskExecutor
+
+# Import financial ratios module
+from modules.financial_ratios import FinancialRatiosCalculator
 
 # Import decision history
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -84,6 +88,10 @@ class AgentState(TypedDict):
     planned_tasks: List[Dict[str, Any]]
     completed_task_ids: List[str]
     task_execution_results: Dict[str, Any]
+    # NEW: Fundamental analysis fields (Phase 3)
+    fundamental_analysis: Optional[Dict[str, Any]]
+    fundamental_score: float
+    financial_ratios: Optional[Dict[str, Any]]
 
 
 class SIGMAXOrchestrator:
@@ -178,6 +186,11 @@ class SIGMAXOrchestrator:
         )
         # Register task handlers for the researcher
         self._register_task_handlers()
+
+        # NEW: Initialize fundamental analyzer (Phase 3)
+        self.fundamental_analyzer = FundamentalAnalyzer(self.llm)
+        self.financial_ratios_calc = FinancialRatiosCalculator()
+        logger.info("✓ Fundamental analyzer initialized")
 
         # Initialize autonomous strategy engine (optional)
         self.autonomous_engine = None
@@ -283,6 +296,7 @@ class SIGMAXOrchestrator:
         workflow.add_node("planner", self._planner_node)      # NEW: Phase 2
         workflow.add_node("researcher", self._researcher_node)
         workflow.add_node("validator", self._validator_node)  # NEW: Phase 1
+        workflow.add_node("fundamental", self._fundamental_node)  # NEW: Phase 3
         workflow.add_node("bull", self._bull_node)
         workflow.add_node("bear", self._bear_node)
         workflow.add_node("analyzer", self._analyzer_node)
@@ -301,10 +315,13 @@ class SIGMAXOrchestrator:
             "validator",
             self._validation_router,
             {
-                "re_research": "researcher",  # Loop back if validation fails
-                "proceed": "bull"             # Continue if validation passes
+                "re_research": "researcher",      # Loop back if validation fails
+                "proceed": "fundamental"          # Continue to fundamental analysis
             }
         )
+
+        # NEW: Phase 3 - Fundamental analysis before debate
+        workflow.add_edge("fundamental", "bull")
 
         workflow.add_edge("bull", "bear")
         workflow.add_edge("bear", "analyzer")
@@ -609,6 +626,58 @@ Be skeptical and risk-focused. Cite specific concerns.
                 "validation_passed": False,
                 "data_gaps": [f"Validation error: {str(e)}"],
                 "validation_checks": {}
+            }
+
+    async def _fundamental_node(self, state: AgentState) -> AgentState:
+        """
+        NEW: Fundamental analyzer node - analyzes project fundamentals
+        Phase 3: Dexter-inspired deep fundamental analysis
+        """
+        logger.info(f"📊 Analyzing fundamentals for {state['symbol']}")
+
+        try:
+            # Perform fundamental analysis
+            fundamental_analysis = await self.fundamental_analyzer.analyze(
+                symbol=state["symbol"],
+                market_data=state.get("market_data", {})
+            )
+
+            # Calculate financial ratios
+            onchain_data = fundamental_analysis.get("onchain_fundamentals", {})
+            token_economics = fundamental_analysis.get("token_economics", {})
+
+            financial_ratios = self.financial_ratios_calc.calculate(
+                symbol=state["symbol"].split('/')[0],  # Base symbol
+                market_data=state.get("market_data", {}),
+                onchain_data=onchain_data,
+                fundamental_data=fundamental_analysis
+            )
+
+            # Generate summary
+            summary = fundamental_analysis.get("summary", "No fundamental data available")
+            ratios_summary = self.financial_ratios_calc.generate_summary(
+                financial_ratios,
+                state["symbol"].split('/')[0]
+            )
+
+            combined_summary = f"{summary}\nRatios: {ratios_summary}"
+
+            return {
+                "messages": [{"role": "fundamental", "content": combined_summary}],
+                "fundamental_analysis": fundamental_analysis,
+                "fundamental_score": fundamental_analysis.get("fundamental_score", 0.5),
+                "financial_ratios": financial_ratios.to_dict()
+            }
+
+        except Exception as e:
+            logger.error(f"Fundamental analysis error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "messages": [{"role": "fundamental", "content": f"Fundamental analysis failed: {e}"}],
+                "fundamental_analysis": {"error": str(e)},
+                "fundamental_score": 0.5,  # Neutral on failure
+                "financial_ratios": {}
             }
 
     async def _analyzer_node(self, state: AgentState) -> AgentState:
