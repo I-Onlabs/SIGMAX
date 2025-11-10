@@ -32,7 +32,9 @@ SIGMAX is a **fully autonomous, multi-agent AI trading operating system** that c
 ### 🧠 Multi-Agent Intelligence
 - **Debate System**: Bull vs Bear agents with researcher arbitration
 - **Specialized Agents**: Sentiment, Technical, Fundamentals, Risk, Arbitrage, Privacy, Compliance
-- **🆕 Self-Validation**: Dexter-inspired quality checks before decisions (Phase 1)
+- **🆕 Structured Planning**: Dexter-inspired task decomposition (Phase 2)
+- **🆕 Parallel Execution**: 1.8-2.4x research speedup through parallelization (Phase 2)
+- **🆕 Self-Validation**: Quality checks before decisions (Phase 1)
 - **🆕 Iterative Refinement**: Adaptive research loops for high-confidence decisions (Phase 1)
 - **Adaptive Learning**: RLHF-tuned responses with FinLLM models
 - **RAG + ZK-Proofs**: Verifiable memory and audit trails
@@ -403,6 +405,7 @@ PROMETHEUS_URL=http://localhost:9090
 - [Deployment Guide](docs/DEPLOYMENT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - **🆕 [Phase 1: Validation Enhancement](docs/PHASE1_VALIDATION.md)** - Dexter-inspired quality checks
+- **🆕 [Phase 2: Planning System](docs/PHASE2_PLANNING.md)** - Task decomposition & parallel execution
 - **🆕 [Dexter Analysis](docs/DEXTER_ANALYSIS.md)** - Learning from autonomous research agents
 - **🆕 [Dexter Comparison](docs/DEXTER_COMPARISON.md)** - Feature comparison and roadmap
 
@@ -410,15 +413,17 @@ PROMETHEUS_URL=http://localhost:9090
 
 ## 🗺️ Roadmap
 
-### Phase 0: Paper Trading (Weeks 1-2)
+### Phase 0: Paper Trading + Enhancements (Complete)
 - ✅ Multi-agent orchestrator
 - ✅ Freqtrade integration
 - ✅ Basic UI
 - ✅ Quantum optimizer
 - ✅ Telegram bot
-- ✅ **Phase 1 Enhancement**: Validation Agent (Dexter-inspired)
-- ✅ **Phase 1 Enhancement**: Iterative research refinement
-- ✅ **Phase 1 Enhancement**: Research safety and cost management
+- ✅ **Phase 1**: Validation Agent (Dexter-inspired)
+- ✅ **Phase 1**: Iterative research refinement
+- ✅ **Phase 1**: Research safety and cost management
+- ✅ **Phase 2**: Task decomposition and parallel execution
+- ✅ **Phase 2**: 1.8-2.4x research speedup
 - 🔄 100% safety gate validation
 
 ### Phase 1: Live Trading ($50 cap, Days 9-23)

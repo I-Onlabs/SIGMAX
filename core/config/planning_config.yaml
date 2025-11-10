@@ -1,0 +1,262 @@
+# SIGMAX Planning Configuration - Phase 2
+# Dexter-inspired task decomposition and parallel execution
+
+# =============================================================================
+# PLANNING SETTINGS
+# =============================================================================
+planning:
+  # Enable parallel task execution
+  enable_parallel_tasks: true
+
+  # Maximum number of tasks to run in parallel
+  max_parallel_tasks: 3
+
+  # Include optional/low-priority tasks
+  # Set to false for faster decisions with less thoroughness
+  include_optional_tasks: true
+
+  # Task timeout settings (seconds)
+  timeouts:
+    sentiment: 30      # News + social sentiment
+    onchain: 20        # On-chain metrics
+    technical: 15      # Technical indicators
+    macro: 20          # Macro factors
+    liquidity: 15      # Liquidity analysis
+    correlation: 15    # Correlation analysis
+    momentum: 10       # Momentum signals
+    patterns: 25       # Pattern matching
+    keywords: 15       # Keyword extraction
+
+  # Cost estimates (USD)
+  cost_estimates:
+    sentiment: 0.05
+    onchain: 0.03
+    technical: 0.02
+    macro: 0.03
+    liquidity: 0.02
+    correlation: 0.02
+    momentum: 0.02
+    patterns: 0.04
+    keywords: 0.02
+
+# =============================================================================
+# TASK EXECUTION SETTINGS
+# =============================================================================
+task_execution:
+  # Enable automatic retry on task failure
+  retry_failed_tasks: true
+
+  # Maximum retries per task
+  max_retries: 2
+
+  # Retry delay (seconds)
+  retry_delay: 1
+
+  # Skip failed optional tasks (continue without them)
+  skip_failed_optional: true
+
+  # Fail entire plan if critical task fails
+  fail_on_critical_error: false  # Still proceed for robustness
+
+# =============================================================================
+# RISK PROFILE PRESETS
+# =============================================================================
+
+# Conservative: Thorough research, all safety checks
+conservative:
+  planning:
+    enable_parallel_tasks: true
+    max_parallel_tasks: 4  # More parallelism for thoroughness
+    include_optional_tasks: true
+
+  # Additional tasks for conservative profile
+  additional_tasks:
+    - liquidity_analysis   # Check market depth
+    - correlation_analysis  # Portfolio correlation
+    - historical_patterns   # Pattern matching
+
+  # Stricter requirements
+  require_all_critical: true
+  min_data_sources: 5
+
+# Balanced: Standard research plan
+balanced:
+  planning:
+    enable_parallel_tasks: true
+    max_parallel_tasks: 3
+    include_optional_tasks: true
+
+  additional_tasks:
+    - historical_patterns
+
+  require_all_critical: true
+  min_data_sources: 4
+
+# Aggressive: Fast decisions, minimal optional tasks
+aggressive:
+  planning:
+    enable_parallel_tasks: true
+    max_parallel_tasks: 3
+    include_optional_tasks: false  # Skip optional tasks
+
+  # Focus on speed-critical tasks
+  additional_tasks:
+    - momentum_signals  # For aggressive trading
+
+  require_all_critical: false  # Can proceed with some missing
+  min_data_sources: 3
+
+# =============================================================================
+# TASK PRIORITY DEFINITIONS
+# =============================================================================
+task_priorities:
+  # CRITICAL: Must complete for valid decision
+  critical:
+    - sentiment_analysis
+    - onchain_metrics
+    - technical_analysis
+
+  # HIGH: Very important, significant impact
+  high:
+    - macro_factors
+    - liquidity_analysis
+    - momentum_signals
+
+  # MEDIUM: Important but not critical
+  medium:
+    - correlation_analysis
+    - historical_patterns
+
+  # LOW: Nice to have, minor impact
+  low:
+    - keyword_extraction
+    - social_trends
+
+# =============================================================================
+# DATA SOURCE MAPPINGS
+# =============================================================================
+data_sources:
+  # Map task types to required data sources
+  sentiment_analysis:
+    - news
+    - social
+    - fear_greed
+
+  onchain_metrics:
+    - onchain
+    - coingecko
+
+  technical_analysis:
+    - price_data
+    - volume_data
+
+  macro_factors:
+    - macro_data
+    - fear_greed
+
+  liquidity_analysis:
+    - orderbook
+    - volume_data
+
+  correlation_analysis:
+    - price_data
+
+  momentum_signals:
+    - price_data
+    - volume_data
+
+  historical_patterns:
+    - historical_data
+
+  keyword_extraction:
+    - news
+
+# =============================================================================
+# TASK DEPENDENCIES
+# =============================================================================
+dependencies:
+  # Define which tasks depend on others
+  correlation_analysis:
+    - technical_analysis  # Need technical data first
+
+  momentum_signals:
+    - technical_analysis  # Build on technical analysis
+
+  historical_patterns:
+    - technical_analysis  # Need patterns identified
+
+  keyword_extraction:
+    - sentiment_analysis  # Extract from sentiment data
+
+# =============================================================================
+# PERFORMANCE TUNING
+# =============================================================================
+performance:
+  # Parallel execution optimization
+  batch_size: 3  # Tasks per parallel batch
+
+  # Resource limits
+  max_concurrent_api_calls: 10
+  max_memory_per_task_mb: 100
+
+  # Timeouts
+  total_plan_timeout: 120  # 2 minutes max for entire plan
+  batch_timeout: 60        # 1 minute max per batch
+
+# =============================================================================
+# MONITORING & METRICS
+# =============================================================================
+monitoring:
+  # Track execution metrics
+  track_metrics:
+    - task_completion_time
+    - task_success_rate
+    - parallel_speedup
+    - cost_per_decision
+    - api_calls_per_task
+
+  # Alert thresholds
+  alerts:
+    # Alert if too many tasks failing
+    high_failure_rate: 0.3  # 30%
+
+    # Alert if plan taking too long
+    slow_execution: 90  # seconds
+
+    # Alert if costs too high
+    high_cost_per_decision: 0.30  # $0.30
+
+# =============================================================================
+# FEATURE FLAGS
+# =============================================================================
+features:
+  # Enable planning system (set false to skip planning)
+  enable_planning: true
+
+  # Enable parallel execution (set false for sequential)
+  enable_parallel: true
+
+  # Enable cost optimization
+  enable_cost_optimization: true
+
+  # Enable automatic task prioritization
+  enable_auto_prioritization: true
+
+  # Log detailed planning information
+  verbose_planning: true
+
+# =============================================================================
+# DEBUGGING
+# =============================================================================
+debug:
+  # Log execution plan before running
+  log_execution_plan: true
+
+  # Log individual task results
+  log_task_results: true
+
+  # Simulate task execution (for testing)
+  simulate_execution: false
+
+  # Dry run (plan but don't execute)
+  dry_run: false

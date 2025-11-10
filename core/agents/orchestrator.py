@@ -216,8 +216,9 @@ class SIGMAXOrchestrator:
         workflow = StateGraph(AgentState)
 
         # Add nodes for each agent
+        workflow.add_node("planner", self._planner_node)      # NEW: Phase 2
         workflow.add_node("researcher", self._researcher_node)
-        workflow.add_node("validator", self._validator_node)  # NEW
+        workflow.add_node("validator", self._validator_node)  # NEW: Phase 1
         workflow.add_node("bull", self._bull_node)
         workflow.add_node("bear", self._bear_node)
         workflow.add_node("analyzer", self._analyzer_node)
@@ -226,8 +227,9 @@ class SIGMAXOrchestrator:
         workflow.add_node("optimizer", self._optimizer_node)
         workflow.add_node("decide", self._decision_node)
 
-        # Define the flow (ENHANCED with validation)
-        workflow.set_entry_point("researcher")
+        # Define the flow (ENHANCED with planning + validation)
+        workflow.set_entry_point("planner")                   # NEW: Phase 2 - Start with planning
+        workflow.add_edge("planner", "researcher")            # NEW: Phase 2 - Plan → Research
         workflow.add_edge("researcher", "validator")  # NEW: Validate after research
 
         # NEW: Conditional edge after validation
@@ -263,6 +265,39 @@ class SIGMAXOrchestrator:
         self.app = workflow.compile(checkpointer=memory)
 
         logger.info("✓ Agent workflow initialized")
+
+    async def _planner_node(self, state: AgentState) -> AgentState:
+        """
+        NEW: Planner node - creates structured research plan
+        Phase 2: Dexter-inspired task decomposition
+        """
+        logger.info(f"📋 Planning research for {state['symbol']}")
+
+        try:
+            # Create research plan
+            plan = await self.planner.create_plan(
+                symbol=state["symbol"],
+                decision_context=state.get("market_data", {}),
+                risk_profile=self.risk_profile
+            )
+
+            return {
+                "messages": [{"role": "planner", "content": plan["summary"]}],
+                "research_plan": plan,
+                "planned_tasks": plan.get("tasks", []),
+                "completed_task_ids": [],
+                "task_execution_results": {}
+            }
+
+        except Exception as e:
+            logger.error(f"Planning error: {e}")
+            return {
+                "messages": [{"role": "planner", "content": f"Planning failed: {e}"}],
+                "research_plan": None,
+                "planned_tasks": [],
+                "completed_task_ids": [],
+                "task_execution_results": {}
+            }
 
     async def _researcher_node(self, state: AgentState) -> AgentState:
         """Research agent node - gathers market intelligence"""
@@ -739,7 +774,7 @@ Be skeptical and risk-focused. Cite specific concerns.
         if not market_data:
             market_data = await self.data_module.get_market_data(symbol)
 
-        # Initial state (ENHANCED with validation fields)
+        # Initial state (ENHANCED with planning + validation fields)
         initial_state = {
             "messages": [],
             "symbol": symbol,
@@ -756,12 +791,17 @@ Be skeptical and risk-focused. Cite specific concerns.
             "confidence": 0.0,
             "iteration": 0,
             "max_iterations": 3,  # INCREASED from 1 to 3 for iterative refinement
-            # NEW: Validation fields
+            # Phase 1: Validation fields
             "validation_score": 0.0,
             "validation_passed": False,
             "data_gaps": [],
             "validation_checks": {},
-            "research_data": None
+            "research_data": None,
+            # Phase 2: Planning fields
+            "research_plan": None,
+            "planned_tasks": [],
+            "completed_task_ids": [],
+            "task_execution_results": {}
         }
 
         # Run the workflow
@@ -802,14 +842,15 @@ Be skeptical and risk-focused. Cite specific concerns.
         logger.info("🛑 Orchestrator stopped")
 
     async def get_status(self) -> Dict[str, Any]:
-        """Get orchestrator status (ENHANCED with validation and safety)"""
+        """Get orchestrator status (ENHANCED with planning, validation, and safety)"""
         return {
             "running": self.running,
             "paused": self.paused,
             "risk_profile": self.risk_profile,
             "agents": {
+                "planner": "active",     # NEW: Phase 2
                 "researcher": "active",
-                "validator": "active",  # NEW
+                "validator": "active",   # NEW: Phase 1
                 "analyzer": "active",
                 "optimizer": "active",
                 "risk": "active",
@@ -820,9 +861,11 @@ Be skeptical and risk-focused. Cite specific concerns.
                 "finrobot": self.autonomous_engine.finrobot.using_finrobot if self.autonomous_engine else False,
                 "rdagent": self.autonomous_engine.rdagent.using_rdagent if self.autonomous_engine else False
             },
-            # NEW: Validation status
+            # Phase 2: Planning status
+            "planning": self.planner.get_config(),
+            # Phase 1: Validation status
             "validation": self.validator.get_config(),
-            # NEW: Research safety status
+            # Phase 1: Research safety status
             "research_safety": self.research_safety.get_safety_status()
         }
 
