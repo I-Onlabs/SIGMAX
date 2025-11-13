@@ -1,0 +1,160 @@
+# SIGMAX Validation and Research Safety Configuration
+# Inspired by Dexter's iterative research approach
+
+# =============================================================================
+# VALIDATION SETTINGS
+# =============================================================================
+validation:
+  # Minimum validation score required to proceed (0.0 - 1.0)
+  # Higher = stricter quality requirements
+  threshold: 0.7
+
+  # Maximum age of data in seconds before considered stale
+  # 300 = 5 minutes
+  data_freshness_seconds: 300
+
+  # Required data sources that must be present
+  # Missing sources will trigger re-research
+  required_data_sources:
+    - news
+    - social
+    - onchain
+    - technical
+
+  # Validation check weights (must sum to 1.0)
+  check_weights:
+    completeness: 0.35  # Are all required fields present?
+    data_quality: 0.25  # Is data valid and error-free?
+    freshness: 0.20     # Is data recent enough?
+    coverage: 0.20      # Are all sources available?
+
+# =============================================================================
+# ITERATION SETTINGS
+# =============================================================================
+iteration:
+  # Maximum research iterations per decision
+  # Increased from 1 to 3 for Dexter-style refinement
+  max_iterations: 3
+
+  # Maximum validation retry attempts
+  max_validation_retries: 3
+
+  # Confidence thresholds for iteration control
+  thresholds:
+    # Below this: trigger full iteration (re-research + re-analyze)
+    low_confidence: 0.5
+
+    # Above this: end iteration (high quality decision)
+    high_confidence: 0.85
+
+    # Validation score below this: refine research only
+    low_validation: 0.6
+
+    # Combined threshold: confidence + validation both must exceed
+    combined_min: 0.8
+
+# =============================================================================
+# RESEARCH SAFETY SETTINGS
+# =============================================================================
+research_safety:
+  # API Rate Limiting
+  api_limits:
+    # Maximum API calls per minute (all sources combined)
+    calls_per_minute: 30
+
+    # Maximum API calls per hour (all sources combined)
+    calls_per_hour: 500
+
+  # Cost Management
+  cost_limits:
+    # Maximum LLM cost per trading decision (USD)
+    max_per_decision: 0.50
+
+    # Maximum total research cost per day (USD)
+    max_per_day: 10.00
+
+  # Timeout Settings
+  timeouts:
+    # Maximum time allowed for research per decision (seconds)
+    max_research_time: 120  # 2 minutes
+
+    # Maximum time to wait for API rate limit (seconds)
+    rate_limit_wait: 60  # 1 minute
+
+# =============================================================================
+# RISK PROFILE OVERRIDES
+# =============================================================================
+# Different settings for different risk profiles
+
+conservative:
+  validation:
+    threshold: 0.8  # Stricter validation
+  iteration:
+    max_iterations: 5  # More iterations for thoroughness
+  research_safety:
+    cost_limits:
+      max_per_decision: 0.75  # Higher budget for quality
+
+balanced:
+  validation:
+    threshold: 0.7  # Standard validation
+  iteration:
+    max_iterations: 3  # Moderate iterations
+  research_safety:
+    cost_limits:
+      max_per_decision: 0.50  # Standard budget
+
+aggressive:
+  validation:
+    threshold: 0.6  # Looser validation
+  iteration:
+    max_iterations: 2  # Faster decisions
+  research_safety:
+    cost_limits:
+      max_per_decision: 0.30  # Lower budget for speed
+
+# =============================================================================
+# FEATURE FLAGS
+# =============================================================================
+features:
+  # Enable validation agent (set false to use legacy behavior)
+  enable_validation: true
+
+  # Enable iterative refinement (set false for single-pass)
+  enable_iteration: true
+
+  # Enable research safety limits
+  enable_safety_limits: true
+
+  # Log validation details for debugging
+  verbose_validation: true
+
+  # Automatically retry on validation failure
+  auto_retry_on_failure: true
+
+# =============================================================================
+# MONITORING & ALERTS
+# =============================================================================
+monitoring:
+  # Alert thresholds
+  alerts:
+    # Alert when validation score drops below this
+    low_validation_score: 0.5
+
+    # Alert when API usage exceeds this percentage
+    high_api_usage_pct: 80
+
+    # Alert when daily cost exceeds this percentage
+    high_cost_usage_pct: 75
+
+    # Alert when iterations exceed this count
+    high_iteration_count: 4
+
+  # Metrics to track
+  track_metrics:
+    - validation_scores
+    - iteration_counts
+    - api_call_rates
+    - research_costs
+    - data_freshness
+    - decision_quality

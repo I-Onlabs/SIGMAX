@@ -29,12 +29,23 @@ from modules.protocols import (
     RLModuleProtocol,
     ArbitrageModuleProtocol
 )
+from modules.research_safety import ResearchSafety
 
 from .researcher import ResearcherAgent
 from .analyzer import AnalyzerAgent
 from .optimizer import OptimizerAgent
 from .risk import RiskAgent
 from .privacy import PrivacyAgent
+from .validator import ValidationAgent
+from .planner import PlanningAgent, ResearchTask, TaskPriority
+from .fundamental_analyzer import FundamentalAnalyzer
+
+# Import task execution system
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
+from task_queue import TaskExecutor
+
+# Import financial ratios module
+from modules.financial_ratios import FinancialRatiosCalculator
 
 # Import decision history
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
@@ -66,6 +77,21 @@ class AgentState(TypedDict):
     confidence: float
     iteration: int
     max_iterations: int
+    # NEW: Validation fields
+    validation_score: float
+    validation_passed: bool
+    data_gaps: List[str]
+    validation_checks: Dict[str, Any]
+    research_data: Optional[Dict[str, Any]]
+    # NEW: Planning fields (Phase 2)
+    research_plan: Optional[Dict[str, Any]]
+    planned_tasks: List[Dict[str, Any]]
+    completed_task_ids: List[str]
+    task_execution_results: Dict[str, Any]
+    # NEW: Fundamental analysis fields (Phase 3)
+    fundamental_analysis: Optional[Dict[str, Any]]
+    fundamental_score: float
+    financial_ratios: Optional[Dict[str, Any]]
 
 
 class SIGMAXOrchestrator:
@@ -125,6 +151,47 @@ class SIGMAXOrchestrator:
         self.risk_agent = RiskAgent(self.llm, compliance_module)
         self.privacy_agent = PrivacyAgent(self.llm)
 
+        # NEW: Initialize validation agent
+        validation_config = {
+            'validation_threshold': 0.7,
+            'data_freshness_seconds': 300,  # 5 minutes
+            'required_data_sources': ['news', 'social', 'onchain', 'technical']
+        }
+        self.validator = ValidationAgent(self.llm, config=validation_config)
+
+        # NEW: Initialize research safety module
+        safety_config = {
+            'max_research_iterations': 5,
+            'max_api_calls_per_minute': 30,
+            'max_llm_cost_per_decision': 0.50,
+            'max_daily_research_cost': 10.0,
+            'data_freshness_threshold': 300,
+            'max_research_time_seconds': 120
+        }
+        self.research_safety = ResearchSafety(config=safety_config)
+
+        # NEW: Initialize planning agent (Phase 2)
+        planning_config = {
+            'enable_parallel_tasks': True,
+            'max_parallel_tasks': 3,
+            'include_optional_tasks': risk_profile != 'aggressive'  # Skip optional for aggressive
+        }
+        self.planner = PlanningAgent(self.llm, config=planning_config)
+
+        # NEW: Initialize task executor for parallel execution (Phase 2)
+        self.task_executor = TaskExecutor(
+            max_parallel=planning_config['max_parallel_tasks'],
+            retry_failed=True,
+            max_retries=2
+        )
+        # Register task handlers for the researcher
+        self._register_task_handlers()
+
+        # NEW: Initialize fundamental analyzer (Phase 3)
+        self.fundamental_analyzer = FundamentalAnalyzer(self.llm)
+        self.financial_ratios_calc = FinancialRatiosCalculator()
+        logger.info("✓ Fundamental analyzer initialized")
+
         # Initialize autonomous strategy engine (optional)
         self.autonomous_engine = None
         if enable_autonomous_engine and AUTONOMOUS_ENGINE_AVAILABLE:
@@ -167,6 +234,57 @@ class SIGMAXOrchestrator:
 
         return llm
 
+    def _register_task_handlers(self):
+        """
+        Register task handlers for parallel execution
+        Maps task data sources to execution functions
+        """
+        # Register handler for news/sentiment tasks
+        async def sentiment_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle sentiment analysis tasks"""
+            symbol = context.get('symbol', '')
+            news_data = await self.researcher._get_news_sentiment(symbol)
+            social_data = await self.researcher._get_social_sentiment(symbol)
+            return {
+                'news': news_data,
+                'social': social_data,
+                'sentiment': (news_data.get('score', 0.0) + social_data.get('score', 0.0)) / 2
+            }
+
+        # Register handler for on-chain metrics
+        async def onchain_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle on-chain metrics tasks"""
+            symbol = context.get('symbol', '')
+            return await self.researcher._get_onchain_metrics(symbol)
+
+        # Register handler for technical analysis
+        async def technical_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle technical analysis tasks"""
+            # Use existing market data or fetch new
+            market_data = context.get('market_data', {})
+            return {
+                'price': market_data.get('current_price', 0),
+                'volume': market_data.get('volume', 0),
+                'indicators': market_data.get('indicators', {})
+            }
+
+        # Register handler for macro factors
+        async def macro_handler(task: ResearchTask, context: Dict[str, Any]):
+            """Handle macro factor analysis"""
+            return await self.researcher._get_macro_factors()
+
+        # Register handlers with task executor
+        self.task_executor.register_handler('news', sentiment_handler)
+        self.task_executor.register_handler('social', sentiment_handler)
+        self.task_executor.register_handler('fear_greed', sentiment_handler)
+        self.task_executor.register_handler('onchain', onchain_handler)
+        self.task_executor.register_handler('coingecko', onchain_handler)
+        self.task_executor.register_handler('price_data', technical_handler)
+        self.task_executor.register_handler('volume_data', technical_handler)
+        self.task_executor.register_handler('macro_data', macro_handler)
+
+        logger.info("✓ Task handlers registered for parallel execution")
+
     async def initialize(self):
         """Initialize the LangGraph workflow"""
         logger.info("Initializing agent workflow...")
@@ -175,7 +293,10 @@ class SIGMAXOrchestrator:
         workflow = StateGraph(AgentState)
 
         # Add nodes for each agent
+        workflow.add_node("planner", self._planner_node)      # NEW: Phase 2
         workflow.add_node("researcher", self._researcher_node)
+        workflow.add_node("validator", self._validator_node)  # NEW: Phase 1
+        workflow.add_node("fundamental", self._fundamental_node)  # NEW: Phase 3
         workflow.add_node("bull", self._bull_node)
         workflow.add_node("bear", self._bear_node)
         workflow.add_node("analyzer", self._analyzer_node)
@@ -184,9 +305,24 @@ class SIGMAXOrchestrator:
         workflow.add_node("optimizer", self._optimizer_node)
         workflow.add_node("decide", self._decision_node)
 
-        # Define the flow
-        workflow.set_entry_point("researcher")
-        workflow.add_edge("researcher", "bull")
+        # Define the flow (ENHANCED with planning + validation)
+        workflow.set_entry_point("planner")                   # NEW: Phase 2 - Start with planning
+        workflow.add_edge("planner", "researcher")            # NEW: Phase 2 - Plan → Research
+        workflow.add_edge("researcher", "validator")  # NEW: Validate after research
+
+        # NEW: Conditional edge after validation
+        workflow.add_conditional_edges(
+            "validator",
+            self._validation_router,
+            {
+                "re_research": "researcher",      # Loop back if validation fails
+                "proceed": "fundamental"          # Continue to fundamental analysis
+            }
+        )
+
+        # NEW: Phase 3 - Fundamental analysis before debate
+        workflow.add_edge("fundamental", "bull")
+
         workflow.add_edge("bull", "bear")
         workflow.add_edge("bear", "analyzer")
         workflow.add_edge("analyzer", "risk")
@@ -194,12 +330,13 @@ class SIGMAXOrchestrator:
         workflow.add_edge("privacy", "optimizer")
         workflow.add_edge("optimizer", "decide")
 
-        # Add conditional edge from decide
+        # ENHANCED: Conditional edge from decide with validation awareness
         workflow.add_conditional_edges(
             "decide",
-            self._should_continue,
+            self._should_continue_enhanced,
             {
-                "continue": "researcher",  # Loop back for another iteration
+                "iterate": "researcher",      # Full loop for low confidence
+                "refine_research": "researcher",  # Re-research only
                 "end": END
             }
         )
@@ -210,27 +347,162 @@ class SIGMAXOrchestrator:
 
         logger.info("✓ Agent workflow initialized")
 
-    async def _researcher_node(self, state: AgentState) -> AgentState:
-        """Research agent node - gathers market intelligence"""
-        logger.info(f"🔍 Researcher analyzing {state['symbol']}")
+    async def _planner_node(self, state: AgentState) -> AgentState:
+        """
+        NEW: Planner node - creates structured research plan
+        Phase 2: Dexter-inspired task decomposition
+        """
+        logger.info(f"📋 Planning research for {state['symbol']}")
 
         try:
-            research = await self.researcher.research(
+            # Create research plan
+            plan = await self.planner.create_plan(
                 symbol=state["symbol"],
-                market_data=state["market_data"]
+                decision_context=state.get("market_data", {}),
+                risk_profile=self.risk_profile
             )
 
             return {
-                "messages": [{"role": "researcher", "content": research["summary"]}],
-                "research_summary": research["summary"],
-                "sentiment_score": research.get("sentiment", 0.0)
+                "messages": [{"role": "planner", "content": plan["summary"]}],
+                "research_plan": plan,
+                "planned_tasks": plan.get("tasks", []),
+                "completed_task_ids": [],
+                "task_execution_results": {}
             }
 
         except Exception as e:
+            logger.error(f"Planning error: {e}")
+            return {
+                "messages": [{"role": "planner", "content": f"Planning failed: {e}"}],
+                "research_plan": None,
+                "planned_tasks": [],
+                "completed_task_ids": [],
+                "task_execution_results": {}
+            }
+
+    async def _researcher_node(self, state: AgentState) -> AgentState:
+        """
+        Research agent node - gathers market intelligence
+        ENHANCED: Executes planned tasks in parallel if plan exists (Phase 2)
+        """
+        logger.info(f"🔍 Researcher analyzing {state['symbol']}")
+
+        try:
+            # Check if we have a research plan to execute
+            research_plan = state.get('research_plan')
+
+            if research_plan and research_plan.get('tasks'):
+                # Phase 2: Execute planned tasks in parallel
+                logger.info(f"📋 Executing {len(research_plan['tasks'])} planned tasks")
+
+                # Convert task dicts to ResearchTask objects
+                tasks = []
+                for task_dict in research_plan['tasks']:
+                    task = ResearchTask(
+                        task_id=task_dict['task_id'],
+                        name=task_dict['name'],
+                        description=task_dict['description'],
+                        priority=TaskPriority(task_dict['priority']),
+                        data_sources=task_dict['data_sources'],
+                        dependencies=task_dict.get('dependencies', []),
+                        estimated_cost=task_dict.get('estimated_cost', 0.0),
+                        timeout_seconds=task_dict.get('timeout_seconds', 30)
+                    )
+                    tasks.append(task)
+
+                # Execute plan with parallel execution
+                execution_summary = await self.task_executor.execute_plan(
+                    tasks=tasks,
+                    execution_order=research_plan['execution_order'],
+                    context={
+                        'symbol': state['symbol'],
+                        'market_data': state.get('market_data', {})
+                    }
+                )
+
+                # Aggregate results from completed tasks
+                task_results = execution_summary.get('task_results', {})
+                research_data = {
+                    'news': {},
+                    'social': {},
+                    'onchain': {},
+                    'macro': {},
+                    'sentiment': 0.0,
+                    'timestamp': datetime.now().isoformat()
+                }
+
+                # Extract data from task results
+                sentiment_scores = []
+                for task_id, result in task_results.items():
+                    if result.get('status') == 'completed':
+                        data = result.get('result', {})
+                        if 'news' in data:
+                            research_data['news'] = data['news']
+                        if 'social' in data:
+                            research_data['social'] = data['social']
+                        if 'sentiment' in data:
+                            sentiment_scores.append(data['sentiment'])
+                        # Merge other data types
+                        for key in ['onchain', 'macro', 'price', 'volume']:
+                            if key in data:
+                                research_data[key] = data.get(key, {})
+
+                # Calculate aggregate sentiment
+                if sentiment_scores:
+                    research_data['sentiment'] = sum(sentiment_scores) / len(sentiment_scores)
+
+                # Generate summary from aggregated results
+                summary = f"""Research completed using parallel execution:
+- Completed: {execution_summary.get('completed', 0)}/{execution_summary.get('total_tasks', 0)} tasks
+- Sentiment: {research_data['sentiment']:.2f}
+- Duration: {execution_summary.get('duration_seconds', 0):.1f}s
+- Speedup: {research_plan.get('speedup', 1.0):.1f}x
+"""
+
+                logger.info(f"✓ Parallel research completed: {execution_summary['completed']}/{execution_summary['total_tasks']} tasks")
+
+                return {
+                    "messages": [{"role": "researcher", "content": summary}],
+                    "research_summary": summary,
+                    "sentiment_score": research_data['sentiment'],
+                    "research_data": research_data,
+                    "task_execution_results": task_results,
+                    "completed_task_ids": list(task_results.keys())
+                }
+
+            else:
+                # Fallback: Use traditional sequential research (backward compatibility)
+                logger.info("📝 Using traditional sequential research (no plan)")
+                research = await self.researcher.research(
+                    symbol=state["symbol"],
+                    market_data=state["market_data"]
+                )
+
+                # NEW: Capture full research data for validation
+                research_data = {
+                    'news': research.get("news", {}),
+                    'social': research.get("social", {}),
+                    'onchain': research.get("onchain", {}),
+                    'macro': research.get("macro", {}),
+                    'sentiment': research.get("sentiment", 0.0),
+                    'timestamp': research.get("timestamp", datetime.now().isoformat())
+                }
+
+                return {
+                    "messages": [{"role": "researcher", "content": research["summary"]}],
+                    "research_summary": research["summary"],
+                    "sentiment_score": research.get("sentiment", 0.0),
+                    "research_data": research_data  # NEW: Full data for validation
+                }
+
+        except Exception as e:
             logger.error(f"Researcher error: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 "messages": [{"role": "researcher", "content": f"Research failed: {e}"}],
-                "research_summary": "Unable to complete research"
+                "research_summary": "Unable to complete research",
+                "research_data": {"error": str(e)}  # NEW: Capture error
             }
 
     async def _bull_node(self, state: AgentState) -> AgentState:
@@ -316,6 +588,96 @@ Be skeptical and risk-focused. Cite specific concerns.
             return {
                 "messages": [{"role": "bear", "content": f"Bear agent failed: {e}"}],
                 "bear_argument": "Unable to generate bear case"
+            }
+
+    async def _validator_node(self, state: AgentState) -> AgentState:
+        """
+        NEW: Validator node - checks research quality and completeness
+        Inspired by Dexter's validation approach
+        """
+        logger.info(f"✅ Validating research for {state['symbol']}")
+
+        try:
+            # Add technical analysis to research data if available
+            research_data = state.get("research_data", {})
+            if state.get("technical_analysis"):
+                research_data["technical"] = {"summary": state["technical_analysis"]}
+
+            validation = await self.validator.validate(
+                research_summary=state.get("research_summary"),
+                technical_analysis=state.get("technical_analysis"),
+                market_data=state.get("market_data"),
+                research_data=research_data
+            )
+
+            return {
+                "messages": [{"role": "validator", "content": validation["summary"]}],
+                "validation_score": validation["score"],
+                "validation_passed": validation["passed"],
+                "data_gaps": validation.get("gaps", []),
+                "validation_checks": validation.get("checks", {})
+            }
+
+        except Exception as e:
+            logger.error(f"Validation error: {e}")
+            return {
+                "messages": [{"role": "validator", "content": f"Validation failed: {e}"}],
+                "validation_score": 0.0,
+                "validation_passed": False,
+                "data_gaps": [f"Validation error: {str(e)}"],
+                "validation_checks": {}
+            }
+
+    async def _fundamental_node(self, state: AgentState) -> AgentState:
+        """
+        NEW: Fundamental analyzer node - analyzes project fundamentals
+        Phase 3: Dexter-inspired deep fundamental analysis
+        """
+        logger.info(f"📊 Analyzing fundamentals for {state['symbol']}")
+
+        try:
+            # Perform fundamental analysis
+            fundamental_analysis = await self.fundamental_analyzer.analyze(
+                symbol=state["symbol"],
+                market_data=state.get("market_data", {})
+            )
+
+            # Calculate financial ratios
+            onchain_data = fundamental_analysis.get("onchain_fundamentals", {})
+            token_economics = fundamental_analysis.get("token_economics", {})
+
+            financial_ratios = self.financial_ratios_calc.calculate(
+                symbol=state["symbol"].split('/')[0],  # Base symbol
+                market_data=state.get("market_data", {}),
+                onchain_data=onchain_data,
+                fundamental_data=fundamental_analysis
+            )
+
+            # Generate summary
+            summary = fundamental_analysis.get("summary", "No fundamental data available")
+            ratios_summary = self.financial_ratios_calc.generate_summary(
+                financial_ratios,
+                state["symbol"].split('/')[0]
+            )
+
+            combined_summary = f"{summary}\nRatios: {ratios_summary}"
+
+            return {
+                "messages": [{"role": "fundamental", "content": combined_summary}],
+                "fundamental_analysis": fundamental_analysis,
+                "fundamental_score": fundamental_analysis.get("fundamental_score", 0.5),
+                "financial_ratios": financial_ratios.to_dict()
+            }
+
+        except Exception as e:
+            logger.error(f"Fundamental analysis error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "messages": [{"role": "fundamental", "content": f"Fundamental analysis failed: {e}"}],
+                "fundamental_analysis": {"error": str(e)},
+                "fundamental_score": 0.5,  # Neutral on failure
+                "financial_ratios": {}
             }
 
     async def _analyzer_node(self, state: AgentState) -> AgentState:
@@ -479,17 +841,76 @@ Be skeptical and risk-focused. Cite specific concerns.
             "iteration": state.get("iteration", 0) + 1
         }
 
-    def _should_continue(self, state: AgentState) -> str:
-        """Decide whether to continue iterating or end"""
+    def _validation_router(self, state: AgentState) -> str:
+        """
+        NEW: Route based on validation results
+        Implements Dexter-style iterative refinement
+        """
+        validation_passed = state.get("validation_passed", False)
+        data_gaps = state.get("data_gaps", [])
         iteration = state.get("iteration", 0)
-        max_iterations = state.get("max_iterations", 1)
-        confidence = state.get("confidence", 0.0)
+        max_iterations = state.get("max_iterations", 3)  # Increased from 1
 
-        # End if max iterations reached or high confidence
-        if iteration >= max_iterations or confidence > 0.8:
+        # If validation passed OR max iterations reached, proceed
+        if validation_passed:
+            logger.info("✓ Validation passed - proceeding to debate")
+            return "proceed"
+
+        if iteration >= max_iterations:
+            logger.warning(f"⚠ Max iterations ({max_iterations}) reached - proceeding anyway")
+            return "proceed"
+
+        # If data gaps exist and we have iterations left, re-research
+        if data_gaps and iteration < max_iterations:
+            logger.info(f"🔄 Data gaps detected ({len(data_gaps)}), re-researching...")
+            for i, gap in enumerate(data_gaps[:3], 1):
+                logger.info(f"   {i}. {gap}")
+            return "re_research"
+
+        # Default: proceed
+        return "proceed"
+
+    def _should_continue_enhanced(self, state: AgentState) -> str:
+        """
+        ENHANCED: Decide whether to continue iterating or end
+        Now considers validation scores alongside confidence
+        """
+        iteration = state.get("iteration", 0)
+        max_iterations = state.get("max_iterations", 3)  # Increased from 1
+        confidence = state.get("confidence", 0.0)
+        validation_score = state.get("validation_score", 0.0)
+
+        # End conditions
+        if iteration >= max_iterations:
+            logger.info(f"📊 Max iterations ({max_iterations}) reached - ending")
             return "end"
 
-        return "continue"
+        # High confidence AND high validation = end
+        if confidence > 0.85 and validation_score > 0.8:
+            logger.info(f"✅ High confidence ({confidence:.2%}) and quality ({validation_score:.2%}) - ending")
+            return "end"
+
+        # Low confidence = full iteration
+        if confidence < 0.5:
+            logger.info(f"🔄 Low confidence ({confidence:.2%}) - full iteration")
+            return "iterate"
+
+        # Low validation score = refine research
+        if validation_score < 0.6:
+            logger.info(f"🔄 Low validation score ({validation_score:.2%}) - refining research")
+            return "refine_research"
+
+        # Moderate confidence and validation = end
+        logger.info(f"✓ Moderate confidence ({confidence:.2%}) and quality ({validation_score:.2%}) - ending")
+        return "end"
+
+    # Keep old function for backward compatibility
+    def _should_continue(self, state: AgentState) -> str:
+        """
+        DEPRECATED: Use _should_continue_enhanced instead
+        Kept for backward compatibility
+        """
+        return self._should_continue_enhanced(state)
 
     def _extract_score(self, argument: str) -> float:
         """
@@ -576,7 +997,7 @@ Be skeptical and risk-focused. Cite specific concerns.
         if not market_data:
             market_data = await self.data_module.get_market_data(symbol)
 
-        # Initial state
+        # Initial state (ENHANCED with planning + validation fields)
         initial_state = {
             "messages": [],
             "symbol": symbol,
@@ -592,7 +1013,18 @@ Be skeptical and risk-focused. Cite specific concerns.
             "final_decision": None,
             "confidence": 0.0,
             "iteration": 0,
-            "max_iterations": 1
+            "max_iterations": 3,  # INCREASED from 1 to 3 for iterative refinement
+            # Phase 1: Validation fields
+            "validation_score": 0.0,
+            "validation_passed": False,
+            "data_gaps": [],
+            "validation_checks": {},
+            "research_data": None,
+            # Phase 2: Planning fields
+            "research_plan": None,
+            "planned_tasks": [],
+            "completed_task_ids": [],
+            "task_execution_results": {}
         }
 
         # Run the workflow
@@ -633,13 +1065,15 @@ Be skeptical and risk-focused. Cite specific concerns.
         logger.info("🛑 Orchestrator stopped")
 
     async def get_status(self) -> Dict[str, Any]:
-        """Get orchestrator status"""
+        """Get orchestrator status (ENHANCED with planning, validation, and safety)"""
         return {
             "running": self.running,
             "paused": self.paused,
             "risk_profile": self.risk_profile,
             "agents": {
+                "planner": "active",     # NEW: Phase 2
                 "researcher": "active",
+                "validator": "active",   # NEW: Phase 1
                 "analyzer": "active",
                 "optimizer": "active",
                 "risk": "active",
@@ -649,7 +1083,13 @@ Be skeptical and risk-focused. Cite specific concerns.
                 "enabled": self.autonomous_engine is not None,
                 "finrobot": self.autonomous_engine.finrobot.using_finrobot if self.autonomous_engine else False,
                 "rdagent": self.autonomous_engine.rdagent.using_rdagent if self.autonomous_engine else False
-            }
+            },
+            # Phase 2: Planning status
+            "planning": self.planner.get_config(),
+            # Phase 1: Validation status
+            "validation": self.validator.get_config(),
+            # Phase 1: Research safety status
+            "research_safety": self.research_safety.get_safety_status()
         }
 
     async def analyze_with_autonomous_engine(
