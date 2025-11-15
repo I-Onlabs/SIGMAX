@@ -226,6 +226,14 @@ class TestResearchTask:
 class TestTaskExecutor:
     """Test TaskExecutor functionality"""
 
+    def test_invalid_parallel_configuration(self):
+        """Invalid parallel limits should raise informative errors."""
+        with pytest.raises(ValueError):
+            TaskExecutor(max_parallel=0)
+
+        with pytest.raises(TypeError):
+            TaskExecutor(max_parallel="2")
+
     @pytest.fixture
     def executor(self):
         """Create a TaskExecutor for testing"""
@@ -272,6 +280,49 @@ class TestTaskExecutor:
 
         # Parallel execution should be faster than 3 seconds (3 tasks * 1s each)
         assert duration < 2.5  # Some overhead allowed
+
+    @pytest.mark.asyncio
+    async def test_execute_batch_respects_max_parallel(self):
+        """Ensure batches honor the configured parallel limit."""
+        executor = TaskExecutor(max_parallel=2)
+        concurrency_state = {
+            'current': 0,
+            'peak': 0
+        }
+        lock = asyncio.Lock()
+
+        async def tracked_handler(task, context):
+            async with lock:
+                concurrency_state['current'] += 1
+                concurrency_state['peak'] = max(
+                    concurrency_state['peak'],
+                    concurrency_state['current']
+                )
+            try:
+                await asyncio.sleep(0.1)
+                return {'result': 'ok'}
+            finally:
+                async with lock:
+                    concurrency_state['current'] -= 1
+
+        executor.register_handler('concurrency_test', tracked_handler)
+
+        tasks = [
+            ResearchTask(
+                task_id=f'parallel_{i}',
+                name=f'Parallel Task {i}',
+                description='Ensure concurrency control',
+                priority=TaskPriority.MEDIUM,
+                data_sources=['concurrency_test'],
+                timeout_seconds=1
+            )
+            for i in range(4)
+        ]
+
+        results = await executor._execute_batch(tasks, {})
+
+        assert len(results) == 4
+        assert concurrency_state['peak'] <= executor.max_parallel
 
     @pytest.mark.asyncio
     async def test_execute_plan(self, executor):
