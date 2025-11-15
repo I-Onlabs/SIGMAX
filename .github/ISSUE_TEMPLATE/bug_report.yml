@@ -1,0 +1,180 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in SIGMAX
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the information below to help us reproduce and fix the issue.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-flight Checklist
+      description: Please confirm the following before submitting
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I am using the latest version of SIGMAX
+          required: true
+        - label: I have reviewed the [Troubleshooting Guide](https://github.com/I-Onlabs/SIGMAX/blob/main/docs/TROUBLESHOOTING.md)
+          required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Critical (System crash, data loss, security vulnerability)
+        - High (Major feature broken, trading halted)
+        - Medium (Feature partially working, workaround exists)
+        - Low (Minor issue, cosmetic problem)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - Core Orchestrator
+        - Multi-Agent System
+        - Quantum Module
+        - RL Module
+        - Data Module
+        - Execution Module
+        - Arbitrage Module
+        - Compliance Module
+        - API Backend
+        - Web UI
+        - Telegram Bot
+        - Docker/Deployment
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: |
+        Example: The orchestrator crashes when analyzing BTC/USDT with error "KeyError: 'price'"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Start SIGMAX in paper trading mode
+        2. Run command `/analyze BTC/USDT`
+        3. Wait for 30 seconds
+        4. Error occurs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: The system should analyze BTC/USDT and return a trading recommendation
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: |
+        System crashed with error:
+        ```
+        KeyError: 'price' in core/agents/analyzer.py line 142
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs
+      description: Please paste relevant error logs or stack traces
+      placeholder: |
+        ```
+        Paste logs here...
+        ```
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Information about your environment
+      placeholder: |
+        - OS: Ubuntu 22.04
+        - Python Version: 3.11.5
+        - SIGMAX Version: 1.0.0
+        - Docker/Podman Version: 24.0.6
+        - Trading Mode: paper
+        - Risk Profile: conservative
+      value: |
+        - OS:
+        - Python Version:
+        - SIGMAX Version:
+        - Docker/Podman Version:
+        - Trading Mode:
+        - Risk Profile:
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: Relevant configuration settings (REMOVE SENSITIVE DATA like API keys!)
+      placeholder: |
+        ```yaml
+        # .env (sanitized)
+        TRADING_MODE=paper
+        RISK_PROFILE=conservative
+        QUANTUM_ENABLED=true
+        ```
+      render: yaml
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem
+      placeholder: |
+        - This started happening after upgrading from v0.9.0
+        - Only occurs with certain trading pairs
+        - System load is high (90%+ CPU)
+    validations:
+      required: false
+
+  - type: dropdown
+    id: willing_to_fix
+    attributes:
+      label: Willing to Submit PR
+      description: Are you willing to submit a pull request to fix this bug?
+      options:
+        - "Yes"
+        - "No"
+        - "Need guidance"
+    validations:
+      required: false
