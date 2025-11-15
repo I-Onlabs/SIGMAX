@@ -41,6 +41,12 @@ class TaskExecutor:
             retry_failed: Whether to retry failed tasks
             max_retries: Maximum number of retries per task
         """
+        if max_parallel is not None:
+            if not isinstance(max_parallel, int):
+                raise TypeError("max_parallel must be an integer or None")
+            if max_parallel <= 0:
+                raise ValueError("max_parallel must be a positive integer")
+
         self.max_parallel = max_parallel
         self.retry_failed = retry_failed
         self.max_retries = max_retries
@@ -160,13 +166,28 @@ class TaskExecutor:
         Returns:
             Dict mapping task_id to result
         """
+        if not batch_tasks:
+            return {}
+
         # Create coroutines for each task
         coroutines = []
         task_ids = []
 
-        for task in batch_tasks:
-            task_ids.append(task.task_id)
-            coroutines.append(self._execute_task(task, context))
+        if self.max_parallel is not None and self.max_parallel < len(batch_tasks):
+            semaphore = asyncio.Semaphore(max(self.max_parallel, 1))
+
+            async def run_with_limit(task: ResearchTask):
+                """Execute task while respecting the parallel limit."""
+                async with semaphore:
+                    return await self._execute_task(task, context)
+
+            for task in batch_tasks:
+                task_ids.append(task.task_id)
+                coroutines.append(run_with_limit(task))
+        else:
+            for task in batch_tasks:
+                task_ids.append(task.task_id)
+                coroutines.append(self._execute_task(task, context))
 
         # Execute in parallel with timeout
         try:
