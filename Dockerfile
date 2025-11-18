@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image
 
 # Stage 1: Build stage
-FROM python:3.11-slim AS builder
+FROM python:3.14-slim AS builder
 
 LABEL maintainer="SIGMAX Team"
 LABEL description="SIGMAX Autonomous Trading Platform"
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 2: Runtime stage
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
