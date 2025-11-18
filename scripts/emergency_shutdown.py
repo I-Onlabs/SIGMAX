@@ -84,19 +84,65 @@ class EmergencyShutdown:
         self.log("Canceling all open orders...", "CRITICAL")
 
         try:
-            # This would need to integrate with actual exchange API
-            # For now, log the intent
-            self.log("Order cancellation would be triggered here", "WARNING")
-            self.log("TODO: Implement exchange order cancellation", "WARNING")
+            import ccxt.async_support as ccxt
+            import os
 
-            # Placeholder for actual implementation:
-            # import ccxt
-            # exchange = ccxt.binance({...})
-            # open_orders = exchange.fetch_open_orders()
-            # for order in open_orders:
-            #     exchange.cancel_order(order['id'])
+            # Load exchange credentials from environment
+            exchanges_config = {
+                'binance': {
+                    'apiKey': os.getenv('BINANCE_API_KEY', ''),
+                    'secret': os.getenv('BINANCE_API_SECRET', ''),
+                    'enableRateLimit': True
+                },
+                'coinbase': {
+                    'apiKey': os.getenv('COINBASE_API_KEY', ''),
+                    'secret': os.getenv('COINBASE_API_SECRET', ''),
+                    'enableRateLimit': True
+                }
+            }
 
-            self.log("✓ All orders cancelled (PLACEHOLDER)", "SUCCESS")
+            total_cancelled = 0
+
+            for exchange_name, config in exchanges_config.items():
+                # Skip if no credentials configured
+                if not config['apiKey']:
+                    self.log(f"Skipping {exchange_name} (no credentials)", "INFO")
+                    continue
+
+                try:
+                    # Initialize exchange
+                    exchange_class = getattr(ccxt, exchange_name)
+                    exchange = exchange_class(config)
+
+                    # Fetch all open orders
+                    open_orders = await exchange.fetch_open_orders()
+
+                    self.log(
+                        f"Found {len(open_orders)} open orders on {exchange_name}",
+                        "INFO"
+                    )
+
+                    # Cancel each order
+                    for order in open_orders:
+                        try:
+                            await exchange.cancel_order(order['id'], order['symbol'])
+                            self.log(
+                                f"Cancelled {order['symbol']} order {order['id']}",
+                                "SUCCESS"
+                            )
+                            total_cancelled += 1
+                        except Exception as e:
+                            self.log(
+                                f"Failed to cancel order {order['id']}: {e}",
+                                "ERROR"
+                            )
+
+                    await exchange.close()
+
+                except Exception as e:
+                    self.log(f"Failed to process {exchange_name}: {e}", "ERROR")
+
+            self.log(f"✓ Cancelled {total_cancelled} orders total", "SUCCESS")
 
         except Exception as e:
             self.log(f"Failed to cancel orders: {e}", "ERROR")
@@ -106,14 +152,38 @@ class EmergencyShutdown:
         self.log("Pausing trading system...", "CRITICAL")
 
         try:
-            # Set pause flag (would integrate with actual safety enforcer)
+            import redis.asyncio as redis
+
+            # Set pause flag file
             pause_file = self.project_root / ".emergency_pause"
             pause_file.write_text(f"Emergency pause activated at {datetime.utcnow().isoformat()}\n")
 
             self.log(f"✓ Pause flag set: {pause_file}", "SUCCESS")
 
-            # TODO: Send pause signal to running services
-            self.log("TODO: Send pause signal to services", "WARNING")
+            # Send pause signal to running services via Redis
+            try:
+                redis_client = redis.from_url(
+                    os.getenv('REDIS_URL', 'redis://localhost:6379'),
+                    decode_responses=True
+                )
+
+                # Set pause flag in Redis for all services to read
+                await redis_client.set('sigmax:emergency_pause', '1', ex=86400)  # 24h expiry
+
+                # Publish pause event to all services
+                await redis_client.publish('sigmax:control', json.dumps({
+                    'command': 'pause',
+                    'reason': 'emergency_shutdown',
+                    'timestamp': datetime.utcnow().isoformat()
+                }))
+
+                self.log("✓ Pause signal sent to all services via Redis", "SUCCESS")
+
+                await redis_client.close()
+
+            except Exception as redis_err:
+                self.log(f"Failed to send Redis pause signal: {redis_err}", "WARNING")
+                self.log("Services will detect pause via file flag", "INFO")
 
         except Exception as e:
             self.log(f"Failed to set pause flag: {e}", "ERROR")

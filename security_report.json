@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-11-18T02:19:27.819528",
+  "project": "SIGMAX",
+  "audits": [
+    {
+      "tool": "bandit",
+      "status": "error",
+      "issues": [],
+      "error": "Failed to parse Bandit output"
+    },
+    {
+      "tool": "secret_scanner",
+      "status": "completed",
+      "issues": [
+        {
+          "file": "tools/health_check.py",
+          "description": "Hardcoded password",
+          "line": 88,
+          "severity": "HIGH"
+        }
+      ]
+    },
+    {
+      "tool": "permission_checker",
+      "status": "completed",
+      "issues": []
+    },
+    {
+      "tool": "pip_audit",
+      "status": "completed",
+      "issues": []
+    },
+    {
+      "tool": "config_checker",
+      "status": "completed",
+      "issues": []
+    }
+  ],
+  "summary": {
+    "total_issues": 1,
+    "critical": 0,
+    "high": 1,
+    "medium": 0
+  }
+}
