@@ -80,12 +80,13 @@ class HealthChecker:
         """Check Postgres database"""
         try:
             import psycopg2
+            import os
             conn = psycopg2.connect(
-                host="localhost",
-                port=5432,
-                database="sigmax",
-                user="sigmax",
-                password="sigmax_dev_password",
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=int(os.getenv("POSTGRES_PORT", "5432")),
+                database=os.getenv("POSTGRES_DB", "sigmax"),
+                user=os.getenv("POSTGRES_USER", "sigmax"),
+                password=os.getenv("POSTGRES_PASSWORD", "changeme"),
                 connect_timeout=3
             )
             cursor = conn.cursor()

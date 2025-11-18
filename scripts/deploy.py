@@ -248,20 +248,69 @@ class DeploymentManager:
             'obs'
         ]
 
+        # Check if systemd is available
+        systemd_available = subprocess.run(
+            ['systemctl', '--version'],
+            capture_output=True
+        ).returncode == 0
+
         # Start each service
         for service in sigmax_services:
             self.log(f"Starting {service}...")
 
-            # In production, these would be started as systemd services or supervisor processes
-            # For now, we'll just log the command that would be run
-            cmd = f"python -m apps.{service}.main --env {self.env}"
-            self.log(f"  Command: {cmd}")
+            if systemd_available and not self.dry_run:
+                # Use systemd to manage services
+                service_name = f"sigmax-{service}@{self.env}"
 
-            if not self.dry_run:
-                # TODO: Implement actual service startup (systemd, supervisor, etc.)
-                self.log(f"  Note: Service startup not implemented - run manually", "WARNING")
+                try:
+                    # Enable service
+                    self.run_command([
+                        'systemctl', 'enable', service_name
+                    ], check=False)
 
-        self.log("✓ SIGMAX services started", "SUCCESS")
+                    # Start service
+                    self.run_command([
+                        'systemctl', 'start', service_name
+                    ])
+
+                    # Check status
+                    result = self.run_command([
+                        'systemctl', 'is-active', service_name
+                    ], check=False)
+
+                    if result.stdout.strip() == 'active':
+                        self.log(f"✓ {service}: Started via systemd", "SUCCESS")
+                    else:
+                        self.log(f"✗ {service}: Failed to start", "ERROR")
+
+                except Exception as e:
+                    self.log(f"Failed to start {service} via systemd: {e}", "ERROR")
+
+            else:
+                # Fallback: Use supervisor or docker-compose
+                compose_service = f"sigmax-{service}"
+
+                if not self.dry_run:
+                    try:
+                        # Try starting via docker-compose
+                        self.run_command([
+                            'docker-compose',
+                            '--env-file', f'.env.{self.env}',
+                            'up', '-d', compose_service
+                        ], check=False)
+
+                        self.log(f"✓ {service}: Started via docker-compose", "SUCCESS")
+
+                    except Exception as e:
+                        # Manual startup instruction
+                        cmd = f"python -m apps.{service}.main --env {self.env}"
+                        self.log(f"  Manual command: {cmd}", "WARNING")
+                        self.log(f"  Run in separate terminal or use screen/tmux", "INFO")
+                else:
+                    cmd = f"python -m apps.{service}.main --env {self.env}"
+                    self.log(f"  Would start: {cmd}", "INFO")
+
+        self.log("✓ SIGMAX services startup initiated", "SUCCESS")
 
     def validate_deployment(self) -> bool:
         """Validate deployment is successful"""

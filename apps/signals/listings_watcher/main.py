@@ -67,21 +67,77 @@ class ListingsWatcher:
         self.logger.info("listings_watcher_stopped")
     
     async def _poll_loop(self):
-        """Poll for new listings (stub implementation)"""
+        """Poll for new listings from exchanges"""
         self.logger.info("poll_loop_started")
-        
+
+        # Initialize CCXT exchange connections
+        import ccxt.async_support as ccxt
+
+        # Configure exchanges to monitor
+        exchanges_config = {
+            'binance': ccxt.binance({'enableRateLimit': True}),
+            'coinbase': ccxt.coinbase({'enableRateLimit': True}),
+        }
+
         while self.running:
             try:
-                # TODO: Implement actual exchange API polling for new listings
-                # Would use CCXT to fetch exchange.fetch_markets() and compare
-                await asyncio.sleep(300)  # Poll every 5 minutes
-                
+                # Poll each exchange for new markets
+                for exchange_name, exchange in exchanges_config.items():
+                    try:
+                        markets = await exchange.fetch_markets()
+                        current_symbols = {m['symbol'] for m in markets if m.get('active', False)}
+
+                        # Detect new listings
+                        new_symbols = current_symbols - self.known_symbols
+
+                        if new_symbols:
+                            self.logger.info(
+                                "new_listings_detected",
+                                exchange=exchange_name,
+                                count=len(new_symbols),
+                                symbols=list(new_symbols)[:10]  # Log first 10
+                            )
+
+                            # Publish signal events for new listings
+                            for symbol in new_symbols:
+                                signal_event = SignalEvent(
+                                    type=SignalType.LISTING,
+                                    symbol=symbol,
+                                    exchange=exchange_name,
+                                    metadata={
+                                        'detected_at': asyncio.get_event_loop().time(),
+                                        'source': 'listings_watcher'
+                                    }
+                                )
+                                await self.publisher.publish(signal_event)
+
+                            self.metrics.increment_counter(
+                                f"listings_detected_{exchange_name}",
+                                len(new_symbols)
+                            )
+
+                        # Update known symbols
+                        self.known_symbols.update(current_symbols)
+
+                    except Exception as e:
+                        self.logger.error(
+                            "exchange_poll_error",
+                            exchange=exchange_name,
+                            error=str(e)
+                        )
+
+                # Poll every 5 minutes
+                await asyncio.sleep(300)
+
             except asyncio.CancelledError:
+                # Cleanup: close exchange connections
+                for exchange in exchanges_config.values():
+                    await exchange.close()
                 break
             except Exception as e:
                 self.logger.error("poll_error", error=str(e))
                 await asyncio.sleep(300)
-        
+
         self.logger.info("poll_loop_stopped")
 
 
