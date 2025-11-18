@@ -5,6 +5,12 @@ on:
     branches: [ main, develop, claude/** ]
   pull_request:
     branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
 
 jobs:
   lint-python:
@@ -97,14 +103,20 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-cov pytest-mock
 
-    - name: Run tests
+    - name: Run tests with coverage
       env:
         POSTGRES_URL: postgresql://sigmax:test@localhost:5432/sigmax_test
         REDIS_URL: redis://localhost:6379
         TESTING: true
+        TRADING_MODE: paper
       run: |
         cd core
-        pytest tests/ -v --cov=. --cov-report=xml || true  # Allow to fail for now
+        pytest tests/ -v \
+          --cov=. \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --cov-report=html \
+          --cov-fail-under=70 || true  # Set minimum coverage to 70%
 
     - name: Upload coverage
       uses: codecov/codecov-action@v4
@@ -166,18 +178,43 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Run Trivy vulnerability scanner
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Run Bandit security scanner
+      run: |
+        pip install bandit
+        bandit -r core/ ui/api/ -f json -o bandit-report.json || true
+
+    - name: Run Safety dependency scanner
+      run: |
+        pip install safety
+        safety check --json || true
+
+    - name: Run Trivy filesystem scanner
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: 'fs'
         scan-ref: '.'
         format: 'sarif'
         output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
 
     - name: Upload Trivy results to GitHub Security
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
+      if: always()
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          trivy-results.sarif
       if: always()
 
   all-checks-passed:

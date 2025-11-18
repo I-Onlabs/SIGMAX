@@ -1,0 +1,150 @@
+version: 2
+updates:
+  # Python dependencies (core)
+  - package-ecosystem: "pip"
+    directory: "/core"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "I-Onlabs"
+    assignees:
+      - "I-Onlabs"
+    labels:
+      - "dependencies"
+      - "python"
+      - "automated"
+    commit-message:
+      prefix: "build(deps)"
+      include: "scope"
+    # Group updates for related packages
+    groups:
+      langchain:
+        patterns:
+          - "langchain*"
+      qiskit:
+        patterns:
+          - "qiskit*"
+      ml-frameworks:
+        patterns:
+          - "torch"
+          - "tensorflow"
+          - "scikit-learn"
+          - "xgboost"
+          - "lightgbm"
+          - "catboost"
+      security:
+        patterns:
+          - "cryptography"
+          - "pycryptodome"
+          - "python-jose"
+          - "passlib"
+
+  # Python dependencies (API)
+  - package-ecosystem: "pip"
+    directory: "/ui/api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "I-Onlabs"
+    labels:
+      - "dependencies"
+      - "python"
+      - "api"
+    commit-message:
+      prefix: "build(deps)"
+
+  # NPM dependencies (Web UI)
+  - package-ecosystem: "npm"
+    directory: "/ui/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "I-Onlabs"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "ui"
+    commit-message:
+      prefix: "build(deps)"
+    # Version constraints
+    versioning-strategy: increase
+    # Group React ecosystem updates
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@react*"
+      three-js:
+        patterns:
+          - "three"
+          - "@react-three/*"
+      build-tools:
+        patterns:
+          - "vite"
+          - "typescript"
+          - "eslint"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "I-Onlabs"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
+    commit-message:
+      prefix: "ci"
+
+  # Docker (if using Dockerfile)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "I-Onlabs"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "build(docker)"
+
+  # Docker (API)
+  - package-ecosystem: "docker"
+    directory: "/ui/api"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+      - "api"
+
+  # Docker (Web UI)
+  - package-ecosystem: "docker"
+    directory: "/ui/web"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+      - "ui"
