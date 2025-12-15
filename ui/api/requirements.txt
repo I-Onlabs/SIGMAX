@@ -5,4 +5,4 @@ pydantic==2.12.4
 pydantic-settings==2.7.0
 python-multipart==0.0.20
 loguru==0.7.3
-python-dotenv==1.0.1
+python-dotenv==1.2.1
