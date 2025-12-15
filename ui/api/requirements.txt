@@ -1,8 +1,8 @@
 fastapi>=0.121.0  # Updated to support starlette 0.49.1+ security fixes
-uvicorn[standard]==0.34.0
-websockets==14.1
-pydantic==2.10.4
-pydantic-settings==2.7.0
+uvicorn[standard]==0.38.0
+websockets==15.0.1
+pydantic==2.12.4
+pydantic-settings==2.12.0
 python-multipart==0.0.20
 loguru==0.7.3
-python-dotenv==1.0.1
+python-dotenv==1.2.1
