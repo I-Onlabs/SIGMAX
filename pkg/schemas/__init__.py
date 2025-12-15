@@ -9,7 +9,7 @@ from .market_data import MdUpdate, TopOfBook, BookDelta
 from .orders import OrderIntent, OrderAck, Fill, Reject, Cancel, Amend
 from .features import FeatureFrame
 from .signals import SignalEvent
-from .common import Side, OrderType, TimeInForce, OrderStatus
+from .common import Side, OrderType, TimeInForce, OrderStatus, SignalType
 
 __all__ = [
     # Market data
@@ -34,4 +34,5 @@ __all__ = [
     "OrderType",
     "TimeInForce",
     "OrderStatus",
+    "SignalType",
 ]
