@@ -77,7 +77,7 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
       <div className="bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-700">
         {/* Header */}
         <div className="sticky top-0 bg-gray-800 border-b border-gray-700 p-6">
@@ -91,10 +91,11 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Exchange Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="exchange-select" className="block text-sm font-medium text-gray-300 mb-2">
               Exchange *
             </label>
             <select
+              id="exchange-select"
               value={formData.exchange}
               onChange={(e) =>
                 setFormData({ ...formData, exchange: e.target.value })
@@ -113,10 +114,11 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="account-name" className="block text-sm font-medium text-gray-300 mb-2">
               Account Name *
             </label>
             <input
+              id="account-name"
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -131,10 +133,11 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
 
           {/* API Key */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="api-key" className="block text-sm font-medium text-gray-300 mb-2">
               API Key *
             </label>
             <input
+              id="api-key"
               type="text"
               value={formData.api_key}
               onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
@@ -146,10 +149,11 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
 
           {/* API Secret */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="api-secret" className="block text-sm font-medium text-gray-300 mb-2">
               API Secret *
             </label>
             <input
+              id="api-secret"
               type="password"
               value={formData.api_secret}
               onChange={(e) =>
@@ -164,10 +168,11 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
           {/* Passphrase (if required) */}
           {selectedExchange?.requires_passphrase && (
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="passphrase" className="block text-sm font-medium text-gray-300 mb-2">
                 Passphrase *
               </label>
               <input
+                id="passphrase"
                 type="password"
                 value={formData.passphrase}
                 onChange={(e) =>
@@ -184,13 +189,16 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
           {selectedExchange?.testnet_available && (
             <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded">
               <div>
-                <label className="text-sm font-medium text-gray-300">Use Testnet</label>
+                <label id="testnet-label" className="text-sm font-medium text-gray-300">Use Testnet</label>
                 <p className="text-xs text-gray-500 mt-1">
                   Test with sandbox environment (no real funds)
                 </p>
               </div>
               <button
                 type="button"
+                role="switch"
+                aria-checked={formData.testnet}
+                aria-labelledby="testnet-label"
                 onClick={() =>
                   setFormData({ ...formData, testnet: !formData.testnet })
                 }
@@ -210,7 +218,7 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
           {/* Enable Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-700/50 rounded">
             <div>
-              <label className="text-sm font-medium text-gray-300">
+              <label id="enable-label" className="text-sm font-medium text-gray-300">
                 Enable Immediately
               </label>
               <p className="text-xs text-gray-500 mt-1">
@@ -219,6 +227,9 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
             </div>
             <button
               type="button"
+              role="switch"
+              aria-checked={formData.enabled}
+              aria-labelledby="enable-label"
               onClick={() =>
                 setFormData({ ...formData, enabled: !formData.enabled })
               }
@@ -237,7 +248,7 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
           {/* Security Warning */}
           <div className="bg-yellow-900/20 border border-yellow-700 rounded p-4">
             <div className="flex items-start gap-3">
-              <div className="text-yellow-500 text-xl">⚠️</div>
+              <div className="text-yellow-500 text-xl" aria-hidden="true">⚠️</div>
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-yellow-400 mb-1">
                   Security Notice
@@ -253,7 +264,7 @@ export default function AddExchangeModal({ isOpen, onClose, onAdd }: AddExchange
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-900/20 border border-red-700 rounded p-4 text-red-400 text-sm">
+            <div className="bg-red-900/20 border border-red-700 rounded p-4 text-red-400 text-sm" role="alert">
               {error}
             </div>
           )}
