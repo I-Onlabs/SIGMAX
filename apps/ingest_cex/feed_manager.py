@@ -118,7 +118,7 @@ class ExchangeFeed:
             # Create MdUpdate
             update = MdUpdate(
                 ts_ns=get_timestamp_ns(),
-                symbol_id=self._get_symbol_id(symbol),
+                symbol_id=await self._get_symbol_id(symbol),
                 bid_px=bid_px,
                 bid_sz=bid_sz,
                 ask_px=ask_px,
@@ -217,7 +217,7 @@ class ExchangeFeed:
                 # Create update with snapshot data
                 update = MdUpdate(
                     ts_ns=get_timestamp_ns(),
-                    symbol_id=self._get_symbol_id(symbol),
+                    symbol_id=await self._get_symbol_id(symbol),
                     bid_px=best_bid[0],
                     bid_sz=best_bid[1],
                     ask_px=best_ask[0],
@@ -274,7 +274,7 @@ class ExchangeFeed:
                             error=str(e),
                             exc_info=True)
 
-    def _get_symbol_id(self, symbol: str) -> int:
+    async def _get_symbol_id(self, symbol: str) -> int:
         """
         Get symbol ID from cache or database
 
@@ -288,8 +288,8 @@ class ExchangeFeed:
         if symbol in self._symbol_cache:
             return self._symbol_cache[symbol]
 
-        # Try database lookup
-        symbol_id = self._lookup_symbol_from_db(symbol)
+        # Try database lookup (run in executor to avoid blocking)
+        symbol_id = await asyncio.to_thread(self._lookup_symbol_from_db, symbol)
 
         if symbol_id is None:
             # Fallback to static mapping
