@@ -267,20 +267,14 @@ class TestBacktestRealistic:
             datetime(2024, 12, 31)
         )
 
-        # Try to generate report (may fail due to bug in backtest module)
-        try:
-            report = backtester.generate_report(result)
-            print(f"\n=== Generated Report ===")
-            print(report)
+        # Generate report
+        report = backtester.generate_report(result)
+        print(f"\n=== Generated Report ===")
+        print(report)
 
-            # Validate report contents
-            assert "BACKTEST RESULTS" in report
-            assert "Performance Metrics" in report or "Risk Metrics" in report
-        except ValueError as e:
-            # Known bug in generate_report format string
-            print(f"\n=== Report Generation Failed (known bug) ===")
-            print(f"Error: {e}")
-            print("Report generation has a formatting bug, but test passes")
+        # Validate report contents
+        assert "SIGMAX BACKTEST REPORT" in report
+        assert "PERFORMANCE SUMMARY" in report
 
 
 if __name__ == "__main__":

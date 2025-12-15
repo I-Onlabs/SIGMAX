@@ -467,7 +467,7 @@ RECENT TRADES (Last 10)
             report += f"""
 {trade.symbol}: {trade.direction.upper()}
 Entry: {trade.entry_time.strftime('%Y-%m-%d %H:%M')} @ ${trade.entry_price:.2f}
-Exit:  {trade.exit_time.strftime('%Y-%m-%d %H:%M') if trade.exit_time else 'Open'} @ ${trade.exit_price:.2f if trade.exit_price else 0}
+Exit:  {trade.exit_time.strftime('%Y-%m-%d %H:%M') if trade.exit_time else 'Open'} @ ${(trade.exit_price if trade.exit_price is not None else 0):.2f}
 PnL:   ${trade.pnl:+,.2f} ({trade.pnl_pct:+.2f}%)
 """
 
