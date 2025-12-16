@@ -438,21 +438,21 @@ class Backtester:
 ╚══════════════════════════════════════════════════════════════╝
 
 Period: {result.start_date.strftime('%Y-%m-%d')} to {result.end_date.strftime('%Y-%m-%d')}
-Initial Capital: ${result.initial_capital:,.2f}
-Final Capital: ${result.final_capital:,.2f}
+Initial Capital: ${float(result.initial_capital):,.2f}
+Final Capital: ${float(result.final_capital):,.2f}
 
 ═══════════════════════════════════════════════════════════════
 
 PERFORMANCE SUMMARY
 ═══════════════════════════════════════════════════════════════
 
-Total Return:        {result.total_return_pct:+.2f}%
-Total PnL:           ${result.total_pnl:+,.2f}
+Total Return:        {float(result.total_return_pct):+.2f}%
+Total PnL:           ${float(result.total_pnl):+,.2f}
 
-Sharpe Ratio:        {result.sharpe_ratio:.2f}
-Sortino Ratio:       {result.sortino_ratio:.2f}
+Sharpe Ratio:        {float(result.sharpe_ratio):.2f}
+Sortino Ratio:       {float(result.sortino_ratio):.2f}
 
-Max Drawdown:        ${result.max_drawdown:,.2f} ({result.max_drawdown_pct:.2f}%)
+Max Drawdown:        ${float(result.max_drawdown):,.2f} ({float(result.max_drawdown_pct):.2f}%)
 
 ═══════════════════════════════════════════════════════════════
 
@@ -460,15 +460,15 @@ TRADING STATISTICS
 ═══════════════════════════════════════════════════════════════
 
 Total Trades:        {result.total_trades}
-Winning Trades:      {result.winning_trades} ({result.win_rate:.1%})
+Winning Trades:      {result.winning_trades} ({float(result.win_rate):.1%})
 Losing Trades:       {result.losing_trades}
 
-Profit Factor:       {result.profit_factor:.2f}
+Profit Factor:       {float(result.profit_factor):.2f}
 
-Average Win:         ${result.avg_win:+,.2f}
-Average Loss:        ${result.avg_loss:+,.2f}
-Largest Win:         ${result.largest_win:+,.2f}
-Largest Loss:        ${result.largest_loss:+,.2f}
+Average Win:         ${float(result.avg_win):+,.2f}
+Average Loss:        ${float(result.avg_loss):+,.2f}
+Largest Win:         ${float(result.largest_win):+,.2f}
+Largest Loss:        ${float(result.largest_loss):+,.2f}
 
 Avg Trade Duration:  {result.avg_trade_duration}
 
@@ -480,13 +480,16 @@ RECENT TRADES (Last 10)
 
         for trade in result.trades[-10:]:
             exit_time_str = trade.exit_time.strftime('%Y-%m-%d %H:%M') if trade.exit_time else 'Open'
-            exit_price_val = trade.exit_price if trade.exit_price is not None else 0.0
+            exit_price_val = float(trade.exit_price) if trade.exit_price is not None else 0.0
+            entry_price_val = float(trade.entry_price) if trade.entry_price is not None else 0.0
+            pnl_val = float(trade.pnl) if trade.pnl is not None else 0.0
+            pnl_pct_val = float(trade.pnl_pct) if trade.pnl_pct is not None else 0.0
 
             report += f"""
 {trade.symbol}: {trade.direction.upper()}
-Entry: {trade.entry_time.strftime('%Y-%m-%d %H:%M')} @ ${trade.entry_price:.2f}
+Entry: {trade.entry_time.strftime('%Y-%m-%d %H:%M')} @ ${entry_price_val:.2f}
 Exit:  {exit_time_str} @ ${exit_price_val:.2f}
-PnL:   ${trade.pnl:+,.2f} ({trade.pnl_pct:+.2f}%)
+PnL:   ${pnl_val:+,.2f} ({pnl_pct_val:+.2f}%)
 """
 
         report += "\n═══════════════════════════════════════════════════════════════\n"
