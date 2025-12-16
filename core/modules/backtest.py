@@ -108,11 +108,13 @@ class Backtester:
         self.open_positions = {}
 
         # Iterate through time
-        timestamps = self._get_timestamps(data, start_date, end_date)
+        timestamps, start_idx = self._get_simulation_parameters(data, start_date, end_date)
 
         for i, timestamp in enumerate(timestamps):
             # Get current market data
-            market_data = self._get_market_data_at(data, i)
+            # Fix: Use correct index relative to original data
+            current_idx = start_idx + i
+            market_data = self._get_market_data_at(data, current_idx)
 
             # Get strategy signals
             signals = await strategy_func(market_data, timestamp)
@@ -381,27 +383,40 @@ class Backtester:
 
         return float(max_drawdown), float(max_drawdown_pct)
 
-    def _get_timestamps(
+    def _get_simulation_parameters(
         self,
         data: Dict[str, np.ndarray],
         start_date: datetime,
         end_date: datetime
-    ) -> List[datetime]:
-        """Extract timestamps from data"""
-        # Get first symbol's timestamps
+    ) -> Tuple[List[datetime], int]:
+        """
+        Extract valid timestamps and the starting index.
+        Optimized to avoid full array conversion.
+        """
         first_symbol = list(data.keys())[0]
+        # Assuming column 0 is timestamp in milliseconds
+        all_ts = data[first_symbol][:, 0]
+
+        # Convert start/end dates to timestamp in milliseconds
+        # datetime.timestamp() returns seconds, we need ms
+        start_ts = start_date.timestamp() * 1000
+        end_ts = end_date.timestamp() * 1000
+
+        # Find indices (assuming sorted data)
+        # using searchsorted is O(log N) instead of O(N)
+        start_idx = np.searchsorted(all_ts, start_ts, side='left')
+        end_idx = np.searchsorted(all_ts, end_ts, side='right')
+
+        # Slice the array
+        valid_ts_array = all_ts[start_idx:end_idx]
+
+        # Convert only necessary timestamps to datetime
         timestamps = [
-            datetime.fromtimestamp(ts / 1000)  # Assuming milliseconds
-            for ts in data[first_symbol][:, 0]
+            datetime.fromtimestamp(ts / 1000)
+            for ts in valid_ts_array
         ]
 
-        # Filter by date range
-        filtered = [
-            ts for ts in timestamps
-            if start_date <= ts <= end_date
-        ]
-
-        return filtered
+        return timestamps, int(start_idx)
 
     def _get_market_data_at(
         self,
