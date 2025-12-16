@@ -83,6 +83,8 @@ class ListingsWatcher:
         exchanges_config = {
             'binance': ccxt.binance({'enableRateLimit': True}),
             'coinbase': ccxt.coinbase({'enableRateLimit': True}),
+            'kraken': ccxt.kraken({'enableRateLimit': True}),
+            'kucoin': ccxt.kucoin({'enableRateLimit': True}),
         }
 
         # Initial fetch to populate known symbols
