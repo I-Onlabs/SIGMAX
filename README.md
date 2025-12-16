@@ -229,6 +229,8 @@ SIGMAX supports a **single orchestrator core** with multiple interfaces feeding 
 - The legacy `POST /api/trade` endpoint is **disabled** unless `ALLOW_DIRECT_TRADE_API=true`.
 - Preferred flow is **proposal → (optional) approval → execute**:
   - `POST /api/chat/proposals`
+  - `GET /api/chat/proposals`
+  - `GET /api/chat/proposals/{proposal_id}`
   - `POST /api/chat/proposals/{proposal_id}/approve`
   - `POST /api/chat/proposals/{proposal_id}/execute`
 

@@ -133,6 +133,28 @@ class ProposalRequest(BaseModel):
     mode: str = "paper"
 
 
+@router.get("/proposals", dependencies=[Depends(verify_api_key)])
+async def list_trade_proposals():
+    manager = await get_sigmax_manager()
+    service = manager.get_channel_service()
+    proposals = service.list_proposals()
+    return {
+        "timestamp": _now(),
+        "count": len(proposals),
+        "proposals": {pid: p.model_dump() for pid, p in proposals.items()},
+    }
+
+
+@router.get("/proposals/{proposal_id}", dependencies=[Depends(verify_api_key)])
+async def get_trade_proposal(proposal_id: str):
+    manager = await get_sigmax_manager()
+    service = manager.get_channel_service()
+    proposal = service.get_proposal(proposal_id)
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Unknown proposal_id")
+    return proposal.model_dump()
+
+
 @router.post("/proposals", dependencies=[Depends(verify_api_key)])
 async def create_trade_proposal(req: ProposalRequest):
     manager = await get_sigmax_manager()
@@ -153,6 +175,8 @@ async def create_trade_proposal(req: ProposalRequest):
             ),
         )
     )
+    if resp.proposal:
+        manager.add_event("trade_proposal", resp.proposal.model_dump())
     return resp.model_dump()
 
 
@@ -162,6 +186,7 @@ async def approve_trade_proposal(proposal_id: str):
     service = manager.get_channel_service()
     try:
         proposal = service.approve_proposal(proposal_id)
+        manager.add_event("trade_proposal_approved", proposal.model_dump())
         return proposal.model_dump()
     except KeyError:
         raise HTTPException(status_code=404, detail="Unknown proposal_id")
@@ -173,6 +198,7 @@ async def execute_trade_proposal(proposal_id: str):
     service = manager.get_channel_service()
     try:
         result = await service.execute_proposal(proposal_id)
+        manager.add_event("trade_execution", {"proposal_id": proposal_id, "result": result})
         return {"success": True, "result": result, "timestamp": _now()}
     except KeyError:
         raise HTTPException(status_code=404, detail="Unknown proposal_id")
