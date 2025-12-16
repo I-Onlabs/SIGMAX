@@ -18,6 +18,10 @@ class TelegramBot:
     - /resume - Resume trading
     - /panic - Emergency stop
     - /why [symbol] - Explain last decision
+    - /analyze [symbol] - Run full multi-agent analysis
+    - /propose [symbol] - Create a trade proposal (paper/live gated)
+    - /approve [proposal_id] - Approve a proposal (required for live by default)
+    - /execute [proposal_id] - Execute an approved proposal
     """
 
     def __init__(self, orchestrator):
@@ -26,6 +30,7 @@ class TelegramBot:
         self.enabled = os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
         self.token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        self.channel_service = None
 
         logger.info(f"✓ Telegram bot created (enabled: {self.enabled})")
 
@@ -42,9 +47,20 @@ class TelegramBot:
         try:
             from telegram import Bot
             from telegram.ext import Application, CommandHandler, MessageHandler, filters
+            from interfaces.channel_service import ChannelService
+            from interfaces.contracts import Channel, Intent, StructuredRequest, UserPreferences, ExecutionPermissions
 
             # Create bot
             self.bot = Application.builder().token(self.token).build()
+
+            # Shared channel service (Telegram + web share the same orchestrator instance)
+            execution_module = getattr(self.orchestrator, "execution_module", None)
+            compliance_module = getattr(self.orchestrator, "compliance_module", None)
+            self.channel_service = ChannelService(
+                orchestrator=self.orchestrator,
+                execution_module=execution_module,
+                compliance_module=compliance_module,
+            )
 
             # Register handlers
             self.bot.add_handler(CommandHandler("start", self._handle_start))
@@ -53,6 +69,10 @@ class TelegramBot:
             self.bot.add_handler(CommandHandler("resume", self._handle_resume))
             self.bot.add_handler(CommandHandler("panic", self._handle_panic))
             self.bot.add_handler(CommandHandler("why", self._handle_why))
+            self.bot.add_handler(CommandHandler("analyze", self._handle_analyze))
+            self.bot.add_handler(CommandHandler("propose", self._handle_propose))
+            self.bot.add_handler(CommandHandler("approve", self._handle_approve))
+            self.bot.add_handler(CommandHandler("execute", self._handle_execute))
 
             # Natural language handler
             self.bot.add_handler(
@@ -187,3 +207,95 @@ Agents: {len(status.get('agents', {}))} active
             await update.message.reply_text(
                 "I didn't understand that. Try /status, /start, /pause, or /resume"
             )
+
+    async def _handle_analyze(self, update, context):
+        symbol = context.args[0] if context.args else "BTC/USDT"
+        try:
+            if not self.channel_service:
+                await update.message.reply_text("⚠️ Channel service not available")
+                return
+
+            resp = await self.channel_service.handle(
+                StructuredRequest(
+                    channel=Channel.telegram,
+                    intent=Intent.analyze,
+                    symbol=symbol,
+                    preferences=UserPreferences(
+                        risk_profile=os.getenv("RISK_PROFILE", "conservative"),
+                        mode=os.getenv("MODE", "paper"),
+                        permissions=ExecutionPermissions(
+                            allow_paper=True,
+                            allow_live=(os.getenv("MODE", "paper") == "live"),
+                            require_manual_approval_live=os.getenv("REQUIRE_MANUAL_APPROVAL", "true").lower() == "true",
+                        ),
+                    ),
+                )
+            )
+            await update.message.reply_text(resp.message)
+        except Exception as e:
+            await update.message.reply_text(f"❌ Analyze failed: {e}")
+
+    async def _handle_propose(self, update, context):
+        symbol = context.args[0] if context.args else "BTC/USDT"
+        try:
+            if not self.channel_service:
+                await update.message.reply_text("⚠️ Channel service not available")
+                return
+
+            resp = await self.channel_service.handle(
+                StructuredRequest(
+                    channel=Channel.telegram,
+                    intent=Intent.propose_trade,
+                    symbol=symbol,
+                    preferences=UserPreferences(
+                        risk_profile=os.getenv("RISK_PROFILE", "conservative"),
+                        mode=os.getenv("MODE", "paper"),
+                        permissions=ExecutionPermissions(
+                            allow_paper=True,
+                            allow_live=(os.getenv("MODE", "paper") == "live"),
+                            require_manual_approval_live=os.getenv("REQUIRE_MANUAL_APPROVAL", "true").lower() == "true",
+                        ),
+                    ),
+                )
+            )
+            if resp.proposal:
+                p = resp.proposal
+                await update.message.reply_text(
+                    f"{resp.message}\n\nProposal ID: `{p.proposal_id}`\n"
+                    f"Requires approval: {p.requires_manual_approval}\n"
+                    f"Approve: /approve {p.proposal_id}\n"
+                    f"Execute: /execute {p.proposal_id}",
+                    parse_mode="Markdown",
+                )
+            else:
+                await update.message.reply_text(resp.message)
+        except Exception as e:
+            await update.message.reply_text(f"❌ Propose failed: {e}")
+
+    async def _handle_approve(self, update, context):
+        proposal_id = context.args[0] if context.args else None
+        if not proposal_id:
+            await update.message.reply_text("Usage: /approve <proposal_id>")
+            return
+        try:
+            if not self.channel_service:
+                await update.message.reply_text("⚠️ Channel service not available")
+                return
+            proposal = self.channel_service.approve_proposal(proposal_id)
+            await update.message.reply_text(f"✅ Approved {proposal.proposal_id}")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Approve failed: {e}")
+
+    async def _handle_execute(self, update, context):
+        proposal_id = context.args[0] if context.args else None
+        if not proposal_id:
+            await update.message.reply_text("Usage: /execute <proposal_id>")
+            return
+        try:
+            if not self.channel_service:
+                await update.message.reply_text("⚠️ Channel service not available")
+                return
+            result = await self.channel_service.execute_proposal(proposal_id)
+            await update.message.reply_text(f"✅ Executed: {result}")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Execute failed: {e}")

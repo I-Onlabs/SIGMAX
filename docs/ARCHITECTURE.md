@@ -102,7 +102,7 @@ Zero-trust architecture:
 ## Data Flow
 
 ```
-User Input (Telegram/UI)
+User Input (Telegram/UI/Web Chat)
          │
          ▼
    Orchestrator
@@ -133,6 +133,15 @@ Execution  Logging
     ▼         ▼
 Exchange   Database
 ```
+
+## AI-Centric Chat Interface (Web) & Execution Gating
+
+SIGMAX exposes an AI chat interface via FastAPI that streams **step-level progress** (planner → research → validation → debate → risk) and returns **artifacts** (plans, summaries, risk reports).
+
+Safety model:
+- **Preferred**: proposal → approve (optional) → execute
+- **Default**: direct trade execution endpoints are gated/disabled unless explicitly enabled
+
 
 ## Technology Stack
 

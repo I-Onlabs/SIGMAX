@@ -218,6 +218,23 @@ SIGMAX/
             └──────────────────┘
 ```
 
+### Multi-Channel (Telegram + Web Chat) & Safe Execution
+
+SIGMAX supports a **single orchestrator core** with multiple interfaces feeding it through a shared structured contract (no duplicated decision logic).
+
+- **Telegram**: `/analyze`, `/propose`, `/approve`, `/execute`
+- **AI Web Chat (API)**: streaming step progress + artifacts over **SSE**
+
+**Execution is gated by default**:
+- The legacy `POST /api/trade` endpoint is **disabled** unless `ALLOW_DIRECT_TRADE_API=true`.
+- Preferred flow is **proposal → (optional) approval → execute**:
+  - `POST /api/chat/proposals`
+  - `POST /api/chat/proposals/{proposal_id}/approve`
+  - `POST /api/chat/proposals/{proposal_id}/execute`
+
+**Streaming chat**:
+- `POST /api/chat/stream` returns `text/event-stream` events: `meta`, `step`, `final`, `error`.
+
 ---
 
 ## 🔒 Safety Philosophy
