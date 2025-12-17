@@ -4,6 +4,7 @@ Provides singleton access to SIGMAX trading system
 """
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -17,6 +18,10 @@ sys.path.insert(0, str(core_path))
 
 from main import SIGMAX
 
+# Shared channel/service contracts (core-level, used by all interfaces)
+from interfaces.channel_service import ChannelService
+from interfaces.contracts import Channel, Intent, StructuredRequest, UserPreferences, ExecutionPermissions
+
 
 class SIGMAXManager:
     """
@@ -29,6 +34,7 @@ class SIGMAXManager:
     _initialized: bool = False
     _lock: asyncio.Lock = asyncio.Lock()
     _event_queue: deque = deque(maxlen=100)  # Store last 100 events
+    _channel_service: Optional[ChannelService] = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -69,6 +75,13 @@ class SIGMAXManager:
 
                 if success:
                     self._initialized = True
+                    # Channel service lives with the SIGMAX instance so
+                    # Telegram + web chat + API share the same orchestrator.
+                    self._channel_service = ChannelService(
+                        orchestrator=self._sigmax.orchestrator,
+                        execution_module=self._sigmax.execution_module,
+                        compliance_module=self._sigmax.compliance_module,
+                    )
                     logger.info("✓ SIGMAX initialized successfully")
                     return True
                 else:
@@ -216,17 +229,18 @@ class SIGMAXManager:
             raise RuntimeError("Orchestrator not available")
 
         try:
-            # Run analysis through orchestrator
-            result = await self._sigmax.orchestrator.analyze_symbol(symbol)
+            # Prefer detailed state for artifacts + correct event payloads
+            result = await self._sigmax.orchestrator.analyze_symbol_detailed(symbol)
+            decision = result.get("final_decision", {}) if isinstance(result, dict) else {}
 
             # Add agent decision event to queue for WebSocket broadcast
             self.add_event("agent_decision", {
                 "symbol": symbol,
-                "decision": result.get("final_decision", {}).get("action", "hold"),
-                "confidence": result.get("confidence", 0),
+                "decision": decision.get("action", "hold"),
+                "confidence": decision.get("confidence", 0),
                 "bull_score": result.get("bull_argument", ""),
                 "bear_score": result.get("bear_argument", ""),
-                "reasoning": result.get("final_decision", {}).get("reasoning", "")
+                "reasoning": decision.get("reasoning", "")
             })
 
             if not include_debate:
@@ -262,14 +276,17 @@ class SIGMAXManager:
         if not self._sigmax.execution_module:
             raise RuntimeError("Execution module not available")
 
+        # Hard gate: direct trade API is disabled by default.
+        # Use the proposal/approval flow (via chat or dedicated endpoints) instead.
+        allow_direct = os.getenv("ALLOW_DIRECT_TRADE_API", "false").lower() == "true"
+        if not allow_direct:
+            raise PermissionError(
+                "Direct trade execution is disabled. Create a proposal and approve/execute it."
+            )
+
         try:
-            # Execute trade through execution module
-            if action == "buy":
-                result = await self._sigmax.execution_module.buy(symbol, size)
-            elif action == "sell":
-                result = await self._sigmax.execution_module.sell(symbol, size)
-            else:
-                raise ValueError(f"Invalid action: {action}")
+            # Execute trade through unified execution path
+            result = await self._sigmax.execution_module.execute_trade(symbol, action, size)
 
             # Add trade execution event to queue for WebSocket broadcast
             self.add_event("trade_execution", {
@@ -347,6 +364,11 @@ class SIGMAXManager:
         except Exception as e:
             logger.error(f"Error getting quantum circuit: {e}")
             raise
+
+    def get_channel_service(self) -> ChannelService:
+        if not self._initialized or not self._sigmax or not self._channel_service:
+            raise RuntimeError("SIGMAX not initialized")
+        return self._channel_service
 
     def is_initialized(self) -> bool:
         """Check if SIGMAX is initialized"""

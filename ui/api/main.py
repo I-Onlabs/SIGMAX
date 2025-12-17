@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
 from typing import List, Dict, Any, Optional
 import asyncio
@@ -27,6 +26,7 @@ from sigmax_manager import get_sigmax_manager
 
 # Import API routes
 from routes.exchanges import router as exchanges_router
+from routes.chat import router as chat_router
 
 # Connection manager for WebSocket clients
 class ConnectionManager:
@@ -88,28 +88,8 @@ class RateLimiter:
 rate_limiter = RateLimiter()
 
 
-# Security - API Key Authentication
-security = HTTPBearer(auto_error=False)
-
-
-def verify_api_key(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> bool:
-    """Verify API key from environment"""
-    api_key = os.getenv("SIGMAX_API_KEY")
-
-    # If no API key configured, allow all requests (development mode)
-    if not api_key:
-        logger.warning("⚠️ No API key configured - running in open mode")
-        return True
-
-    # Verify credentials
-    if not credentials or credentials.credentials != api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    return True
+# Security - API Key Authentication (imported to avoid circular imports)
+from auth import verify_api_key
 
 
 # Request metrics
@@ -289,6 +269,8 @@ async def log_requests(request: Request, call_next):
 # Include API routers
 app.include_router(exchanges_router)
 logger.info("✓ Exchange API routes registered")
+app.include_router(chat_router)
+logger.info("✓ AI chat routes registered")
 
 
 # Request models with validation
@@ -496,11 +478,14 @@ async def execute_trade(request: TradeRequest):
         manager = await get_sigmax_manager()
 
         # Execute trade through execution module
-        result = await manager.execute_trade(
-            symbol=request.symbol,
-            action=request.action,
-            size=request.size
-        )
+        try:
+            result = await manager.execute_trade(
+                symbol=request.symbol,
+                action=request.action,
+                size=request.size
+            )
+        except PermissionError as e:
+            raise HTTPException(status_code=403, detail=str(e))
 
         # Add timestamp if not present
         if "timestamp" not in result:

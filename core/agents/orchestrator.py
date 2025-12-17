@@ -1043,6 +1043,140 @@ Be skeptical and risk-focused. Cite specific concerns.
                 "error": str(e)
             }
 
+    async def analyze_symbol_detailed(
+        self,
+        symbol: str,
+        market_data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Run a full LangGraph analysis and return the final graph state.
+
+        This is the preferred API for UIs and multi-channel adapters that need
+        step artifacts (plan, research, validation, debate, risk, etc.).
+        """
+        if not self.app:
+            raise RuntimeError("Orchestrator not initialized. Call initialize() first.")
+
+        if not market_data:
+            market_data = await self.data_module.get_market_data(symbol)
+
+        initial_state = {
+            "messages": [],
+            "symbol": symbol,
+            "current_price": market_data.get("price", 0.0),
+            "market_data": market_data,
+            "bull_argument": None,
+            "bear_argument": None,
+            "research_summary": None,
+            "technical_analysis": None,
+            "sentiment_score": 0.0,
+            "risk_assessment": {},
+            "compliance_check": {},
+            "final_decision": None,
+            "confidence": 0.0,
+            "iteration": 0,
+            "max_iterations": 3,
+            "validation_score": 0.0,
+            "validation_passed": False,
+            "data_gaps": [],
+            "validation_checks": {},
+            "research_data": None,
+            "research_plan": None,
+            "planned_tasks": [],
+            "completed_task_ids": [],
+            "task_execution_results": {},
+        }
+
+        config = {"configurable": {"thread_id": f"{symbol}_{datetime.now().timestamp()}"}}
+        try:
+            return await self.app.ainvoke(initial_state, config)
+        except Exception as e:
+            logger.error(f"Error in analyze_symbol_detailed: {e}", exc_info=True)
+            return {
+                **initial_state,
+                "final_decision": {
+                    "action": "hold",
+                    "symbol": symbol,
+                    "confidence": 0.0,
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                },
+            }
+
+    async def stream_symbol_analysis(
+        self,
+        symbol: str,
+        market_data: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Stream LangGraph execution updates as they complete.
+
+        Yields dicts shaped like:
+        {"type": "step", "step": "<node>", "update": {...}, "timestamp": "..."}
+        and finally:
+        {"type": "final", "state": {...}, "timestamp": "..."}
+        """
+        if not self.app:
+            raise RuntimeError("Orchestrator not initialized. Call initialize() first.")
+
+        if not market_data:
+            market_data = await self.data_module.get_market_data(symbol)
+
+        initial_state = {
+            "messages": [],
+            "symbol": symbol,
+            "current_price": market_data.get("price", 0.0),
+            "market_data": market_data,
+            "bull_argument": None,
+            "bear_argument": None,
+            "research_summary": None,
+            "technical_analysis": None,
+            "sentiment_score": 0.0,
+            "risk_assessment": {},
+            "compliance_check": {},
+            "final_decision": None,
+            "confidence": 0.0,
+            "iteration": 0,
+            "max_iterations": 3,
+            "validation_score": 0.0,
+            "validation_passed": False,
+            "data_gaps": [],
+            "validation_checks": {},
+            "research_data": None,
+            "research_plan": None,
+            "planned_tasks": [],
+            "completed_task_ids": [],
+            "task_execution_results": {},
+        }
+
+        config = {"configurable": {"thread_id": f"{symbol}_{datetime.now().timestamp()}"}}
+
+        # Prefer LangGraph streaming updates when available.
+        if hasattr(self.app, "astream"):
+            final_state: Dict[str, Any] = {}
+            async for update in self.app.astream(initial_state, config, stream_mode="updates"):
+                # update is typically: {node_name: partial_state_update}
+                if isinstance(update, dict):
+                    for node_name, partial in update.items():
+                        if isinstance(partial, dict):
+                            final_state.update(partial)
+                        yield {
+                            "type": "step",
+                            "step": str(node_name),
+                            "update": partial,
+                            "timestamp": datetime.now().isoformat(),
+                        }
+
+            # Best effort final snapshot: run a full invoke if we didn't capture it.
+            if not final_state or "final_decision" not in final_state:
+                final_state = await self.analyze_symbol_detailed(symbol, market_data=market_data)
+            yield {"type": "final", "state": final_state, "timestamp": datetime.now().isoformat()}
+            return
+
+        # Fallback: no streaming support
+        state = await self.analyze_symbol_detailed(symbol, market_data=market_data)
+        yield {"type": "final", "state": state, "timestamp": datetime.now().isoformat()}
+
     async def start(self):
         """Start the orchestrator"""
         self.running = True
