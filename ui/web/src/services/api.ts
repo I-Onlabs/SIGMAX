@@ -170,6 +170,36 @@ export interface SupportedExchange {
   requires_passphrase: boolean;
 }
 
+// === AI Chat / Proposals ===
+export interface TradeProposal {
+  proposal_id: string;
+  symbol: string;
+  action: 'buy' | 'sell';
+  size: number;
+  notional_usd: number;
+  mode: 'paper' | 'live';
+  requires_manual_approval: boolean;
+  approved: boolean;
+  created_at: string;
+  rationale?: string | null;
+}
+
+export interface ChatProposalResponse {
+  ok: boolean;
+  message: string;
+  intent: string;
+  symbol?: string;
+  proposal?: TradeProposal | null;
+  decision?: any;
+  artifacts?: any[];
+}
+
+export interface ExecuteProposalResponse {
+  success: boolean;
+  result: any;
+  timestamp: string;
+}
+
 /**
  * API Client Class
  */
@@ -194,14 +224,13 @@ class SIGMAXApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const headers: HeadersInit = {
+    const headers = new Headers({
       'Content-Type': 'application/json',
-      ...options.headers,
-    };
+      ...((options.headers as Record<string, string>) || {}),
+    });
 
-    // Add API key if available
     if (this.apiKey) {
-      headers['Authorization'] = `Bearer ${this.apiKey}`;
+      headers.set('Authorization', `Bearer ${this.apiKey}`);
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -269,6 +298,31 @@ class SIGMAXApiClient {
       method: 'POST',
       body: JSON.stringify(request),
     });
+  }
+
+  // === AI Chat / Proposal Endpoints ===
+
+  async chatCreateProposal(symbol: string, risk_profile: string = 'conservative', mode: 'paper' | 'live' = 'paper'): Promise<ChatProposalResponse> {
+    return this.request<ChatProposalResponse>('/api/chat/proposals', {
+      method: 'POST',
+      body: JSON.stringify({ symbol, risk_profile, mode }),
+    });
+  }
+
+  async chatListProposals(): Promise<{ timestamp: string; count: number; proposals: Record<string, TradeProposal> }> {
+    return this.request('/api/chat/proposals');
+  }
+
+  async chatGetProposal(proposalId: string): Promise<TradeProposal> {
+    return this.request(`/api/chat/proposals/${proposalId}`);
+  }
+
+  async chatApproveProposal(proposalId: string): Promise<TradeProposal> {
+    return this.request(`/api/chat/proposals/${proposalId}/approve`, { method: 'POST' });
+  }
+
+  async chatExecuteProposal(proposalId: string): Promise<ExecuteProposalResponse> {
+    return this.request(`/api/chat/proposals/${proposalId}/execute`, { method: 'POST' });
   }
 
   /**

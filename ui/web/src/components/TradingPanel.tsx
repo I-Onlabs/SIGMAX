@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, Zap } from 'lucide-react'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import api from '../services/api'
 
 interface TradingPanelProps {

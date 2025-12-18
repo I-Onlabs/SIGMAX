@@ -4,7 +4,6 @@
 
 import { useState } from 'react';
 import type { ExchangeCredential, ConnectionTestResult } from '../services/api';
-import api from '../services/api';
 
 interface ExchangeCardProps {
   exchange: ExchangeCredential;

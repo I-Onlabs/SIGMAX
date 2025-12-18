@@ -62,7 +62,7 @@ export default function StatusPanel({ status, health }: StatusPanelProps) {
       <div className="pt-4 border-t border-white/10">
         <h4 className="text-sm font-semibold mb-2">Active Agents</h4>
         <div className="grid grid-cols-2 gap-2">
-          {Object.entries(status.agents || {}).map(([name, state]) => (
+          {Object.entries(status.agents || {}).map(([name]) => (
             <div key={name} className="flex items-center space-x-2 text-xs">
               <div
                 className="w-2 h-2 rounded-full bg-green-500"

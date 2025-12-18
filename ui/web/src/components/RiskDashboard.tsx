@@ -85,7 +85,7 @@ export default function RiskDashboard({ portfolio, status }: RiskDashboardProps)
         <div className="p-4 rounded-lg bg-white/5 border border-white/10">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-gray-400">Daily PnL</span>
-            {metrics.dailyPnL >= 0 ? (
+            {dailyPnL >= 0 ? (
               <TrendingUp className="w-4 h-4 text-green-400" />
             ) : (
               <TrendingDown className="w-4 h-4 text-red-400" />

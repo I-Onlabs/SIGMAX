@@ -55,10 +55,8 @@ export default function PerformanceChart({ portfolio }: PerformanceChartProps) {
 
   // Calculate metrics from portfolio
   const totalPnl = portfolio ? (portfolio.total_value || 50) - 50 : 0 // Assume $50 starting capital
-  const winRate = 0 // Would need trade history to calculate
   const sharpeRatio = portfolio?.performance?.sharpe_ratio || 0
   const maxDrawdown = portfolio?.performance?.max_drawdown || 0
-  const profitFactor = totalPnl > 0 ? 1.5 : 0 // Simplified
 
   const maxVal = performanceHistory.length > 0
     ? Math.max(...performanceHistory.map(d => d.value))

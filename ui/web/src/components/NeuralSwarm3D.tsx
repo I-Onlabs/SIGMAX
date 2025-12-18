@@ -4,7 +4,7 @@ import { OrbitControls, Sphere } from '@react-three/drei'
 import * as THREE from 'three'
 
 // Agent node component
-function AgentNode({ position, color, label }: any) {
+function AgentNode({ position, color, label: _label }: any) {
   const meshRef = useRef<THREE.Mesh>(null)
 
   useFrame((state) => {

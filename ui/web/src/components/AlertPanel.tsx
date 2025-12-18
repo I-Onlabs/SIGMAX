@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, Info, AlertCircle, XCircle, X, Bell, BellOff, TrendingUp, TrendingDown } from 'lucide-react'
+import { AlertTriangle, Info, AlertCircle, XCircle, X, Bell, BellOff } from 'lucide-react'
 
 interface Alert {
   id: string

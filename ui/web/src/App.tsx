@@ -8,6 +8,7 @@ import QuantumCircuit from './components/QuantumCircuit'
 import RiskDashboard from './components/RiskDashboard'
 import AlertPanel from './components/AlertPanel'
 import PerformanceChart from './components/PerformanceChart'
+import AIChatPanel from './components/AIChatPanel'
 import { useWebSocket } from './hooks/useWebSocket'
 import api from './services/api'
 
@@ -153,6 +154,9 @@ function App() {
           <div className="space-y-6">
             {/* Status Panel */}
             <StatusPanel status={systemStatus} health={systemHealth} />
+
+            {/* AI Chat Panel */}
+            <AIChatPanel />
 
             {/* Risk Dashboard */}
             <RiskDashboard portfolio={portfolio} status={systemStatus} />
