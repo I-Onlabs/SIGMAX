@@ -1,0 +1,61 @@
+{
+  "name": "@sigmax/sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for SIGMAX - Autonomous AI Crypto Trading System",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run build:cjs && npm run build:esm && npm run build:types && npm run build:finalize",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build:finalize": "node scripts/finalize-build.js",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example:basic": "node examples/node-example.js",
+    "example:streaming": "npx tsx examples/streaming.ts",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "sigmax",
+    "trading",
+    "crypto",
+    "ai",
+    "autonomous",
+    "multi-agent",
+    "api",
+    "sdk",
+    "typescript"
+  ],
+  "author": "SIGMAX Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/sigmax"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/sigmax/issues"
+  },
+  "homepage": "https://github.com/yourusername/sigmax#readme",
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

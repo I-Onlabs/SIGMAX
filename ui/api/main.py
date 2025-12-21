@@ -27,30 +27,12 @@ from sigmax_manager import get_sigmax_manager
 # Import API routes
 from routes.exchanges import router as exchanges_router
 from routes.chat import router as chat_router
-
-# Connection manager for WebSocket clients
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-        logger.info(f"Client connected. Total: {len(self.active_connections)}")
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-        logger.info(f"Client disconnected. Total: {len(self.active_connections)}")
-
-    async def broadcast(self, message: dict):
-        for connection in self.active_connections:
-            try:
-                await connection.send_json(message)
-            except Exception as e:
-                logger.error(f"Error broadcasting: {e}")
-
-
-manager = ConnectionManager()
+from routes.websocket import (
+    router as websocket_router,
+    init_websocket_manager,
+    shutdown_websocket_manager,
+    broadcast_system_updates
+)
 
 
 # Rate limiting
@@ -137,9 +119,28 @@ metrics = RequestMetrics()
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting SIGMAX API")
+
+    # Initialize WebSocket manager
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    await init_websocket_manager(redis_url)
+
+    # Start broadcast task
+    broadcast_task = asyncio.create_task(broadcast_system_updates())
+
     yield
+
     # Shutdown
     logger.info("👋 Shutting down SIGMAX API")
+
+    # Cancel broadcast task
+    broadcast_task.cancel()
+    try:
+        await broadcast_task
+    except asyncio.CancelledError:
+        pass
+
+    # Shutdown WebSocket manager
+    await shutdown_websocket_manager()
 
 
 # Create FastAPI app with enhanced documentation
@@ -271,6 +272,8 @@ app.include_router(exchanges_router)
 logger.info("✓ Exchange API routes registered")
 app.include_router(chat_router)
 logger.info("✓ AI chat routes registered")
+app.include_router(websocket_router, prefix="/api")
+logger.info("✓ WebSocket routes registered")
 
 
 # Request models with validation
@@ -681,264 +684,13 @@ async def get_quantum_circuit():
         raise HTTPException(status_code=500, detail="Failed to fetch quantum circuit")
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """
-    WebSocket endpoint for real-time updates
-
-    Broadcasts:
-    - System status every 5 seconds
-    - Market prices every 2 seconds
-    - Portfolio updates every 3 seconds
-    - Trade executions immediately
-    - Agent decisions immediately
-    - System health every 10 seconds
-    """
-    await manager.connect(websocket)
-
-    # Get SIGMAX manager
-    sigmax_manager = await get_sigmax_manager()
-
-    try:
-        # Send welcome message
-        await websocket.send_json({
-            "type": "connected",
-            "message": "Connected to SIGMAX real-time updates",
-            "timestamp": datetime.now().isoformat(),
-            "server_version": "2.0.0"
-        })
-
-        # Send initial status
-        try:
-            status = await sigmax_manager.get_status()
-            await websocket.send_json({
-                "type": "initial_status",
-                "data": status,
-                "timestamp": datetime.now().isoformat()
-            })
-        except Exception as e:
-            logger.warning(f"Could not fetch initial status: {e}")
-
-        # Counters for update intervals
-        tick = 0
-
-        # Keep connection alive and send updates
-        while True:
-            try:
-                # Check for client messages (non-blocking)
-                try:
-                    client_msg = await asyncio.wait_for(
-                        websocket.receive_json(),
-                        timeout=0.1
-                    )
-
-                    # Handle client commands
-                    await handle_websocket_command(websocket, client_msg, sigmax_manager)
-
-                except asyncio.TimeoutError:
-                    # No message from client, continue with broadcasts
-                    pass
-
-                # Market prices update every 2 seconds (tick % 2 == 0)
-                if tick % 2 == 0:
-                    await broadcast_market_data(websocket, sigmax_manager)
-
-                # Portfolio update every 3 seconds (tick % 3 == 0)
-                if tick % 3 == 0:
-                    await broadcast_portfolio_update(websocket, sigmax_manager)
-
-                # System status every 5 seconds (tick % 5 == 0)
-                if tick % 5 == 0:
-                    await broadcast_system_status(websocket, sigmax_manager)
-
-                # System health every 10 seconds (tick % 10 == 0)
-                if tick % 10 == 0:
-                    await broadcast_system_health(websocket)
-
-                # Check for immediate events (trade executions, agent decisions)
-                await broadcast_pending_events(websocket, sigmax_manager)
-
-                # Increment tick counter
-                tick += 1
-                if tick > 30:  # Reset every 30 seconds to avoid overflow
-                    tick = 0
-
-                # Sleep 1 second between ticks
-                await asyncio.sleep(1)
-
-            except Exception as e:
-                logger.error(f"Error in WebSocket broadcast loop: {e}")
-                await asyncio.sleep(1)  # Prevent tight loop on error
-
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        logger.info("WebSocket client disconnected")
-    except Exception as e:
-        logger.error(f"WebSocket error: {e}")
-        manager.disconnect(websocket)
-
-
-async def handle_websocket_command(
-    websocket: WebSocket,
-    command: dict,
-    sigmax_manager
-):
-    """Handle commands from WebSocket client"""
-    cmd_type = command.get("type", "")
-
-    try:
-        if cmd_type == "ping":
-            # Respond to ping
-            await websocket.send_json({
-                "type": "pong",
-                "timestamp": datetime.now().isoformat()
-            })
-
-        elif cmd_type == "subscribe":
-            # Client wants to subscribe to specific updates
-            channels = command.get("channels", [])
-            await websocket.send_json({
-                "type": "subscribed",
-                "channels": channels,
-                "timestamp": datetime.now().isoformat()
-            })
-
-        elif cmd_type == "get_status":
-            # Client requests immediate status update
-            status = await sigmax_manager.get_status()
-            await websocket.send_json({
-                "type": "status",
-                "data": status,
-                "timestamp": datetime.now().isoformat()
-            })
-
-        else:
-            # Unknown command
-            await websocket.send_json({
-                "type": "error",
-                "message": f"Unknown command: {cmd_type}",
-                "timestamp": datetime.now().isoformat()
-            })
-
-    except Exception as e:
-        logger.error(f"Error handling WebSocket command: {e}")
-        await websocket.send_json({
-            "type": "error",
-            "message": str(e),
-            "timestamp": datetime.now().isoformat()
-        })
-
-
-async def broadcast_market_data(websocket: WebSocket, sigmax_manager):
-    """Broadcast current market prices and data"""
-    try:
-        if not sigmax_manager.is_initialized():
-            return
-
-        # Get market data for tracked symbols
-        symbols = ["BTC/USDT", "ETH/USDT"]  # Could be configurable
-
-        market_data = []
-        for symbol in symbols:
-            try:
-                # Get data from data module if available
-                if sigmax_manager._sigmax and sigmax_manager._sigmax.data_module:
-                    data = await sigmax_manager._sigmax.data_module.get_market_data(symbol)
-                    market_data.append({
-                        "symbol": symbol,
-                        "price": data.get("price", 0),
-                        "volume_24h": data.get("volume_24h", 0),
-                        "change_24h": data.get("change_24h", 0),
-                        "timestamp": data.get("timestamp", datetime.now().isoformat())
-                    })
-            except Exception as e:
-                logger.debug(f"Could not fetch market data for {symbol}: {e}")
-
-        if market_data:
-            await websocket.send_json({
-                "type": "market_update",
-                "data": market_data,
-                "timestamp": datetime.now().isoformat()
-            })
-
-    except Exception as e:
-        logger.debug(f"Error broadcasting market data: {e}")
-
-
-async def broadcast_portfolio_update(websocket: WebSocket, sigmax_manager):
-    """Broadcast portfolio changes"""
-    try:
-        if not sigmax_manager.is_initialized():
-            return
-
-        # Get portfolio from execution module
-        portfolio = await sigmax_manager.get_portfolio()
-
-        await websocket.send_json({
-            "type": "portfolio_update",
-            "data": portfolio,
-            "timestamp": datetime.now().isoformat()
-        })
-
-    except Exception as e:
-        logger.debug(f"Error broadcasting portfolio: {e}")
-
-
-async def broadcast_system_status(websocket: WebSocket, sigmax_manager):
-    """Broadcast system status"""
-    try:
-        status = await sigmax_manager.get_status()
-
-        await websocket.send_json({
-            "type": "system_status",
-            "data": status,
-            "timestamp": datetime.now().isoformat()
-        })
-
-    except Exception as e:
-        logger.debug(f"Error broadcasting system status: {e}")
-
-
-async def broadcast_system_health(websocket: WebSocket):
-    """Broadcast system health metrics"""
-    try:
-        health_data = {
-            "cpu_percent": psutil.cpu_percent(interval=0.1),
-            "memory_percent": psutil.virtual_memory().percent,
-            "disk_percent": psutil.disk_usage('/').percent,
-            "process_count": len(psutil.pids()),
-        }
-
-        await websocket.send_json({
-            "type": "health_update",
-            "data": health_data,
-            "timestamp": datetime.now().isoformat()
-        })
-
-    except Exception as e:
-        logger.debug(f"Error broadcasting health: {e}")
-
-
-async def broadcast_pending_events(websocket: WebSocket, sigmax_manager):
-    """
-    Broadcast pending events from event queue
-
-    Events include:
-    - trade_execution: Immediate notification when trades execute
-    - agent_decision: Immediate notification when agents make decisions
-    - alert: System alerts and warnings
-    """
-    try:
-        # Get all pending events
-        events = sigmax_manager.get_pending_events()
-
-        # Broadcast each event
-        for event in events:
-            await websocket.send_json(event)
-            logger.info(f"Broadcasted event: {event['type']}")
-
-    except Exception as e:
-        logger.debug(f"Error broadcasting pending events: {e}")
+# Old WebSocket endpoint removed - using new implementation in routes/websocket.py
+# The new WebSocket endpoint is at /api/ws with enhanced features:
+# - Subscription-based updates (topics and symbols)
+# - Redis pub/sub for multi-instance support
+# - Automatic reconnection support
+# - Heartbeat/ping-pong mechanism
+# - Per-connection message routing
 
 
 @app.post("/api/control/start", tags=["Control"], dependencies=[Depends(verify_api_key)])

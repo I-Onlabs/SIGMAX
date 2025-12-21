@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGMAX SDK - Browser Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 3px solid #4CAF50;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .output {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #f44336;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #4CAF50;
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .stream-event {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .event-meta { background: #2196F3; color: white; }
+        .event-step { background: #FF9800; color: white; }
+        .event-final { background: #4CAF50; color: white; }
+        .event-error { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SIGMAX SDK - Browser Example</h1>
+        <p>This example demonstrates using the SIGMAX SDK in a browser environment.</p>
+
+        <!-- Configuration -->
+        <div class="section">
+            <h2>⚙️ Configuration</h2>
+            <div>
+                <label>API URL:</label>
+                <input type="text" id="apiUrl" value="http://localhost:8000" style="width: 300px;">
+            </div>
+            <div style="margin-top: 10px;">
+                <label>API Key:</label>
+                <input type="password" id="apiKey" value="" placeholder="your-api-key" style="width: 300px;">
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <h2>🎯 Quick Actions</h2>
+            <button onclick="checkHealth()">Health Check</button>
+            <button onclick="getStatus()">Get Status</button>
+            <button onclick="analyzeBTC()">Analyze BTC</button>
+            <button onclick="streamAnalysis()">Stream Analysis</button>
+            <button onclick="getPortfolio()">Get Portfolio</button>
+            <button onclick="getMetrics()">Get Metrics</button>
+        </div>
+
+        <!-- Custom Analysis -->
+        <div class="section">
+            <h2>📊 Custom Analysis</h2>
+            <input type="text" id="customSymbol" value="ETH/USDT" placeholder="Symbol">
+            <button onclick="analyzeCustom()">Analyze</button>
+        </div>
+
+        <!-- Output -->
+        <div class="section">
+            <h2>📋 Output</h2>
+            <div id="output" class="output">Ready. Click a button to get started...</div>
+        </div>
+    </div>
+
+    <!-- Import SDK (using ESM from CDN or local build) -->
+    <script type="module">
+        import { SigmaxClient } from './dist/index.mjs';
+
+        // Make client available globally
+        window.SigmaxClient = SigmaxClient;
+        window.client = null;
+
+        // Helper to safely create text node
+        function createTextElement(text, className = '') {
+            const div = document.createElement('div');
+            if (className) div.className = className;
+            div.textContent = text;
+            return div;
+        }
+
+        // Helper to get or create client
+        window.getClient = function() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const apiKey = document.getElementById('apiKey').value;
+
+            if (!apiKey) {
+                throw new Error('Please enter an API key');
+            }
+
+            if (!window.client) {
+                window.client = new SigmaxClient({ apiUrl, apiKey });
+            }
+
+            return window.client;
+        };
+
+        // Helper to display output
+        window.displayOutput = function(data, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Clear output
+            output.textContent = '';
+
+            if (type === 'error') {
+                const errorDiv = createTextElement(`[${timestamp}] ERROR\n${JSON.stringify(data, null, 2)}`, 'error');
+                output.appendChild(errorDiv);
+            } else if (type === 'success') {
+                const successDiv = createTextElement(`[${timestamp}] SUCCESS`, 'success');
+                output.appendChild(successDiv);
+                const dataText = document.createTextNode('\n' + JSON.stringify(data, null, 2));
+                output.appendChild(dataText);
+            } else {
+                output.textContent = `[${timestamp}]\n${JSON.stringify(data, null, 2)}`;
+            }
+
+            output.scrollTop = output.scrollHeight;
+        };
+
+        // Helper to append stream events
+        window.appendStreamEvent = function(event) {
+            const output = document.getElementById('output');
+            const timestamp = new Date(event.timestamp).toLocaleTimeString();
+            const eventClass = `stream-event event-${event.type}`;
+
+            const eventDiv = createTextElement(
+                `[${timestamp}] ${event.type.toUpperCase()}: ${JSON.stringify(event.data || event.update || event.error || 'event')}`,
+                eventClass
+            );
+
+            output.appendChild(eventDiv);
+            output.scrollTop = output.scrollHeight;
+        };
+
+        // Action functions
+        window.checkHealth = async function() {
+            try {
+                const client = getClient();
+                displayOutput('Checking health...', 'info');
+                const result = await client.healthCheck();
+                displayOutput(result, 'success');
+            } catch (error) {
+                displayOutput(error.message, 'error');
+            }
+        };
+
+        window.getStatus = async function() {
+            try {
+                const client = getClient();
+                displayOutput('Getting status...', 'info');
+                const result = await client.getStatus();
+                displayOutput(result, 'success');
+            } catch (error) {
+                displayOutput(error.message, 'error');
+            }
+        };
+
+        window.analyzeBTC = async function() {
+            try {
+                const client = getClient();
+                displayOutput('Analyzing BTC/USDT...', 'info');
+                const result = await client.analyze('BTC/USDT', { risk_profile: 'balanced' });
+                displayOutput(result, 'success');
+            } catch (error) {
+                displayOutput(error.message, 'error');
+            }
+        };
+
+        window.analyzeCustom = async function() {
+            try {
+                const symbol = document.getElementById('customSymbol').value;
+                const client = getClient();
+                displayOutput(`Analyzing ${symbol}...`, 'info');
+                const result = await client.analyze(symbol, { risk_profile: 'balanced' });
+                displayOutput(result, 'success');
+            } catch (error) {
+                displayOutput(error.message, 'error');
+            }
+        };
+
+        window.streamAnalysis = async function() {
+            try {
+                const client = getClient();
+                const output = document.getElementById('output');
+                output.textContent = '';
+
+                const startDiv = createTextElement('Starting stream...');
+                output.appendChild(startDiv);
+
+                for await (const event of client.analyzeStream('BTC/USDT')) {
+                    appendStreamEvent(event);
+
+                    if (event.type === 'final' || event.type === 'error') {
+                        break;
+                    }
+                }
+
+                const successDiv = createTextElement('Stream completed!', 'success');
+                output.appendChild(successDiv);
+
+            } catch (error) {
+                displayOutput(error.message, 'error');
+            }
+        };
+
+        window.getPortfolio = async function() {
+            try {
+                const client = getClient();
+                displayOutput('Getting portfolio...', 'info');
+                const result = await client.getPortfolio();
+                displayOutput(result, 'success');
+            } catch (error) {
+                displayOutput(error.message, 'error');
+            }
+        };
+
+        window.getMetrics = async function() {
+            try {
+                const client = getClient();
+                displayOutput('Getting metrics...', 'info');
+                const result = await client.getMetrics();
+                displayOutput(result, 'success');
+            } catch (error) {
+                displayOutput(error.message, 'error');
+            }
+        };
+
+        console.log('✅ SIGMAX SDK loaded and ready!');
+    </script>
+</body>
+</html>

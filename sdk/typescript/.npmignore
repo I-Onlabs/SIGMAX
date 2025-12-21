@@ -1,0 +1,26 @@
+# Source files
+src/
+tsconfig.json
+
+# Examples and docs
+examples/
+*.md
+!README.md
+
+# Development
+node_modules/
+.DS_Store
+*.log
+*.lock
+.vscode/
+.idea/
+
+# Tests
+test/
+tests/
+*.test.ts
+*.spec.ts
+coverage/
+
+# Build artifacts (keep only dist/)
+*.tsbuildinfo
