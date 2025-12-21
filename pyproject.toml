@@ -50,6 +50,13 @@ dev = [
     "isort>=5.12.0",
     "pre-commit>=3.3.3",
 ]
+cli = [
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    "prompt_toolkit>=3.0.43",
+    "httpx>=0.27.0",
+    "httpx-sse>=0.4.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/I-Onlabs/SIGMAX"
@@ -57,8 +64,11 @@ Documentation = "https://github.com/I-Onlabs/SIGMAX/tree/main/docs"
 Repository = "https://github.com/I-Onlabs/SIGMAX"
 "Bug Tracker" = "https://github.com/I-Onlabs/SIGMAX/issues"
 
+[project.scripts]
+sigmax = "core.cli.main:app"
+
 [tool.setuptools]
-packages = ["pkg", "apps"]
+packages = ["pkg", "apps", "core"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.yml", "*.json", "*.sql"]

@@ -1,346 +1,416 @@
-# SIGMAX - Autonomous Multi-Agent AI Crypto Trading OS
+# SIGMAX
 
-![SIGMAX Banner](docs/assets/banner.png)
-
-**The Ultimate Open-Source Autonomous Trading Operating System**
+**Autonomous Multi-Agent AI Crypto Trading Operating System**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![React 18](https://img.shields.io/badge/react-18-blue.svg)](https://reactjs.org/)
-[![Tauri 2.0](https://img.shields.io/badge/tauri-2.0-orange.svg)](https://tauri.app/)
+
+> ⚠️ **EDUCATIONAL USE ONLY** - See [Disclaimer](#-disclaimer) before use
 
 ---
 
-## 🎯 What is SIGMAX?
+## What is SIGMAX?
 
-SIGMAX is a **fully autonomous, multi-agent AI trading operating system** that combines:
+SIGMAX is an **open-source, autonomous AI trading system** that combines multi-agent intelligence, quantum optimization, and advanced risk management for cryptocurrency trading.
 
-- 🤖 **Multi-Agent Orchestration** (LangChain + LangGraph)
-- 📈 **Freqtrade + FreqAI** for algorithmic trading
-- ⚛️ **Quantum Portfolio Optimization** (Qiskit VQE/QAOA)
-- 🔗 **Multi-Chain Arbitrage** (CEX + DEX)
-- 🛡️ **Zero-Trust Security** (ZK-SNARKs + OPA policies)
-- 🎨 **Neural Cockpit UI** (React + Three.js + Tauri)
-- 🔊 **Voice Control** via Telegram natural language
+### Key Highlights
 
-**100% Open Source | 100% Local | Zero Cloud Dependencies**
-
----
-
-## ✨ Key Features
-
-### 🧠 Multi-Agent Intelligence
-- **Debate System**: Bull vs Bear agents with researcher arbitration
-- **Specialized Agents**: Sentiment, Technical, Fundamentals, Risk, Arbitrage, Privacy, Compliance
-- **🆕 Fundamental Analysis**: On-chain metrics, token economics, financial ratios (Phase 3)
-- **🆕 Financial Ratios**: P/F, MC/TVL, NVT, token velocity, protocol revenue yield (Phase 3)
-- **🆕 Structured Planning**: Task decomposition with dependency resolution (Phase 2)
-- **🆕 Parallel Execution**: 1.8-2.4x research speedup through parallelization (Phase 2)
-- **🆕 Self-Validation**: 4D quality checks before decisions (Phase 1)
-- **🆕 Iterative Refinement**: Adaptive research loops for high-confidence decisions (Phase 1)
-- **Adaptive Learning**: RLHF-tuned responses with FinLLM models
-- **RAG + ZK-Proofs**: Verifiable memory and audit trails
-- **ML Ensemble**: XGBoost, LightGBM, Random Forest, Gradient Boosting for price prediction
-- **Sentiment Analysis**: Multi-source aggregation (news, social, on-chain, Fear & Greed)
-- **Market Regime Detection**: 6 regime types with HMM-based classification
-
-### 📊 Advanced Trading
-- **Freqtrade Integration**: Paper + Live trading with FreqAI
-- **HFT Support**: LEAN engine integration for high-frequency strategies
-- **Multi-Chain**: BTC, ETH, Solana, Base, Arbitrum, Polygon
-- **Arbitrage Scanner**: 50+ DEX/CEX real-time monitoring
-- **MEV Shield**: Anti-sandwich, anti-frontrun protection
-- **Advanced Backtesting**: Sharpe/Sortino ratio, max drawdown, walk-forward analysis
-- **Portfolio Rebalancing**: Quantum-enhanced with multiple strategies (threshold, calendar, volatility-adjusted)
-- **Performance Monitoring**: Real-time metrics with latency tracking and throughput analysis
-
-### ⚛️ Quantum Computing
-- **Portfolio Optimization**: VQE + QAOA with hot-starting
-- **Real-Time Visualization**: Live quantum circuit rendering
-- **Dynamic Circuits**: Adapts to portfolio composition
-- **Classical Hybrid**: Falls back gracefully when quantum unavailable
-
-### 🛡️ Safety & Compliance
-- **Zero-Trust Architecture**: Every action validated
-- **Auto-Pause Triggers**: Loss limits, API errors, sentiment drops
-- **Two-Man Rule**: Critical actions require confirmation
-- **EU AI Act Compliant**: Bias detection + transparency
-- **SEC Compliant**: Trade logging and reporting
-- **Privacy First**: PII detection + anti-collusion
-- **Multi-Channel Alerts**: Console, webhook, email, SMS, Telegram, Discord, Slack
-- **Alert Management**: Throttling, priority routing, customizable rules
-
-### 🎨 Neural Cockpit UI
-- **3D Agent Swarm**: Live visualization of agent activity
-- **Quantum Circuit Viewer**: Interactive circuit simulator
-- **Latency Waterfall**: Microsecond-level performance tracking
-- **ESG Satellite**: Geographic risk visualization
-- **Voice Commands**: Natural language control
-- **macOS Native**: Tauri-based .app (6MB installer)
-- **Performance Charts**: Real-time PnL, win rate, Sharpe ratio visualization
-- **Alert Panel**: Multi-level alert display with filtering and statistics
-- **Risk Dashboard**: Live exposure tracking with auto-pause indicators
+🤖 **Multi-Agent Debate** - Bull vs Bear agents with researcher arbitration
+⚛️ **Quantum Optimization** - VQE/QAOA portfolio optimization with Qiskit
+🛡️ **Safety-First** - Auto-pause triggers, two-man rule, zero-trust architecture
+🎨 **Neural Cockpit** - 3D visualization with React + Three.js
+🔊 **Multiple Interfaces** - Telegram, Web UI, CLI, Python/TypeScript SDKs
+💯 **100% Local** - No cloud dependencies, full control
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- **OS**: macOS 13+ or Linux (Ubuntu 22.04+)
-- **RAM**: 16GB minimum
-- **Tools**: Podman/Docker, Node.js 20+, Python 3.11+, Rust 1.75+
+
+- **OS:** macOS 13+ or Linux (Ubuntu 22.04+)
+- **RAM:** 16GB minimum
+- **Tools:** Docker/Podman, Node.js 20+, Python 3.11+, Rust 1.75+
 
 ### One-Command Deploy
 
 ```bash
-git clone https://github.com/yourusername/SIGMAX.git
+git clone https://github.com/I-Onlabs/SIGMAX.git
 cd SIGMAX
 bash deploy.sh
 ```
 
 This will:
-1. Install all dependencies
+1. Install dependencies
 2. Start backend services (Podman)
 3. Launch UI at `http://localhost:3000`
 4. Build macOS .app (if on macOS)
-5. Open Telegram bot setup wizard
+5. Open setup wizard
 
 ### Manual Setup
 
+<details>
+<summary>Click to expand manual installation steps</summary>
+
 ```bash
-# 1. Install Python dependencies
+# 1. Backend
 cd core
 python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+source venv/bin/activate
 pip install -r requirements.txt
 
-# 2. Install UI dependencies
+# 2. Frontend
 cd ../ui/web
 npm install
 
-# 3. Configure environment
+# 3. Environment
 cp .env.example .env
-# Edit .env with your API keys (optional for paper trading)
+# Edit .env with your API keys
 
-# 4. Start services
-cd ../../
+# 4. Services
 podman-compose up -d
 
 # 5. Start UI
-cd ui/web
 npm run dev
 
-# 6. Start core orchestrator
+# 6. Start orchestrator
 cd ../../core
 python main.py
 ```
 
+</details>
+
 ---
 
-## 📂 Architecture
+## For Different Users
+
+<table>
+<tr>
+<th>🎯 I want to...</th>
+<th>📖 Start here</th>
+</tr>
+<tr>
+<td><strong>Trade crypto with AI</strong></td>
+<td>
+<code>bash deploy.sh</code> → Use Telegram bot<br/>
+See <a href="#telegram-bot-commands">Telegram Commands</a>
+</td>
+</tr>
+<tr>
+<td><strong>Build apps on SIGMAX</strong></td>
+<td>
+Install SDK: <code>pip install sigmax-sdk</code><br/>
+See <a href="docs/SDK.md">SDK Guide</a> (coming soon)
+</td>
+</tr>
+<tr>
+<td><strong>Automate trading ops</strong></td>
+<td>
+Use CLI: <code>sigmax analyze BTC/USDT</code><br/>
+See <a href="docs/CLI.md">CLI Guide</a>
+</td>
+</tr>
+<tr>
+<td><strong>Research AI trading</strong></td>
+<td>
+Read <a href="docs/ARCHITECTURE.md">Architecture</a><br/>
+See <a href="docs/ENHANCEMENTS_SUMMARY.md">Enhancements</a>
+</td>
+</tr>
+<tr>
+<td><strong>Contribute code</strong></td>
+<td>
+Fork repo → Read <a href="CONTRIBUTING.md">Contributing</a><br/>
+Join <a href="https://discord.gg/sigmax">Discord</a>
+</td>
+</tr>
+</table>
+
+---
+
+## Features
+
+### 🧠 Multi-Agent Intelligence
+
+```
+┌─────────────┐
+│  Planner    │  Creates structured plan
+└──────┬──────┘
+       ▼
+┌──────────────┐
+│ Researcher   │  Executes tasks in parallel (1.8-2.4x speedup)
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│  Validator   │  4D quality checks, re-research if needed
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ Fundamental  │  On-chain metrics + financial ratios
+└──────┬───────┘
+       ▼
+┌──────────────┐
+│ Bull vs Bear │  Informed debate
+│    Debate    │
+└──────┬───────┘
+       ▼
+┌─────────────────┐
+│ Risk + Privacy  │  Final safety check
+└─────────────────┘
+```
+
+**Specialized Agents:**
+- **Sentiment** - Multi-source aggregation (news, social, on-chain)
+- **Technical** - ML ensemble (XGBoost, LightGBM, Random Forest)
+- **Fundamentals** - P/F, MC/TVL, NVT, token velocity
+- **Risk** - Exposure monitoring, auto-pause triggers
+- **Arbitrage** - 50+ DEX/CEX scanning
+- **Privacy** - PII detection, anti-collusion
+- **Compliance** - EU AI Act + SEC compliant
+
+### ⚛️ Quantum Computing
+
+- **Portfolio Optimization** - VQE + QAOA algorithms
+- **Hot-starting** - Faster convergence
+- **Real-time Visualization** - Live circuit rendering
+- **Classical Hybrid** - Graceful fallback
+
+### 📊 Advanced Trading
+
+- **Freqtrade Integration** - Paper + Live trading
+- **HFT Support** - LEAN engine integration
+- **Multi-Chain** - BTC, ETH, Solana, Base, Arbitrum, Polygon
+- **MEV Shield** - Anti-sandwich, anti-frontrun
+- **Backtesting** - Sharpe/Sortino, max drawdown, walk-forward
+
+### 🛡️ Safety & Compliance
+
+**Risk Caps (Configurable):**
+- Max Exposure: $50 total
+- Position Size: $10-15 per trade
+- Stop Loss: -1.5% per trade
+- Daily Loss Limit: $10
+
+**Auto-Pause Triggers:**
+- 3 consecutive losses
+- API error burst (>5 errors/min)
+- Sentiment drop (<-0.3)
+- MEV attack (slippage >1%)
+
+**Two-Man Rule:**
+Critical actions require confirmation:
+- Leverage increase
+- Risk cap removal
+- Emergency withdraw
+
+**Audit Trail:**
+- ZK-SNARK proofs for every decision
+- Daily snapshots via Telegram
+- Weekly PDF tearsheets
+
+### 🎨 Neural Cockpit UI
+
+- **3D Agent Swarm** - Live agent activity visualization
+- **Quantum Circuit Viewer** - Interactive simulator
+- **Latency Waterfall** - Microsecond performance tracking
+- **Performance Charts** - Real-time PnL, win rate, Sharpe ratio
+- **Voice Commands** - Natural language control
+- **macOS Native** - Tauri .app (6MB installer)
+
+---
+
+## Usage
+
+### Telegram Bot Commands
+
+```bash
+/status                   # Current PnL, open trades
+/start balanced           # Start with balanced risk profile
+/pause 2h                 # Pause for 2 hours
+/resume                   # Resume trading
+/panic                    # Emergency stop + close all
+/why BTC/USDT            # Explain last BTC decision
+/quantum portfolio        # Show quantum optimization
+/agents                   # Show agent debate history
+```
+
+### CLI
+
+```bash
+# Install with CLI support
+pip install -e ".[cli]"
+
+# Configure API access
+sigmax config set api_key YOUR_API_KEY
+
+# Analyze trading pairs
+sigmax analyze BTC/USDT --risk balanced
+
+# Check system status
+sigmax status
+
+# Create and manage proposals
+sigmax propose ETH/USDT --size 1000
+sigmax approve PROP-abc123
+sigmax execute PROP-abc123
+
+# Interactive shell mode
+sigmax shell
+```
+
+**[📖 Full CLI Documentation](docs/CLI.md)**
+
+### Python SDK (Coming Soon)
+
+```python
+from sigmax import SigmaxClient
+
+client = SigmaxClient(api_key="...")
+
+# Streaming analysis
+async for event in client.analyze("BTC/USDT", risk="balanced"):
+    print(f"[{event.type}] {event.data}")
+
+# Synchronous
+result = client.analyze_sync("ETH/USDT")
+
+# Trading
+proposal = client.propose_trade("BTC/USDT", size=100)
+client.approve_proposal(proposal.id)
+client.execute_proposal(proposal.id)
+```
+
+### TypeScript SDK (Coming Soon)
+
+```typescript
+import { SigmaxClient } from '@sigmax/sdk';
+
+const client = new SigmaxClient({ apiKey: '...' });
+
+// Streaming
+for await (const event of client.analyze('BTC/USDT')) {
+  console.log(event);
+}
+
+// Promise-based
+const result = await client.analyzeSync('ETH/USDT');
+```
+
+### Web API
+
+```bash
+# Streaming analysis (SSE)
+curl -N -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Analyze BTC","symbol":"BTC/USDT"}' \
+  http://localhost:8000/api/chat/stream
+
+# Trade proposals
+curl -X POST -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"symbol":"BTC/USDT"}' \
+  http://localhost:8000/api/chat/proposals
+
+# List proposals
+curl -H "Authorization: Bearer $API_KEY" \
+  http://localhost:8000/api/chat/proposals
+
+# Approve proposal
+curl -X POST -H "Authorization: Bearer $API_KEY" \
+  http://localhost:8000/api/chat/proposals/PROP-123/approve
+
+# Execute proposal
+curl -X POST -H "Authorization: Bearer $API_KEY" \
+  http://localhost:8000/api/chat/proposals/PROP-123/execute
+```
+
+---
+
+## Architecture
 
 ```
 SIGMAX/
 ├── core/                   # Multi-agent orchestrator
-│   ├── main.py            # Agentic brain
-│   ├── agents/            # Specialized agents
-│   └── modules/           # Trading, quantum, arbitrage
+│   ├── main.py            # Main entry point
+│   ├── agents/            # Specialized AI agents
+│   ├── modules/           # Trading, quantum, arbitrage
+│   └── interfaces/        # Multi-channel contracts
 ├── trading/               # Trading engines
-│   ├── freqtrade/        # Main trading bot
-│   ├── lean/             # HFT engine
-│   └── hummingbot/       # Arbitrage backup
+│   ├── freqtrade/        # Main bot
+│   └── lean/             # HFT backup
 ├── ui/                    # Neural Cockpit
 │   ├── web/              # React frontend
 │   ├── desktop/          # Tauri wrapper
 │   └── api/              # FastAPI backend
 ├── infra/                 # Deployment
 │   ├── podman-compose.yml
-│   └── helm-chart/
+│   └── prometheus/
 └── docs/                  # Documentation
 ```
 
-### Data Flow
+### Multi-Channel Support
 
-```
-┌─────────────┐
-│   Telegram  │ Natural Language Commands
-│     Bot     │─────────┐
-└─────────────┘         │
-                        ▼
-┌────────────────────────────────────────────────┐
-│      SIGMAX Orchestrator (LangGraph)           │
-│                                                 │
-│  ┌─────────┐  Creates structured plan          │
-│  │ Planner │  (task decomposition)              │
-│  └────┬────┘                                    │
-│       ▼                                         │
-│  ┌──────────┐  Executes tasks in parallel      │
-│  │Researcher│  (1.8-2.4x speedup)               │
-│  └────┬─────┘                                   │
-│       ▼                                         │
-│  ┌──────────┐  Quality checks (4D validation)  │
-│  │Validator │  Re-research if needed            │
-│  └────┬─────┘                                   │
-│       ▼                                         │
-│  ┌──────────┐  On-chain + financial ratios     │
-│  │Fundamental│ P/F, MC/TVL, token economics     │
-│  └────┬─────┘                                   │
-│       ▼                                         │
-│  ┌──────────────┐                               │
-│  │Bull vs Bear  │  Informed debate               │
-│  │    Debate    │                               │
-│  └──────┬───────┘                               │
-│         ▼                                       │
-│  ┌─────────────────────────┐                   │
-│  │ Risk + Privacy Check    │                   │
-│  └──────────┬──────────────┘                   │
-└─────────────┼──────────────────────────────────┘
-              ▼
-    ┌──────────────────┐
-    │   Quantum        │
-    │   Portfolio      │───► Qiskit VQE/QAOA
-    │   Optimizer      │
-    └────────┬─────────┘
-             ▼
-    ┌──────────────────┐
-    │   Freqtrade      │
-    │   + FreqAI       │───► Exchange (CCXT)
-    └────────┬─────────┘
-             │
-             ├──► Arbitrage Scanner (Multi-chain)
-             ├──► MEV Shield
-             └──► Policy Validator (OPA)
-                       │
-                       ▼
-            ┌──────────────────┐
-            │  Neural Cockpit  │◄─── NATS Events
-            │   (React + 3D)   │
-            └──────────────────┘
-```
+SIGMAX supports multiple interfaces feeding the same orchestrator:
 
-### Multi-Channel (Telegram + Web Chat) & Safe Execution
+| Interface | Status | Use Case |
+|-----------|--------|----------|
+| **Telegram Bot** | ✅ Production | Natural language control |
+| **Web UI** | ✅ Production | 3D visualization |
+| **Web API** | ✅ Production | REST + SSE streaming |
+| **CLI** | ✅ Available | Automation/scripting ([docs](docs/CLI.md)) |
+| **Python SDK** | 🚧 Coming Soon | Programmatic access |
+| **TypeScript SDK** | 🚧 Coming Soon | Web integration |
+| **WebSocket** | 🚧 Coming Soon | Real-time bidirectional |
 
-SIGMAX supports a **single orchestrator core** with multiple interfaces feeding it through a shared structured contract (no duplicated decision logic).
-
-- **Telegram**: `/analyze`, `/propose`, `/approve`, `/execute`
-- **AI Web Chat (API)**: streaming step progress + artifacts over **SSE**
-
-**Execution is gated by default**:
-- The legacy `POST /api/trade` endpoint is **disabled** unless `ALLOW_DIRECT_TRADE_API=true`.
-- Preferred flow is **proposal → (optional) approval → execute**:
-  - `POST /api/chat/proposals`
-  - `GET /api/chat/proposals`
-  - `GET /api/chat/proposals/{proposal_id}`
-  - `POST /api/chat/proposals/{proposal_id}/approve`
-  - `POST /api/chat/proposals/{proposal_id}/execute`
-
-**Streaming chat**:
-- `POST /api/chat/stream` returns `text/event-stream` events: `meta`, `step`, `final`, `error`.
+See [Interface Enhancement Plan](docs/INTERFACE_ENHANCEMENT_PLAN.md) for details.
 
 ---
 
-## 🔒 Safety Philosophy
+## Documentation
 
-**SIGMAX is designed with safety-first principles:**
+### Getting Started
+- [Quickstart Guide](docs/QUICKSTART.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
 
-### Risk Caps
-- **Max Exposure**: $50 total (configurable)
-- **Position Size**: $10-15 per trade
-- **Stop Loss**: -1.5% per trade
-- **Daily Loss Limit**: $10
-- **Leverage**: 1x → 2x (P2 phase only)
-- **Max Open Trades**: 3 concurrent
+### Architecture & Design
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [Agent Design](docs/AGENTS.md) *(coming soon)*
+- [Safety & Risk Management](docs/SAFETY.md)
+- [Quantum Integration](docs/QUANTUM.md) *(coming soon)*
 
-### Auto-Pause Triggers
-- 3 consecutive losses
-- API error burst (>5 errors/min)
-- Sentiment drop (<-0.3)
-- RAG mismatch (>5% hallucination)
-- Privacy breach detected
-- Collusion pattern found
-- MEV attack (slippage >1%)
+### Enhancements
+- [Complete Enhancement Summary](docs/ENHANCEMENTS_SUMMARY.md)
+- [Phase 1: Validation](docs/PHASE1_VALIDATION.md)
+- [Phase 2: Planning System](docs/PHASE2_PLANNING.md)
+- [Phase 3: Fundamental Analysis](docs/PHASE3_FUNDAMENTALS.md)
+- [Integration Testing](docs/INTEGRATION_TESTING.md)
 
-### Two-Man Rule
-Critical actions require confirmation:
-- Leverage increase
-- Risk cap removal
-- Policy override
-- Emergency withdraw
-
-### Audit Trail
-- **ZK-SNARK Proofs**: Every trade decision logged immutably
-- **Daily Snapshots**: Telegram + email reports
-- **Weekly Tearsheets**: PDF with full strategy analysis
-- **Real-Time Dashboard**: Live risk metrics
+### API & Development
+- [API Reference](docs/API_REFERENCE.md)
+- [CLI Guide](docs/CLI.md)
+- [SDK Guide](docs/SDK.md) *(coming soon)*
+- [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
-## 🎮 Usage Examples
-
-### Telegram Bot Commands
-
-```
-/status                    # Current PnL, open trades
-/start balanced            # Start with balanced risk profile
-/start aggressive          # Higher risk tolerance
-/pause 2h                  # Pause for 2 hours
-/resume                    # Resume trading
-/panic                     # Emergency stop + close all
-/retrain                   # Trigger FreqAI retraining
-/why BTC/USDT              # Explain last BTC decision
-/quantum portfolio         # Show quantum optimization
-/risk report               # Detailed risk analysis
-/agents                    # Show agent debate history
-```
-
-### Voice Commands (UI)
-
-```
-"Show me Bitcoin"          # Focus on BTC charts
-"Pause trading"            # Stop all strategies
-"Why did we buy Ethereum?" # Explain ETH trade
-"Start quantum optimizer"  # Run portfolio rebalance
-"Show me the swarm"        # Display 3D agent view
-```
-
-### Python API
-
-```python
-from sigmax import SIGMAX
-
-# Initialize
-bot = SIGMAX(mode='paper', risk_profile='conservative')
-
-# Manual control
-bot.start()
-bot.add_strategy('BTC/USDT', 'momentum')
-bot.set_risk_limit(max_loss_per_day=20)
-
-# Query agents
-debate = bot.agents.debate('Should we buy ETH now?')
-print(debate.conclusion)
-
-# Quantum portfolio
-portfolio = bot.quantum.optimize(['BTC', 'ETH', 'SOL'], budget=1000)
-print(portfolio.weights)
-```
-
----
-
-## 🧪 Testing & Validation
+## Testing
 
 ### Backtesting
+
 ```bash
 # Run 1-year backtest
 python core/main.py --backtest --start 2024-01-01 --end 2024-12-31
 
-# Generate performance report
+# Generate report
 python core/main.py --report --output reports/2024.pdf
 ```
 
 ### Safety Tests
+
 ```bash
-# Run all safety tests
+# All safety tests
 pytest tests/safety/ -v
 
 # Specific tests
@@ -350,42 +420,72 @@ pytest tests/safety/test_policy_validator.py
 ```
 
 ### Load Testing
+
 ```bash
-# Simulate high-frequency scenarios
 locust -f tests/load/locustfile.py --host http://localhost:8000
 ```
 
 ---
 
-## 📊 Performance Metrics
+## Roadmap
 
-### Backtested Results (2024, Paper Trading)
-- **Strategy**: Multi-agent balanced
-- **Period**: Jan 1 - Dec 31, 2024
-- **Assets**: BTC/USDT, ETH/USDT
-- **Results**: *(Run backtest to generate)*
-  - Sharpe Ratio: TBD
-  - Max Drawdown: TBD
-  - Win Rate: TBD
-  - Omega Ratio: TBD
+### ✅ Phase 0: Paper Trading + Enhancements (Complete)
+- Multi-agent orchestrator
+- Freqtrade integration
+- Quantum optimizer
+- Telegram bot
+- Enhancement phases 1-3 (validation, planning, fundamentals)
 
-### System Performance
-- **Latency**: <30ms agent decision
-- **UI FPS**: 60fps (3D swarm)
-- **Memory**: ~4GB RAM usage
-- **CPU**: ~15% idle, ~40% active trading
+### 🚧 Phase 1: Multi-Interface (In Progress)
+- CLI interface
+- Python SDK
+- TypeScript SDK
+- WebSocket support
+- Enhanced documentation
+
+### 🔲 Phase 2: Live Trading ($50 cap)
+- Live BTC/USDT only
+- Real-time monitoring
+- MEV protection
+- Two-man rule enforcement
+
+### 🔲 Phase 3: Multi-Asset
+- Add ETH, SOL, ARB, BASE
+- Memecoin scanner
+- Leverage 2x (with safety)
+- Advanced arbitrage
+
+### 🔲 Phase 4: Community (Q2 2025)
+- Multi-user support
+- Strategy marketplace
+- Mobile app
+- Cloud deployment option
+- DAO governance
 
 ---
 
-## 🛠️ Configuration
+## Performance
 
-### Environment Variables (.env)
+### System Metrics
+- **Latency:** <30ms agent decision
+- **UI FPS:** 60fps (3D swarm)
+- **Memory:** ~4GB RAM usage
+- **CPU:** ~15% idle, ~40% active
+
+### Backtested Results
+Run `python core/main.py --backtest` to generate performance metrics.
+
+---
+
+## Configuration
+
+### Environment Variables
 
 ```bash
 # Trading
 EXCHANGE=binance
-API_KEY=your_key_here
-API_SECRET=your_secret_here
+API_KEY=your_key
+API_SECRET=your_secret
 TESTNET=true
 
 # LLM (Optional - uses Ollama by default)
@@ -394,7 +494,7 @@ ANTHROPIC_API_KEY=sk-...
 
 # Telegram
 TELEGRAM_BOT_TOKEN=123456:ABC...
-TELEGRAM_CHAT_ID=your_chat_id
+TELEGRAM_CHAT_ID=your_id
 
 # Safety
 MAX_DAILY_LOSS=10
@@ -408,107 +508,26 @@ QUANTUM_SHOTS=1000
 # Database
 POSTGRES_URL=postgresql://user:pass@localhost:5432/sigmax
 REDIS_URL=redis://localhost:6379
-CLICKHOUSE_URL=http://localhost:8123
-
-# Observability
-GRAFANA_URL=http://localhost:3001
-PROMETHEUS_URL=http://localhost:9090
 ```
 
----
-
-## 🎨 UI Screenshots
-
-### Neural Cockpit Dashboard
-![Dashboard](docs/assets/screenshots/dashboard.png)
-
-### 3D Agent Swarm
-![Swarm](docs/assets/screenshots/swarm.png)
-
-### Quantum Circuit Viewer
-![Quantum](docs/assets/screenshots/quantum.png)
-
-### Live Trading View
-![Trading](docs/assets/screenshots/trading.png)
+See [.env.example](.env.example) for full configuration.
 
 ---
 
-## 📚 Documentation
+## Contributing
 
-- [Architecture Deep Dive](docs/ARCHITECTURE.md)
-- [Safety & Risk Management](docs/SAFETY.md)
-- [Agent Design](docs/AGENTS.md)
-- [Quantum Integration](docs/QUANTUM.md)
-- [API Reference](docs/API.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-
-### Enhancement Documentation
-- **⭐ [Complete Enhancement Summary](docs/ENHANCEMENTS_SUMMARY.md)** - Overview of all three phases
-- **🆕 [Phase 1: Validation Enhancement](docs/PHASE1_VALIDATION.md)** - Self-validation and quality checks
-- **🆕 [Phase 2: Planning System](docs/PHASE2_PLANNING.md)** - Task decomposition & parallel execution
-- **🆕 [Phase 3: Fundamental Analysis](docs/PHASE3_FUNDAMENTALS.md)** - On-chain metrics & financial ratios
-- **🆕 [Integration Testing Guide](docs/INTEGRATION_TESTING.md)** - Testing all phases end-to-end
-
----
-
-## 🗺️ Roadmap
-
-### Phase 0: Paper Trading + Enhancements (Complete ✅)
-- ✅ Multi-agent orchestrator
-- ✅ Freqtrade integration
-- ✅ Basic UI
-- ✅ Quantum optimizer
-- ✅ Telegram bot
-- ✅ **Enhancement Phase 1**: Self-validation and iterative refinement
-  - ValidationAgent with 4D quality checks
-  - ResearchSafety cost and iteration management
-  - Adaptive re-research loops
-- ✅ **Enhancement Phase 2**: Task decomposition and parallel execution
-  - PlanningAgent with structured task breakdown
-  - TaskExecutor with 1.8-2.4x parallel speedup
-  - Dependency-aware execution batching
-- ✅ **Enhancement Phase 3**: Fundamental analysis integration
-  - FundamentalAnalyzer for on-chain and project metrics
-  - Financial ratios calculator (P/F, MC/TVL, NVT, etc.)
-  - Token economics and development activity analysis
-
-### Phase 1: Live Trading ($50 cap, Days 9-23)
-- 🔲 Live BTC/USDT only
-- 🔲 Real-time monitoring
-- 🔲 MEV protection
-- 🔲 Two-man rule enforcement
-- 🔲 Daily audit reports
-
-### Phase 2: Multi-Asset (Days 24-60)
-- 🔲 Add ETH, SOL, ARB, BASE
-- 🔲 Memecoin scanner
-- 🔲 Leverage 2x (with safety)
-- 🔲 Narrative mode (events)
-- 🔲 Advanced arbitrage
-
-### Phase 3: Community (Q2 2025)
-- 🔲 Multi-user support
-- 🔲 Strategy marketplace
-- 🔲 Mobile app
-- 🔲 Cloud deployment option
-- 🔲 DAO governance
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### Development Setup
+
 ```bash
-# Install pre-commit hooks
+# Pre-commit hooks
 pre-commit install
 
 # Run tests
 pytest
 
-# Lint code
+# Lint
 ruff check .
 mypy core/
 
@@ -518,16 +537,15 @@ black core/ ui/api/
 
 ---
 
-## 📜 License
+## License
 
-This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for details.
+MIT License - See [LICENSE](LICENSE) for details.
 
 ### Third-Party Licenses
-- **Freqtrade**: GPL-3.0
-- **Hummingbot**: Apache 2.0
-- **Qiskit**: Apache 2.0
-- **React**: MIT
-- **Tauri**: MIT/Apache 2.0
+- Freqtrade: GPL-3.0
+- Qiskit: Apache 2.0
+- React: MIT
+- Tauri: MIT/Apache 2.0
 
 ---
 
@@ -546,30 +564,19 @@ This project is licensed under the **MIT License** - see [LICENSE](LICENSE) for 
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-Built with:
-- [Freqtrade](https://www.freqtrade.io/)
-- [Qiskit](https://qiskit.org/)
-- [LangChain](https://www.langchain.com/)
-- [Tauri](https://tauri.app/)
-- [React](https://reactjs.org/)
-- [Three.js](https://threejs.org/)
+Built with: [Freqtrade](https://www.freqtrade.io/) • [Qiskit](https://qiskit.org/) • [LangChain](https://www.langchain.com/) • [Tauri](https://tauri.app/) • [React](https://reactjs.org/) • [Three.js](https://threejs.org/)
 
-Inspired by:
-- Soly_AI
-- FinRobot
-- AutoGPT
-- Metagpt
+Inspired by: Soly_AI • FinRobot • AutoGPT • Metagpt
 
 ---
 
-## 📬 Contact & Support
+## Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/SIGMAX/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/SIGMAX/discussions)
-- **Twitter**: [@SIGMAXTrading](https://twitter.com/SIGMAXTrading)
-- **Discord**: [Join Community](https://discord.gg/sigmax)
+- **Issues:** [GitHub Issues](https://github.com/I-Onlabs/SIGMAX/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/I-Onlabs/SIGMAX/discussions)
+- **Discord:** [Join Community](https://discord.gg/sigmax) *(coming soon)*
 
 ---
 
@@ -577,6 +584,6 @@ Inspired by:
 
 **Built with ❤️ by the SIGMAX Community**
 
-[⭐ Star us on GitHub](https://github.com/yourusername/SIGMAX) | [🐦 Follow on Twitter](https://twitter.com/SIGMAXTrading) | [📖 Read the Docs](https://sigmax.dev)
+[⭐ Star us on GitHub](https://github.com/I-Onlabs/SIGMAX) | [📖 Read the Docs](docs/ARCHITECTURE.md)
 
 </div>
