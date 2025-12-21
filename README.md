@@ -519,11 +519,32 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 
 ## Performance
 
-### System Metrics
-- **Latency:** <30ms agent decision
+> ⚠️ **Status**: Performance claims below are **targets/goals** and have not yet been verified with production benchmarks. See [PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md) for testing methodology and how to collect actual metrics.
+
+### System Metrics (Target)
+- **Latency:** <30ms agent decision (unverified - see [benchmark suite](tests/performance/))
 - **UI FPS:** 60fps (3D swarm)
-- **Memory:** ~4GB RAM usage
-- **CPU:** ~15% idle, ~40% active
+- **Memory:** ~4GB RAM usage (target)
+- **CPU:** ~15% idle, ~40% active (estimated)
+
+### Verified Metrics
+- ✅ Test suite: 457 tests pass
+- ✅ Integration tests: 60 tests covering API workflow, quantum integration, safety enforcer
+- ✅ Security scan: 3 HIGH/MEDIUM issues fixed
+- ⏳ Performance baselines: Awaiting first run ([see docs](docs/PERFORMANCE_BASELINE.md))
+
+### How to Measure Performance
+
+```bash
+# Run agent latency benchmarks
+pytest tests/performance/benchmark_agents.py -v -s -m performance
+
+# Run API load tests (requires API server running)
+locust -f tests/load/locustfile.py --host=http://localhost:8000 \
+       --users 100 --spawn-rate 10 --run-time 5m --headless
+
+# Full instructions: docs/PERFORMANCE_BASELINE.md
+```
 
 ### Backtested Results
 Run `python core/main.py --backtest` to generate performance metrics.
