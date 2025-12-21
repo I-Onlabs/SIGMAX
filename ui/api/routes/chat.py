@@ -9,6 +9,7 @@ Provides:
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from datetime import datetime
 from typing import AsyncIterator, Optional
@@ -46,6 +47,7 @@ class ChatRequest(BaseModel):
     risk_profile: str = Field("conservative", description="conservative|balanced|aggressive")
     mode: str = Field("paper", description="paper|live")
     require_manual_approval_live: bool = Field(True, description="Require manual approval before live execution")
+    quantum: bool = Field(True, description="Enable quantum portfolio optimization")
 
 
 @router.post("/stream", dependencies=[Depends(verify_api_key)])
@@ -58,6 +60,9 @@ async def chat_stream(req: ChatRequest):
     - final: {state, decision, proposal?}
     - error: {error}
     """
+    # Set quantum environment variable for this request
+    os.environ['QUANTUM_ENABLED'] = 'true' if req.quantum else 'false'
+
     manager = await get_sigmax_manager()
     service = manager.get_channel_service()
 
@@ -131,6 +136,7 @@ class ProposalRequest(BaseModel):
     symbol: str
     risk_profile: str = "conservative"
     mode: str = "paper"
+    quantum: bool = True  # Enable quantum portfolio optimization
 
 
 @router.get("/proposals", dependencies=[Depends(verify_api_key)])
@@ -157,6 +163,9 @@ async def get_trade_proposal(proposal_id: str):
 
 @router.post("/proposals", dependencies=[Depends(verify_api_key)])
 async def create_trade_proposal(req: ProposalRequest):
+    # Set quantum environment variable for this request
+    os.environ['QUANTUM_ENABLED'] = 'true' if req.quantum else 'false'
+
     manager = await get_sigmax_manager()
     service = manager.get_channel_service()
     resp = await service.handle(
