@@ -6,7 +6,10 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![React 18](https://img.shields.io/badge/react-18-blue.svg)](https://reactjs.org/)
 
-> ⚠️ **EDUCATIONAL USE ONLY** - See [Disclaimer](#-disclaimer) before use
+> ⚠️ **RESEARCH SOFTWARE - EDUCATIONAL USE ONLY**
+> SIGMAX is experimental research software for learning about AI trading systems.
+> **NOT for production trading.** Trading crypto involves high risk of total loss.
+> **Read full [Disclaimer](#-disclaimer) before use.**
 
 ---
 
@@ -488,12 +491,14 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 - Leverage 2x (with safety)
 - Advanced arbitrage
 
-### 🔲 Phase 4: Community (Q2 2025)
-- Multi-user support
-- Strategy marketplace
-- Mobile app
-- Cloud deployment option
-- DAO governance
+### 🔲 Phase 4: Community Features (Exploratory)
+> ⚠️ **Note**: These are experimental research directions, not production commitments. Any implementation would require proper regulatory compliance and legal review.
+
+- Multi-user support (research/educational environments)
+- Strategy sharing & backtesting (non-commercial)
+- Mobile monitoring app (read-only, educational)
+- Self-hosted deployment guides
+- Community governance (technical decisions only)
 
 ---
 
@@ -584,16 +589,45 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## ⚠️ Disclaimer
 
-**SIGMAX IS FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY.**
+**CURRENT STATUS: EDUCATIONAL AND RESEARCH SOFTWARE**
 
-- Trading cryptocurrencies involves substantial risk of loss
-- Past performance does not guarantee future results
-- You are responsible for your own trading decisions
-- Always start with paper trading
-- Never invest more than you can afford to lose
-- SIGMAX developers assume no liability for financial losses
+SIGMAX (Phases 0-1) is **research software for educational purposes**. It is designed to explore autonomous AI trading concepts, multi-agent systems, and quantum optimization in a controlled environment.
 
-**USE AT YOUR OWN RISK.**
+### Important Warnings
+
+- **Trading Risk**: Cryptocurrency trading involves substantial risk of total capital loss
+- **Not Financial Advice**: SIGMAX does not provide investment, financial, or trading advice
+- **Your Responsibility**: All trading decisions and outcomes are solely your responsibility
+- **Paper Trading First**: Always test thoroughly in paper trading mode before considering any real funds
+- **Regulatory Compliance**: Check your local regulations - automated trading may be restricted or prohibited in your jurisdiction
+- **No Warranty**: Provided "as-is" without warranties of any kind (see [LICENSE](LICENSE))
+- **No Liability**: Developers and contributors assume no liability for financial losses or damages
+
+### Future Development
+
+While the roadmap includes exploratory phases (2-4), these are **research directions only**, not guarantees. Any progression beyond paper trading would require:
+- Comprehensive security audits
+- Regulatory compliance review
+- Legal framework compliance
+- Explicit user agreements
+- Professional risk disclosures
+
+### Recommended Use
+
+✅ **Appropriate Uses**:
+- Learning about AI trading systems
+- Research on multi-agent architectures
+- Backtesting trading strategies
+- Paper trading and simulation
+- Academic and educational purposes
+
+❌ **Not Recommended**:
+- Production trading without thorough testing
+- Trading with funds you cannot afford to lose
+- Relying on AI decisions without understanding them
+- Circumventing regulatory requirements
+
+**BY USING THIS SOFTWARE, YOU ACKNOWLEDGE THESE RISKS AND AGREE TO USE IT RESPONSIBLY AT YOUR OWN RISK.**
 
 ---
 
