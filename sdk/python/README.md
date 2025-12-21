@@ -1,28 +1,41 @@
 # SIGMAX Python SDK
 
+> ⚠️ **NOT YET PUBLISHED TO PyPI - INSTALL FROM SOURCE**
+>
+> This SDK is functional code but **not yet published** to PyPI.
+> Use source installation below. Publishing planned for v0.3.0.
+
 Official Python SDK for [SIGMAX](https://github.com/I-Onlabs/SIGMAX) - an autonomous AI-powered cryptocurrency trading system.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Type Hints: Strict](https://img.shields.io/badge/type%20hints-strict-brightgreen.svg)](https://mypy.readthedocs.io/)
+[![Status: Alpha](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/I-Onlabs/SIGMAX)
+
+## ⚠️ Current Status
+
+- **Version**: 0.2.0-alpha (NOT published)
+- **Maturity**: Alpha - Research Software
+- **Use Case**: Educational and Research Only
+- **Production Ready**: No - Use at your own risk
 
 ## Features
 
 - **Async-First Design**: Built on `httpx` for high-performance async operations
 - **Type-Safe**: Complete type hints with Pydantic models for validation
 - **Streaming Support**: Real-time analysis updates via Server-Sent Events (SSE)
-- **Production-Ready**: Comprehensive error handling, retries, and timeouts
+- **Well-Tested**: Unit tests with pytest and async support
 - **Easy to Use**: Pythonic API with context managers and async iterators
 
 ## Installation
 
-### From PyPI (recommended)
+### ~~From PyPI~~ **[NOT AVAILABLE YET]**
 
 ```bash
-pip install sigmax-sdk
+# ❌ This will NOT work until we publish to PyPI
+# pip install sigmax-sdk
 ```
 
-### From Source
+### From Source (Required for now)
 
 ```bash
 git clone https://github.com/I-Onlabs/SIGMAX.git

@@ -20,6 +20,13 @@ import traceback
 from pydantic import BaseModel, Field, validator
 from loguru import logger
 import psutil
+import sys
+from pathlib import Path
+
+# Import version from project root
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+from __version__ import __version__, STATUS
 
 # Import SIGMAX manager
 from sigmax_manager import get_sigmax_manager
@@ -145,17 +152,28 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app with enhanced documentation
 app = FastAPI(
-    title="SIGMAX API",
-    description="""
+    title=f"SIGMAX API ({STATUS})",
+    description=f"""
     # SIGMAX - Autonomous Multi-Agent AI Trading OS API
 
-    ## Features
-    - 🤖 Multi-agent trading system (Bull/Bear/Researcher debate)
-    - ⚛️ Quantum portfolio optimization
-    - 📊 Real-time market analysis
-    - 🛡️ Risk management & compliance
-    - 🔒 Secure API with rate limiting
-    - 📈 Live WebSocket updates
+    **⚠️ {STATUS} - Educational & Research Use Only**
+
+    This is alpha-stage research software. Not for production trading.
+    See full disclaimer at https://github.com/I-Onlabs/SIGMAX
+
+    ## Features (Working)
+    - 🤖 Multi-agent orchestrator (core functionality)
+    - ⚛️ Quantum optimization (VQE/QAOA - real implementation)
+    - 📊 Market analysis framework
+    - 🛡️ Safety enforcer (auto-pause triggers)
+    - 🔒 API with rate limiting
+    - 📈 WebSocket real-time updates
+
+    ## Known Limitations
+    - Paper trading only
+    - Performance claims unverified
+    - Some documented features not implemented
+    - SDKs not published to PyPI/npm
 
     ## Authentication
     Set `SIGMAX_API_KEY` environment variable and include it as Bearer token:
@@ -168,7 +186,7 @@ app = FastAPI(
     - Analysis: 10 requests/minute
     - Trading: 5 requests/minute
     """,
-    version="2.0.0",
+    version=__version__,
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -314,11 +332,15 @@ async def root():
     """
     return {
         "name": "SIGMAX API",
-        "version": "2.0.0",
-        "status": "operational",
+        "version": __version__,
+        "status": STATUS,
+        "stability": "Alpha - Research Software",
+        "use_case": "Educational and Research Only",
+        "production_ready": False,
         "docs": "/docs",
         "health": "/health",
-        "metrics": "/metrics"
+        "metrics": "/metrics",
+        "disclaimer": "https://github.com/I-Onlabs/SIGMAX#-disclaimer"
     }
 
 

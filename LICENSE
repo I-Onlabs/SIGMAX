@@ -22,6 +22,24 @@ SOFTWARE.
 
 ---
 
+GPL-3.0 DEPENDENCY NOTICE
+
+This project depends on Freqtrade, which is licensed under GPL-3.0.
+While SIGMAX core code is MIT-licensed, the GPL-3.0 license of
+Freqtrade may impose additional requirements if you distribute
+modified versions of SIGMAX that include Freqtrade integration.
+
+For more information on GPL compatibility, see:
+https://www.gnu.org/licenses/gpl-faq.html#GPLIncompatibleLibs
+
+If you plan to distribute this software commercially or under a
+different license, consult legal counsel regarding GPL compliance.
+
+SIGMAX can be used without Freqtrade by disabling the trading
+integration module, which removes the GPL dependency.
+
+---
+
 THIRD-PARTY LICENSES
 
 This project uses the following third-party software:

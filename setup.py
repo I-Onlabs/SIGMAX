@@ -1,4 +1,10 @@
 from setuptools import setup, find_packages
+import sys
+from pathlib import Path
+
+# Import version from single source of truth
+sys.path.insert(0, str(Path(__file__).parent))
+from __version__ import __version__, STATUS, USE_CASE
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -8,9 +14,9 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="sigmax",
-    version="0.1.0",
-    author="SIGMAX Team",
-    description="Algorithmic Crypto Trading Bot with Zero Legal Risk",
+    version=__version__,
+    author="SIGMAX Contributors",
+    description=f"SIGMAX - {STATUS} - {USE_CASE}",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/I-Onlabs/SIGMAX",

@@ -4,22 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sigmax"
-version = "1.0.0"
-description = "Autonomous Multi-Agent AI Crypto Trading Operating System - Production Ready"
+version = "0.2.0-alpha"  # Synced with __version__.py
+description = "SIGMAX - Research Software for AI Trading System Prototyping (Educational Use Only)"
 authors = [
     {name = "SIGMAX Contributors"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.11"
-keywords = ["trading", "crypto", "algorithmic", "bot", "hft", "market-making", "ai", "quantum", "multi-agent"]
+keywords = ["trading", "crypto", "research", "educational", "ai", "quantum", "multi-agent", "prototype"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.11",
-    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 

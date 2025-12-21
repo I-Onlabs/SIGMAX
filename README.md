@@ -20,11 +20,11 @@ SIGMAX is an **open-source, autonomous AI trading system** that combines multi-a
 ### Key Highlights
 
 🤖 **Multi-Agent Debate** - Bull vs Bear agents with researcher arbitration
-⚛️ **Quantum Optimization** - VQE/QAOA portfolio optimization with Qiskit
-🛡️ **Safety-First** - Auto-pause triggers, two-man rule, zero-trust architecture
+⚛️ **Quantum Optimization** - VQE/QAOA portfolio optimization with Qiskit (real implementation)
+🛡️ **Safety-First** - Auto-pause triggers, risk limits, paper trading
 🎨 **Neural Cockpit** - 3D visualization with React + Three.js
 🔊 **Multiple Interfaces** - Telegram, Web UI, CLI, Python/TypeScript SDKs
-💯 **100% Local** - No cloud dependencies, full control
+💯 **Local Option** - Can run with Ollama (default uses cloud LLMs)
 
 ---
 
@@ -182,10 +182,10 @@ Join <a href="https://discord.gg/sigmax">Discord</a>
 ### 📊 Advanced Trading
 
 - **Freqtrade Integration** - Paper + Live trading
-- **HFT Support** - LEAN engine integration
-- **Multi-Chain** - BTC, ETH, Solana, Base, Arbitrum, Polygon
-- **MEV Shield** - Anti-sandwich, anti-frontrun
-- **Backtesting** - Sharpe/Sortino, max drawdown, walk-forward
+- **HFT Support** - LEAN engine integration (planned)
+- **Multi-Chain** - BTC, ETH, Solana, Base, Arbitrum, Polygon (planned)
+- **Slippage Monitoring** - Auto-pause on excessive slippage (>1%)
+- **Backtesting** - Framework for Sharpe/Sortino, max drawdown analysis
 
 ### 🛡️ Safety & Compliance
 
@@ -201,16 +201,11 @@ Join <a href="https://discord.gg/sigmax">Discord</a>
 - Sentiment drop (<-0.3)
 - MEV attack (slippage >1%)
 
-**Two-Man Rule:**
-Critical actions require confirmation:
-- Leverage increase
-- Risk cap removal
-- Emergency withdraw
-
-**Audit Trail:**
-- ZK-SNARK proofs for every decision
-- Daily snapshots via Telegram
-- Weekly PDF tearsheets
+**Logging & Monitoring:**
+- Decision logging with timestamps
+- Daily performance snapshots via Telegram (planned)
+- CSV export for analysis
+- API request audit logs
 
 ### 🎨 Neural Cockpit UI
 
@@ -266,8 +261,15 @@ sigmax shell
 
 ### Python SDK
 
+> ⚠️ **NOT YET PUBLISHED** - Install from source until v0.3.0
+
 ```bash
-pip install sigmax-sdk
+# ❌ pip install sigmax-sdk  # NOT available yet
+
+# ✅ Install from source:
+git clone https://github.com/I-Onlabs/SIGMAX.git
+cd SIGMAX/sdk/python
+pip install -e .
 ```
 
 ```python
@@ -296,8 +298,19 @@ async with SigmaxClient(api_url="http://localhost:8000") as client:
 
 ### TypeScript SDK
 
+> ⚠️ **NOT YET PUBLISHED** - Install from source until v0.3.0
+
 ```bash
-npm install @sigmax/sdk
+# ❌ npm install @sigmax/sdk  # NOT available yet
+
+# ✅ Install from source:
+git clone https://github.com/I-Onlabs/SIGMAX.git
+cd SIGMAX/sdk/typescript
+npm install && npm run build
+npm link
+
+# In your project:
+npm link @sigmax/sdk
 ```
 
 ```typescript
@@ -480,10 +493,12 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 - ✅ Enhanced documentation
 
 ### 🔲 Phase 2: Live Trading ($50 cap)
-- Live BTC/USDT only
-- Real-time monitoring
-- MEV protection
-- Two-man rule enforcement
+> ⚠️ **Requires security audit, legal review, regulatory compliance**
+
+- Live BTC/USDT only (paper trading verified first)
+- Enhanced real-time monitoring
+- Advanced slippage protection
+- Manual approval workflow for high-risk operations
 
 ### 🔲 Phase 3: Multi-Asset
 - Add ETH, SOL, ARB, BASE
