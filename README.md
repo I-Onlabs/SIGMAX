@@ -101,7 +101,7 @@ See <a href="#telegram-bot-commands">Telegram Commands</a>
 <td><strong>Build apps on SIGMAX</strong></td>
 <td>
 Install SDK: <code>pip install sigmax-sdk</code><br/>
-See <a href="docs/SDK.md">SDK Guide</a> (coming soon)
+See <a href="docs/SDK_OVERVIEW.md">SDK Guide</a>
 </td>
 </tr>
 <tr>
@@ -261,41 +261,71 @@ sigmax shell
 
 **[📖 Full CLI Documentation](docs/CLI.md)**
 
-### Python SDK (Coming Soon)
+### Python SDK
+
+```bash
+pip install sigmax-sdk
+```
 
 ```python
-from sigmax import SigmaxClient
+from sigmax_sdk import SigmaxClient, RiskProfile, TradeMode
 
-client = SigmaxClient(api_key="...")
+async with SigmaxClient(api_url="http://localhost:8000") as client:
+    # Get system status
+    status = await client.get_status()
 
-# Streaming analysis
-async for event in client.analyze("BTC/USDT", risk="balanced"):
-    print(f"[{event.type}] {event.data}")
+    # Streaming analysis (SSE)
+    async for event in client.analyze_stream("BTC/USDT"):
+        print(f"[{event['status']}] {event.get('message', '')}")
+        if event.get('final'):
+            break
 
-# Synchronous
-result = client.analyze_sync("ETH/USDT")
+    # Synchronous analysis
+    result = await client.analyze("ETH/USDT", RiskProfile.BALANCED)
 
-# Trading
-proposal = client.propose_trade("BTC/USDT", size=100)
-client.approve_proposal(proposal.id)
-client.execute_proposal(proposal.id)
+    # Trading workflow
+    proposal = await client.propose_trade("BTC/USDT", mode=TradeMode.PAPER, size=0.1)
+    await client.approve_proposal(proposal.proposal_id)
+    await client.execute_proposal(proposal.proposal_id)
 ```
 
-### TypeScript SDK (Coming Soon)
+**[📖 Python SDK Documentation](sdk/python/README.md)**
+
+### TypeScript SDK
+
+```bash
+npm install @sigmax/sdk
+```
 
 ```typescript
-import { SigmaxClient } from '@sigmax/sdk';
+import { SigmaxClient, RiskProfile, TradeMode } from '@sigmax/sdk';
 
-const client = new SigmaxClient({ apiKey: '...' });
+const client = new SigmaxClient({
+  apiUrl: 'http://localhost:8000'
+});
 
-// Streaming
-for await (const event of client.analyze('BTC/USDT')) {
-  console.log(event);
+// Get system status
+const status = await client.getStatus();
+
+// Streaming analysis (SSE)
+for await (const event of client.analyzeStream('BTC/USDT')) {
+  console.log(`[${event.status}] ${event.message || ''}`);
+  if (event.final) break;
 }
 
-// Promise-based
-const result = await client.analyzeSync('ETH/USDT');
+// Synchronous analysis
+const result = await client.analyze('ETH/USDT', RiskProfile.BALANCED);
+
+// Trading workflow
+const proposal = await client.proposeTrade('BTC/USDT', {
+  mode: TradeMode.PAPER,
+  size: 0.1
+});
+await client.approveProposal(proposal.proposalId);
+await client.executeProposal(proposal.proposalId);
 ```
+
+**[📖 TypeScript SDK Documentation](sdk/typescript/README.md)**
 
 ### Web API
 
@@ -358,10 +388,10 @@ SIGMAX supports multiple interfaces feeding the same orchestrator:
 | **Telegram Bot** | ✅ Production | Natural language control |
 | **Web UI** | ✅ Production | 3D visualization |
 | **Web API** | ✅ Production | REST + SSE streaming |
-| **CLI** | ✅ Available | Automation/scripting ([docs](docs/CLI.md)) |
-| **Python SDK** | 🚧 Coming Soon | Programmatic access |
-| **TypeScript SDK** | 🚧 Coming Soon | Web integration |
-| **WebSocket** | 🚧 Coming Soon | Real-time bidirectional |
+| **CLI** | ✅ Production | Automation/scripting ([docs](docs/CLI.md)) |
+| **Python SDK** | ✅ Available | Programmatic access ([docs](sdk/python/README.md)) |
+| **TypeScript SDK** | ✅ Available | Web/Node.js integration ([docs](sdk/typescript/README.md)) |
+| **WebSocket** | ✅ Available | Real-time bidirectional ([docs](docs/WEBSOCKET.md)) |
 
 See [Interface Enhancement Plan](docs/INTERFACE_ENHANCEMENT_PLAN.md) for details.
 
@@ -390,7 +420,10 @@ See [Interface Enhancement Plan](docs/INTERFACE_ENHANCEMENT_PLAN.md) for details
 ### API & Development
 - [API Reference](docs/API_REFERENCE.md)
 - [CLI Guide](docs/CLI.md)
-- [SDK Guide](docs/SDK.md) *(coming soon)*
+- [SDK Overview](docs/SDK_OVERVIEW.md)
+- [Python SDK](sdk/python/README.md)
+- [TypeScript SDK](sdk/typescript/README.md)
+- [WebSocket Protocol](docs/WEBSOCKET.md)
 - [Contributing Guide](CONTRIBUTING.md)
 
 ---
@@ -436,12 +469,12 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 - Telegram bot
 - Enhancement phases 1-3 (validation, planning, fundamentals)
 
-### 🚧 Phase 1: Multi-Interface (In Progress)
-- CLI interface
-- Python SDK
-- TypeScript SDK
-- WebSocket support
-- Enhanced documentation
+### ✅ Phase 1: Multi-Interface (Complete)
+- ✅ CLI interface
+- ✅ Python SDK (sigmax-sdk v1.0.0)
+- ✅ TypeScript SDK (@sigmax/sdk v1.0.0)
+- ✅ WebSocket support
+- ✅ Enhanced documentation
 
 ### 🔲 Phase 2: Live Trading ($50 cap)
 - Live BTC/USDT only
