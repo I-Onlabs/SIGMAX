@@ -174,10 +174,24 @@ Join <a href="https://discord.gg/sigmax">Discord</a>
 
 ### ⚛️ Quantum Computing
 
-- **Portfolio Optimization** - VQE + QAOA algorithms
-- **Hot-starting** - Faster convergence
-- **Real-time Visualization** - Live circuit rendering
-- **Classical Hybrid** - Graceful fallback
+SIGMAX uses quantum computing (VQE/QAOA algorithms via Qiskit) for portfolio optimization.
+
+**Features:**
+- **Portfolio Optimization** - VQE + QAOA algorithms for optimal position sizing
+- **Hot-starting** - Faster convergence using classical solutions as initial state
+- **Real-time Visualization** - Live circuit rendering in Neural Cockpit UI
+- **Classical Fallback** - Automatic Kelly Criterion fallback when quantum disabled/fails
+
+**Configuration:**
+- **Enable**: Set `QUANTUM_ENABLED=true` in `.env` (default)
+- **Disable**: Set `QUANTUM_ENABLED=false` for classical-only optimization
+- **Performance**: Quantum is more accurate but slower; classical is fast and reliable
+
+**When to Use:**
+- ✅ **Quantum**: Complex portfolio optimization, multi-asset portfolios, production trading
+- ✅ **Classical**: Simple buy/sell decisions, low-latency requirements, development/testing
+
+See [Quantum Module Documentation](docs/quantum.md) for details.
 
 ### 📊 Advanced Trading
 
@@ -575,9 +589,10 @@ MAX_DAILY_LOSS=10
 MAX_POSITION_SIZE=15
 STOP_LOSS_PCT=1.5
 
-# Quantum
-QUANTUM_BACKEND=qiskit_aer
-QUANTUM_SHOTS=1000
+# Quantum Computing (VQE/QAOA Portfolio Optimization)
+QUANTUM_ENABLED=true              # Enable quantum optimization (default: true)
+QUANTUM_BACKEND=qiskit_aer         # Quantum simulator backend
+QUANTUM_SHOTS=1000                 # Circuit executions (1000-10000)
 
 # Database
 POSTGRES_URL=postgresql://user:pass@localhost:5432/sigmax

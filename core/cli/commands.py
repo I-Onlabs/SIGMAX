@@ -7,6 +7,7 @@ All commands use the ChannelService for consistent behavior across interfaces.
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -46,8 +47,12 @@ def analyze_command(
     mode: str = "paper",
     format: str = "text",
     stream: bool = False,
+    quantum: bool = True,
 ):
     """Analyze a trading pair."""
+    # Set quantum environment variable for this command execution
+    os.environ['QUANTUM_ENABLED'] = 'true' if quantum else 'false'
+
     client = get_client()
 
     if stream:
@@ -124,8 +129,12 @@ def propose_command(
     risk: str = "conservative",
     mode: str = "paper",
     format: str = "text",
+    quantum: bool = True,
 ):
     """Create a trade proposal."""
+    # Set quantum environment variable for this command execution
+    os.environ['QUANTUM_ENABLED'] = 'true' if quantum else 'false'
+
     client = get_client()
 
     with console.status(f"[bold cyan]Creating proposal for {symbol}...[/bold cyan]"):

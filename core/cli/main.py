@@ -47,6 +47,7 @@ def analyze(
     mode: str = typer.Option("paper", "--mode", "-m", help="Trading mode: paper or live"),
     format: str = typer.Option("text", "--format", "-f", help="Output format: json, table, text"),
     stream: bool = typer.Option(False, "--stream", "-s", help="Stream analysis progress"),
+    quantum: bool = typer.Option(True, "--quantum/--no-quantum", help="Enable quantum portfolio optimization"),
 ):
     """
     Analyze a trading pair and get AI recommendation.
@@ -55,8 +56,9 @@ def analyze(
         sigmax analyze BTC/USDT
         sigmax analyze ETH/USDT --risk balanced
         sigmax analyze SOL/USDT --risk aggressive --stream
+        sigmax analyze BTC/USDT --no-quantum  # Use classical optimization
     """
-    analyze_command(symbol=symbol, risk=risk, mode=mode, format=format, stream=stream)
+    analyze_command(symbol=symbol, risk=risk, mode=mode, format=format, stream=stream, quantum=quantum)
 
 
 @app.command("status")
@@ -82,6 +84,7 @@ def propose(
     risk: str = typer.Option("conservative", "--risk", "-r", help="Risk profile"),
     mode: str = typer.Option("paper", "--mode", "-m", help="Trading mode: paper or live"),
     format: str = typer.Option("text", "--format", "-f", help="Output format: json, table, text"),
+    quantum: bool = typer.Option(True, "--quantum/--no-quantum", help="Enable quantum portfolio optimization"),
 ):
     """
     Create a trade proposal.
@@ -90,8 +93,9 @@ def propose(
         sigmax propose BTC/USDT
         sigmax propose ETH/USDT --size 100
         sigmax propose SOL/USDT --risk balanced --mode live
+        sigmax propose BTC/USDT --no-quantum  # Use classical optimization
     """
-    propose_command(symbol=symbol, size=size, risk=risk, mode=mode, format=format)
+    propose_command(symbol=symbol, size=size, risk=risk, mode=mode, format=format, quantum=quantum)
 
 
 @app.command("approve")
