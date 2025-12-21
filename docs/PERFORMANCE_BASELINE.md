@@ -228,6 +228,125 @@ pytest tests/integration/ -v --cov=core --cov=ui --cov-report=html
 
 ---
 
+## Quantum vs Classical Performance
+
+### Overview
+
+SIGMAX supports two portfolio optimization methods:
+1. **Quantum** - VQE/QAOA algorithms via Qiskit (default)
+2. **Classical** - Kelly Criterion position sizing (fallback)
+
+### Configuration
+
+```bash
+# Enable quantum (default)
+QUANTUM_ENABLED=true
+
+# Disable quantum (use classical)
+QUANTUM_ENABLED=false
+
+# CLI override
+sigmax analyze BTC/USDT --no-quantum
+
+# API override
+curl -X POST http://localhost:8000/api/chat/proposals \
+  -H "X-API-Key: test-key" \
+  -d '{"symbol": "BTC/USDT", "quantum": false}'
+```
+
+### Benchmarks (To Be Measured)
+
+Run these benchmarks to compare quantum vs classical performance:
+
+```bash
+# Benchmark quantum optimization
+QUANTUM_ENABLED=true pytest tests/performance/benchmark_agents.py::TestQuantumModulePerformance -v -s
+
+# Benchmark classical optimization
+QUANTUM_ENABLED=false pytest tests/performance/benchmark_agents.py::TestQuantumModulePerformance -v -s
+```
+
+**Expected Metrics to Collect**:
+
+| Metric | Quantum (Target) | Classical (Target) | Notes |
+|--------|------------------|-------------------|-------|
+| Mean Latency | <100ms | <10ms | Quantum uses circuit simulation |
+| P95 Latency | <200ms | <20ms | Worst-case reasonable performance |
+| P99 Latency | <500ms | <50ms | Extreme edge cases |
+| Throughput | >10 req/sec | >100 req/sec | Classical much faster |
+| Memory | ~500MB | ~50MB | Quantum requires circuit buffers |
+| Accuracy | Higher | Good | Quantum theoretically optimal |
+
+### Performance Trade-offs
+
+**Quantum Advantages**:
+- More sophisticated optimization (considers complex constraints)
+- Better handling of multi-asset portfolios
+- Theoretically optimal solutions (VQE finds ground state)
+- Can model correlation matrices more accurately
+
+**Quantum Disadvantages**:
+- Slower (quantum circuit simulation overhead ~10-100x)
+- More memory intensive (circuit state vectors)
+- More complex (harder to debug, understand)
+- Requires quantum libraries (qiskit, qiskit-aer)
+
+**Classical Advantages**:
+- Fast (~10-100x faster than quantum)
+- Simple and well-understood (Kelly Criterion)
+- Minimal dependencies
+- Easy to debug and validate
+
+**Classical Disadvantages**:
+- Simpler optimization (doesn't handle complex constraints)
+- Less accurate for multi-asset portfolios
+- No correlation modeling
+
+### When to Use Each
+
+**Use Quantum When**:
+- Complex portfolio optimization (multiple assets)
+- Production trading with higher accuracy requirements
+- Willing to accept higher latency for better decisions
+- Portfolio has complex constraints (sector limits, correlation caps)
+
+**Use Classical When**:
+- Simple buy/sell decisions (single asset)
+- Low-latency requirements (HFT, scalping)
+- Development and testing (faster iteration)
+- Resource-constrained environments
+
+**Recommendation**:
+- **Development**: Start with classical (`QUANTUM_ENABLED=false`) for fast iteration
+- **Production**: Enable quantum (`QUANTUM_ENABLED=true`) for better accuracy
+- **High-frequency**: Use classical for sub-second requirements
+- **Complex portfolios**: Use quantum for multi-asset optimization
+
+### Testing Both Modes
+
+**Integration Tests**:
+```bash
+# Test with quantum enabled
+QUANTUM_ENABLED=true pytest tests/integration/test_quantum_integration.py -v
+
+# Test with quantum disabled (classical fallback)
+QUANTUM_ENABLED=false pytest tests/integration/test_quantum_integration.py -v
+```
+
+**Verify Fallback**:
+```bash
+# Temporarily corrupt qiskit to test fallback
+pip uninstall -y qiskit-aer
+
+# System should still work with classical optimizer
+QUANTUM_ENABLED=true pytest tests/integration/test_quantum_integration.py -v
+
+# Reinstall qiskit
+pip install qiskit-aer
+```
+
+---
+
 ## Baseline Data Collection Procedure
 
 ### Prerequisites
