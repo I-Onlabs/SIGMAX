@@ -93,7 +93,9 @@ aiokafka==0.12.0
 # ============================================
 cryptography==46.0.3
 pycryptodome==3.23.0
-python-jose[cryptography]==3.3.0
+# SECURITY FIX: Replaced python-jose (unmaintained, CVE vulnerabilities)
+# with PyJWT (actively maintained, no known vulnerabilities)
+PyJWT[crypto]==2.10.1
 passlib[bcrypt]==1.7.4
 
 # ============================================

@@ -8,7 +8,8 @@ name = "sigmax_rust_execution"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
+# SECURITY FIX: Updated from 0.22 to 0.23+ to fix CVE buffer overflow vulnerability
+pyo3 = { version = "0.23", features = ["extension-module"] }
 
 [profile.release]
 lto = true
