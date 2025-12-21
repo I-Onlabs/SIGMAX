@@ -5,7 +5,7 @@ This package contains all message schemas and data models for the trading system
 Messages are designed for SBE encoding but initially implemented in Python for Profile A.
 """
 
-from .market_data import MdUpdate, TopOfBook, BookDelta
+from .market_data import MdUpdate, TopOfBook, BookDelta, L2Book, BookLevel
 from .orders import OrderIntent, OrderAck, Fill, Reject, Cancel, Amend
 from .features import FeatureFrame
 from .signals import SignalEvent
@@ -16,7 +16,9 @@ __all__ = [
     "MdUpdate",
     "TopOfBook",
     "BookDelta",
-    
+    "L2Book",
+    "BookLevel",
+
     # Orders
     "OrderIntent",
     "OrderAck",
@@ -24,11 +26,11 @@ __all__ = [
     "Reject",
     "Cancel",
     "Amend",
-    
+
     # Features & Signals
     "FeatureFrame",
     "SignalEvent",
-    
+
     # Enums
     "Side",
     "OrderType",

@@ -38,6 +38,10 @@ try:
     FLWR_AVAILABLE = True
 except ImportError:
     logger.warning("Flower (flwr) not available. Install with: pip install flwr")
+    # Define fallback types when Flower is not available
+    NDArrays = List[np.ndarray]  # type: ignore
+    Scalar = float  # type: ignore
+    NumPyClient = object  # type: ignore
 
 # Try to import PyTorch
 TORCH_AVAILABLE = False

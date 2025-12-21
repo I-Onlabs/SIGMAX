@@ -13,7 +13,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 # Direct import to avoid pulling in all agent dependencies
 import importlib.util
-spec = importlib.util.spec_from_file_location("sentiment", "/home/user/SIGMAX/core/agents/sentiment.py")
+# Fixed: Use relative path from project root instead of hardcoded /home/user
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+sentiment_path = os.path.join(project_root, 'core/agents/sentiment.py')
+spec = importlib.util.spec_from_file_location("sentiment", sentiment_path)
 sentiment_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sentiment_module)
 SentimentAgent = sentiment_module.SentimentAgent

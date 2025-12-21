@@ -12,8 +12,8 @@ from core.agents.orchestrator import SIGMAXOrchestrator
 from core.modules.data import DataModule
 from core.modules.execution import ExecutionModule
 from core.modules.quantum import QuantumModule
-from core.modules.rl_agent import RLAgent
-from core.modules.arbitrage import ArbitrageDetector
+from core.modules.rl import RLModule  # Fixed: was rl_agent.RLAgent
+from core.modules.arbitrage import ArbitrageModule  # Fixed: was ArbitrageDetector
 from core.modules.compliance import ComplianceModule
 
 
