@@ -604,9 +604,23 @@ async def get_trade_history(
 
 
 @app.get("/api/agents/debate/{symbol}", tags=["Analysis"])
-async def get_agent_debate(symbol: str):
+async def get_agent_debate(
+    symbol: str,
+    limit: int = 10,
+    offset: int = 0,
+    since: Optional[str] = None,
+    decision: Optional[str] = None,
+    min_confidence: Optional[float] = None
+):
     """
     Get multi-agent debate history for a specific symbol
+
+    Query Parameters:
+    - limit: Max number of debates to return (default: 10, max: 100)
+    - offset: Pagination offset (default: 0)
+    - since: ISO timestamp - only return debates after this time
+    - decision: Filter by final decision ('buy', 'sell', 'hold')
+    - min_confidence: Minimum confidence threshold (0.0 - 1.0)
 
     Shows the complete debate flow:
     - Researcher's market intelligence
@@ -617,64 +631,109 @@ async def get_agent_debate(symbol: str):
     - Final decision
     """
     try:
+        # Validate parameters
+        if limit > 100:
+            limit = 100
+        if offset < 0:
+            offset = 0
+        if min_confidence is not None and (min_confidence < 0.0 or min_confidence > 1.0):
+            raise HTTPException(status_code=400, detail="min_confidence must be between 0.0 and 1.0")
+        if decision and decision not in ['buy', 'sell', 'hold']:
+            raise HTTPException(status_code=400, detail="decision must be 'buy', 'sell', or 'hold'")
+
+        # Get SIGMAX manager and decision history
+        manager = await get_sigmax_manager()
+        decision_history = manager.decision_history
+
+        # Parse since timestamp if provided
+        since_dt = None
+        if since:
+            try:
+                since_dt = datetime.fromisoformat(since.replace('Z', '+00:00'))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid ISO timestamp format")
+
+        # Get decisions from history
+        decisions = decision_history.get_decisions(
+            symbol=symbol.upper(),
+            limit=limit + offset,  # Get extra for offset
+            since=since_dt
+        )
+
+        # Apply filtering
+        filtered_decisions = []
+        for dec in decisions:
+            # Filter by decision type
+            if decision and dec.get("action") != decision:
+                continue
+
+            # Filter by confidence
+            if min_confidence is not None and dec.get("confidence", 0.0) < min_confidence:
+                continue
+
+            filtered_decisions.append(dec)
+
+        # Apply offset and limit
+        paginated_decisions = filtered_decisions[offset:offset + limit]
+
+        # Format debates for response
+        debates = []
+        for dec in paginated_decisions:
+            agent_debate = dec.get("agent_debate", {})
+
+            debates.append({
+                "timestamp": dec.get("timestamp"),
+                "symbol": dec.get("symbol"),
+                "debate": [
+                    {
+                        "agent": "bull",
+                        "role": "buy_case",
+                        "argument": agent_debate.get("bull_argument", ""),
+                        "score": agent_debate.get("agent_scores", {}).get("bull")
+                    },
+                    {
+                        "agent": "bear",
+                        "role": "sell_case",
+                        "argument": agent_debate.get("bear_argument", ""),
+                        "score": agent_debate.get("agent_scores", {}).get("bear")
+                    },
+                    {
+                        "agent": "researcher",
+                        "role": "market_intelligence",
+                        "content": agent_debate.get("research_summary", "")
+                    }
+                ],
+                "decision": {
+                    "action": dec.get("action"),
+                    "confidence": dec.get("confidence"),
+                    "sentiment": dec.get("sentiment"),
+                    "reasoning": dec.get("decision", {}).get("reasoning", {})
+                },
+                "summary": {
+                    "bull_score": agent_debate.get("agent_scores", {}).get("bull"),
+                    "bear_score": agent_debate.get("agent_scores", {}).get("bear"),
+                    "final_decision": dec.get("action"),
+                    "confidence": dec.get("confidence")
+                }
+            })
+
         return {
             "symbol": symbol.upper(),
             "timestamp": datetime.now().isoformat(),
-            "debate": [
-                {
-                    "agent": "researcher",
-                    "role": "market_intelligence",
-                    "content": "Gathered 50+ data points from multiple sources. Overall sentiment positive.",
-                    "timestamp": datetime.now().isoformat(),
-                    "confidence": 0.7
-                },
-                {
-                    "agent": "bull",
-                    "role": "buy_case",
-                    "argument": "Strong upward momentum with increasing volume. RSI showing strength. Breaking resistance levels.",
-                    "timestamp": datetime.now().isoformat(),
-                    "score": 0.75
-                },
-                {
-                    "agent": "bear",
-                    "role": "sell_case",
-                    "argument": "Overbought conditions on 4h timeframe. Potential correction ahead. Volume divergence detected.",
-                    "timestamp": datetime.now().isoformat(),
-                    "score": 0.45
-                },
-                {
-                    "agent": "analyzer",
-                    "role": "technical_analysis",
-                    "analysis": "Mixed signals. RSI neutral at 50, MACD showing consolidation. Support at $93k, resistance at $97k.",
-                    "timestamp": datetime.now().isoformat(),
-                    "indicators": {"rsi": 50, "macd": 0, "volume": "above_average"}
-                },
-                {
-                    "agent": "risk",
-                    "role": "risk_validation",
-                    "verdict": "Approved with constraints: max 0.5 BTC position, stop-loss at -3%",
-                    "timestamp": datetime.now().isoformat(),
-                    "approved": True
-                },
-                {
-                    "agent": "decision",
-                    "role": "final_verdict",
-                    "decision": "hold",
-                    "confidence": 0.5,
-                    "reasoning": "Mixed signals warrant caution. Monitor for clearer breakout.",
-                    "timestamp": datetime.now().isoformat()
-                }
-            ],
-            "summary": {
-                "bull_score": 0.75,
-                "bear_score": 0.45,
-                "final_decision": "hold",
-                "confidence": 0.5
+            "count": len(debates),
+            "debates": debates,
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "has_more": len(filtered_decisions) > offset + limit,
+                "total_filtered": len(filtered_decisions)
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting debate for {symbol}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch debate history")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch debate history: {str(e)}")
 
 
 @app.get("/api/quantum/circuit", tags=["Analysis"])

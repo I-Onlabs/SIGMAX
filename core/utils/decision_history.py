@@ -7,29 +7,40 @@ from datetime import datetime
 from collections import deque
 from loguru import logger
 import json
+import os
+import time
 
 
 class DecisionHistory:
     """
-    In-memory decision history with optional Redis backend
-    Stores the last N decisions for each symbol
+    Multi-backend decision history storage
+    Supports: In-memory (volatile), Redis (TTL), PostgreSQL (persistent)
     """
 
-    def __init__(self, max_history_per_symbol: int = 10, use_redis: bool = False):
+    def __init__(
+        self,
+        max_history_per_symbol: int = 10,
+        use_redis: bool = False,
+        use_postgres: bool = True
+    ):
         """
         Initialize decision history
 
         Args:
-            max_history_per_symbol: Max decisions to store per symbol
-            use_redis: Whether to use Redis for persistence
+            max_history_per_symbol: Max decisions to store per symbol (in-memory only)
+            use_redis: Whether to use Redis for caching (7-day TTL)
+            use_postgres: Whether to use PostgreSQL for persistent storage (default: True)
         """
         self.max_history = max_history_per_symbol
         self.use_redis = use_redis
+        self.use_postgres = use_postgres
         self.redis_client = None
+        self.pg_connection = None
 
         # In-memory storage: {symbol: deque of decisions}
         self.decisions: Dict[str, deque] = {}
 
+        # Initialize Redis
         if use_redis:
             try:
                 import redis
@@ -38,12 +49,37 @@ class DecisionHistory:
                     port=6379,
                     decode_responses=True
                 )
-                logger.info("✓ Decision history using Redis")
+                logger.info("✓ Decision history using Redis cache")
             except Exception as e:
                 logger.warning(f"Redis unavailable, using in-memory storage: {e}")
                 self.use_redis = False
 
-        logger.info(f"✓ Decision history created (max per symbol: {self.max_history})")
+        # Initialize PostgreSQL
+        if use_postgres:
+            try:
+                import psycopg2
+                from psycopg2.extras import RealDictCursor
+
+                # Get database connection from environment or use defaults
+                db_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL")
+                if db_url:
+                    self.pg_connection = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+                else:
+                    # Fallback to individual parameters
+                    self.pg_connection = psycopg2.connect(
+                        host=os.getenv("POSTGRES_HOST", "localhost"),
+                        port=int(os.getenv("POSTGRES_PORT", "5432")),
+                        database=os.getenv("POSTGRES_DB", "sigmax"),
+                        user=os.getenv("POSTGRES_USER", "sigmax"),
+                        password=os.getenv("POSTGRES_PASSWORD", ""),
+                        cursor_factory=RealDictCursor
+                    )
+                logger.info("✓ Decision history using PostgreSQL persistent storage")
+            except Exception as e:
+                logger.warning(f"PostgreSQL unavailable, debates will not persist: {e}")
+                self.use_postgres = False
+
+        logger.info(f"✓ Decision history created (in-memory max: {self.max_history}, postgres: {self.use_postgres})")
 
     def add_decision(
         self,
@@ -85,6 +121,13 @@ class DecisionHistory:
                 self.redis_client.expire(key, 86400 * 7)  # 7 days TTL
             except Exception as e:
                 logger.warning(f"Failed to store in Redis: {e}")
+
+        # Store in PostgreSQL if available
+        if self.use_postgres and self.pg_connection:
+            try:
+                self._save_to_postgres(symbol, decision, agent_debate or {})
+            except Exception as e:
+                logger.warning(f"Failed to store in PostgreSQL: {e}")
 
         logger.debug(f"Stored decision for {symbol}: {decision.get('action')}")
 
@@ -200,6 +243,124 @@ class DecisionHistory:
 """
 
         return explanation
+
+    def _save_to_postgres(
+        self,
+        symbol: str,
+        decision: Dict[str, Any],
+        agent_debate: Dict[str, Any]
+    ):
+        """
+        Save decision and debate to PostgreSQL
+
+        Args:
+            symbol: Trading symbol
+            decision: Decision dict from orchestrator
+            agent_debate: Debate history with bull/bear/research
+        """
+        try:
+            cursor = self.pg_connection.cursor()
+
+            # Extract debate components
+            bull_argument = agent_debate.get("bull_argument", "")
+            bear_argument = agent_debate.get("bear_argument", "")
+            research_summary = agent_debate.get("research_summary", "")
+
+            # Extract decision components
+            final_decision = decision.get("action", "hold")
+            confidence = decision.get("confidence", 0.0)
+            sentiment = decision.get("sentiment", 0.0)
+
+            # Extract agent scores if available
+            agent_scores = agent_debate.get("agent_scores", {})
+            bull_score = agent_scores.get("bull", None)
+            bear_score = agent_scores.get("bear", None)
+
+            # Get reasoning
+            reasoning = decision.get("reasoning", {})
+
+            # Get risk validation
+            risk_approved = decision.get("risk_approved", True)
+            risk_constraints = decision.get("risk_constraints", {})
+
+            # Get nanosecond timestamp
+            created_at_ns = time.time_ns()
+
+            # Parse symbol into base/quote (e.g., "BTC/USDT" -> base="BTC", quote="USDT")
+            if '/' in symbol:
+                base, quote = symbol.split('/', 1)
+            else:
+                # Fallback for symbols without slash
+                base = symbol
+                quote = "USDT"
+
+            # First, get or create symbol_id
+            # Default exchange to "binance" (most common)
+            exchange = "binance"
+
+            cursor.execute(
+                "SELECT symbol_id FROM symbols WHERE pair = %s AND exchange = %s",
+                (symbol, exchange)
+            )
+            result = cursor.fetchone()
+
+            if result:
+                symbol_id = result['symbol_id']
+            else:
+                # Insert symbol if it doesn't exist
+                cursor.execute(
+                    "INSERT INTO symbols (exchange, base, quote, pair) VALUES (%s, %s, %s, %s) RETURNING symbol_id",
+                    (exchange, base, quote, symbol)
+                )
+                symbol_id = cursor.fetchone()['symbol_id']
+
+            # Insert debate record
+            cursor.execute("""
+                INSERT INTO agent_debates (
+                    symbol_id,
+                    symbol,
+                    bull_argument,
+                    bear_argument,
+                    research_summary,
+                    final_decision,
+                    confidence,
+                    sentiment,
+                    bull_score,
+                    bear_score,
+                    agent_scores,
+                    reasoning,
+                    risk_approved,
+                    risk_constraints,
+                    created_at_ns
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+            """, (
+                symbol_id,
+                symbol,
+                bull_argument,
+                bear_argument,
+                research_summary,
+                final_decision,
+                confidence,
+                sentiment,
+                bull_score,
+                bear_score,
+                json.dumps(agent_scores) if agent_scores else None,
+                json.dumps(reasoning) if reasoning else None,
+                risk_approved,
+                json.dumps(risk_constraints) if risk_constraints else None,
+                created_at_ns
+            ))
+
+            self.pg_connection.commit()
+            logger.debug(f"Saved debate to PostgreSQL for {symbol}")
+
+        except Exception as e:
+            logger.error(f"PostgreSQL save failed: {e}")
+            if self.pg_connection:
+                self.pg_connection.rollback()
+            raise
 
     def clear_history(self, symbol: Optional[str] = None):
         """
