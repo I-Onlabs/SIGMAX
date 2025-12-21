@@ -1,7 +1,6 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-import time
 
 from apps.signals.listings_watcher.main import ListingsWatcher
 from pkg.schemas import SignalEvent, SignalType

@@ -2,7 +2,7 @@
 Quantum Module - Portfolio Optimization using Qiskit VQE/QAOA
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 from loguru import logger
 import os
 import numpy as np

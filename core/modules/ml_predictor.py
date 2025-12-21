@@ -2,9 +2,9 @@
 ML Predictor - Advanced Machine Learning Models for Price Prediction
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 from loguru import logger
 
 try:

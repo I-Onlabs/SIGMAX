@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 CONFIG_DIR = Path.home() / ".sigmax"
 CONFIG_FILE = CONFIG_DIR / "config.json"

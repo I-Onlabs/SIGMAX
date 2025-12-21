@@ -4,7 +4,6 @@ Tests the backtester with simple scenarios and validates metrics.
 """
 
 import pytest
-import asyncio
 from datetime import datetime, timedelta
 import numpy as np
 from typing import Dict
@@ -72,7 +71,7 @@ class TestBacktestRealistic:
             datetime(2024, 12, 31)
         )
 
-        print(f"\n=== Buy and Hold (Uptrend) ===")
+        print("\n=== Buy and Hold (Uptrend) ===")
         print(f"Total Return: {result.total_return_pct:.2f}%")
         print(f"Total Trades: {result.total_trades}")
         print(f"Win Rate: {result.win_rate:.2%}")
@@ -98,7 +97,7 @@ class TestBacktestRealistic:
             datetime(2024, 12, 31)
         )
 
-        print(f"\n=== No Trades Strategy ===")
+        print("\n=== No Trades Strategy ===")
         print(f"Total Return: {result.total_return_pct:.2f}%")
         print(f"Total Trades: {result.total_trades}")
 
@@ -134,7 +133,7 @@ class TestBacktestRealistic:
             datetime(2024, 12, 31)
         )
 
-        print(f"\n=== Multiple Trades Strategy ===")
+        print("\n=== Multiple Trades Strategy ===")
         print(f"Total Return: {result.total_return_pct:.2f}%")
         print(f"Total Trades: {result.total_trades}")
         print(f"Win Rate: {result.win_rate:.2%}")
@@ -171,7 +170,7 @@ class TestBacktestRealistic:
             datetime(2024, 12, 31)
         )
 
-        print(f"\n=== Metrics Validation ===")
+        print("\n=== Metrics Validation ===")
         print(f"Total Return: {result.total_return_pct:.2f}%")
         print(f"Win Rate: {result.win_rate:.2%}")
         print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
@@ -232,7 +231,7 @@ class TestBacktestRealistic:
             datetime(2024, 12, 31)
         )
 
-        print(f"\n=== Commission Impact ===")
+        print("\n=== Commission Impact ===")
         print(f"No Commission: {result_no_comm.total_return_pct:.2f}%")
         print(f"0.5% Commission: {result_high_comm.total_return_pct:.2f}%")
         print(f"Difference: {(result_no_comm.total_return_pct - result_high_comm.total_return_pct):.2f}%")
@@ -269,7 +268,7 @@ class TestBacktestRealistic:
 
         # Generate report
         report = backtester.generate_report(result)
-        print(f"\n=== Generated Report ===")
+        print("\n=== Generated Report ===")
         print(report)
 
         # Validate report contents

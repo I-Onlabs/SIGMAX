@@ -6,7 +6,7 @@ import pytest
 import time
 from pkg.common import (
     Clock, get_timestamp_ns, calculate_latency_us, calculate_latency_ms,
-    LatencyTracker, Config, load_config
+    LatencyTracker, Config
 )
 
 
@@ -124,7 +124,7 @@ class TestRiskEngine:
     def test_risk_position_limit(self):
         """Test position limit check"""
         from apps.risk.risk_engine import RiskEngine
-        from pkg.schemas import OrderIntent, Side, OrderType, TimeInForce
+        from pkg.schemas import OrderIntent, Side, OrderType
         
         config = Config()
         config.risk.max_position_usd = 1000.0

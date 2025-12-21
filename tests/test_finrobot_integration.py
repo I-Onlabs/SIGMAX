@@ -3,7 +3,6 @@ Tests for FinRobot + RD-Agent Integration
 """
 
 import pytest
-import asyncio
 from core.agents.finrobot_integration import (
     FinRobotAgentWrapper,
     RDAgentWrapper,

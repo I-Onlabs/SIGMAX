@@ -2,8 +2,8 @@
 Data Module - Market Data Fetching & Management
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from typing import Dict, Any, List
+from datetime import datetime
 import asyncio
 from loguru import logger
 import os

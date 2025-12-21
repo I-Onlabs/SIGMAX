@@ -5,7 +5,6 @@ Tests sentiment scoring accuracy and LLM output analysis.
 
 import pytest
 import asyncio
-from datetime import datetime
 import sys
 import os
 
@@ -40,8 +39,8 @@ class TestSentimentValidation:
         agent = SentimentAgent(llm=MockLLM())
         result = await agent.analyze("BTC/USDT", lookback_hours=24)
 
-        print(f"\n=== Basic Sentiment Analysis ===")
-        print(f"Symbol: BTC/USDT")
+        print("\n=== Basic Sentiment Analysis ===")
+        print("Symbol: BTC/USDT")
         print(f"Aggregate Score: {result['aggregate_score']:.3f}")
         print(f"Classification: {result['classification']}")
         print(f"Confidence: {result['confidence']:.3f}")
@@ -70,32 +69,32 @@ class TestSentimentValidation:
         agent = SentimentAgent(llm=MockLLM())
         result = await agent.analyze("ETH/USDT", lookback_hours=24)
 
-        print(f"\n=== Sentiment Sources ===")
+        print("\n=== Sentiment Sources ===")
 
         # News sentiment
         news = result['sources']['news']
-        print(f"News:")
+        print("News:")
         print(f"  Score: {news['score']:.3f}")
         print(f"  Articles: {news['article_count']}")
         print(f"  Headlines: {news.get('top_headlines', [])[:2]}")
 
         # Social sentiment
         social = result['sources']['social']
-        print(f"Social:")
+        print("Social:")
         print(f"  Score: {social['score']:.3f}")
         print(f"  Mentions: {social['mention_count']}")
         print(f"  Trending: {social['trending']}")
 
         # On-chain sentiment
         onchain = result['sources']['onchain']
-        print(f"On-chain:")
+        print("On-chain:")
         print(f"  Score: {onchain['score']:.3f}")
         print(f"  Inflow: ${onchain['exchange_flow']['inflow']:,.0f}")
         print(f"  Outflow: ${onchain['exchange_flow']['outflow']:,.0f}")
 
         # Fear & Greed
         fear_greed = result['sources']['fear_greed']
-        print(f"Fear & Greed:")
+        print("Fear & Greed:")
         print(f"  Index: {fear_greed['index']}")
         print(f"  Classification: {fear_greed['classification']}")
 
@@ -120,7 +119,7 @@ class TestSentimentValidation:
             (-0.7, 'very_bearish'),
         ]
 
-        print(f"\n=== Sentiment Classification Mapping ===")
+        print("\n=== Sentiment Classification Mapping ===")
 
         for score, expected_class in test_cases:
             classification = agent._classify_sentiment(score)
@@ -141,7 +140,7 @@ class TestSentimentValidation:
             ("Weak fundamentals lead to bearish breakdown", "negative"),
         ]
 
-        print(f"\n=== Text Sentiment Scoring ===")
+        print("\n=== Text Sentiment Scoring ===")
 
         for text, expected_sentiment in test_texts:
             score = agent._score_text(text)
@@ -161,7 +160,7 @@ class TestSentimentValidation:
 
         confidence = result['confidence']
 
-        print(f"\n=== Confidence Calculation ===")
+        print("\n=== Confidence Calculation ===")
         print(f"Aggregate Score: {result['aggregate_score']:.3f}")
         print(f"Confidence: {confidence:.3f}")
         print(f"News articles: {result['sources']['news']['article_count']}")
@@ -188,7 +187,7 @@ class TestSentimentValidation:
         if hasattr(agent, 'get_sentiment_trend'):
             trend = await agent.get_sentiment_trend(periods=5)
 
-            print(f"\n=== Sentiment Trend ===")
+            print("\n=== Sentiment Trend ===")
             print(f"History length: {len(agent.sentiment_history)}")
             if trend:
                 print(f"Trend direction: {trend.get('direction', 'N/A')}")
@@ -209,7 +208,7 @@ class TestSentimentValidation:
             result = await agent.analyze(symbol, lookback_hours=24)
             results[symbol] = result
 
-        print(f"\n=== Multi-Symbol Sentiment ===")
+        print("\n=== Multi-Symbol Sentiment ===")
         for symbol, result in results.items():
             print(f"{symbol}:")
             print(f"  Score: {result['aggregate_score']:+.3f}")
@@ -235,7 +234,7 @@ class TestSentimentValidation:
             result = await agent.analyze("BTC/USDT", lookback_hours=hours)
             results.append((hours, result))
 
-        print(f"\n=== Lookback Period Variation ===")
+        print("\n=== Lookback Period Variation ===")
         for hours, result in results:
             print(f"{hours}h lookback:")
             print(f"  Score: {result['aggregate_score']:+.3f}")
@@ -254,7 +253,7 @@ class TestSentimentValidation:
 
         summary = result.get('summary', '')
 
-        print(f"\n=== Sentiment Summary ===")
+        print("\n=== Sentiment Summary ===")
         print(f"Summary: {summary}")
 
         # Summary should exist and be non-empty
@@ -287,7 +286,7 @@ class TestSentimentValidation:
 
         actual_aggregate = result['aggregate_score']
 
-        print(f"\n=== Weighted Aggregation ===")
+        print("\n=== Weighted Aggregation ===")
         print(f"News: {news_score:+.3f} (weight 0.30)")
         print(f"Social: {social_score:+.3f} (weight 0.25)")
         print(f"On-chain: {onchain_score:+.3f} (weight 0.25)")
@@ -310,7 +309,7 @@ class TestSentimentValidation:
             result = await agent.analyze("BTC/USDT", lookback_hours=24)
             results.append(result)
 
-        print(f"\n=== Extreme Sentiment Cases ===")
+        print("\n=== Extreme Sentiment Cases ===")
 
         # Find most bullish and bearish
         most_bullish = max(results, key=lambda r: r['aggregate_score'])

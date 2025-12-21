@@ -3,11 +3,10 @@ Unit tests for Backtesting Module
 """
 
 import pytest
-from unittest.mock import AsyncMock
 import numpy as np
 from datetime import datetime, timedelta
 
-from core.modules.backtest import Backtester, Trade, BacktestResult
+from core.modules.backtest import Backtester, BacktestResult
 
 
 class TestBacktester:

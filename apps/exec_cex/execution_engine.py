@@ -5,7 +5,7 @@ Executes orders on exchanges via CCXT.
 """
 
 import ccxt.async_support as ccxtasync
-from typing import Dict, Optional
+from typing import Dict
 
 from pkg.common import get_logger, get_metrics_collector, get_timestamp_ns, calculate_latency_us
 from pkg.schemas import OrderIntent, OrderAck, Fill, Reject, OrderStatus, RejectReason, get_trading_metrics

@@ -4,7 +4,6 @@ Database Initialization Script
 Initializes Postgres and ClickHouse databases with schema and seed data.
 """
 
-import asyncio
 import sys
 from pathlib import Path
 

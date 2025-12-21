@@ -3,16 +3,13 @@ SIGMAX Multi-Agent Orchestrator using LangGraph
 Coordinates bull/bear/researcher debate system
 """
 
-import asyncio
 from typing import Dict, Any, List, Optional, TypedDict, Annotated
 from datetime import datetime
 import json
 import sys
 from pathlib import Path
 
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langchain_openai import ChatOpenAI
-from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 from loguru import logger

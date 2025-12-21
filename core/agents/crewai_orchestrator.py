@@ -3,7 +3,6 @@ SIGMAX CrewAI Orchestrator
 Multi-agent orchestration using CrewAI framework with 17 specialized agents
 """
 
-import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
@@ -31,7 +30,7 @@ from modules.protocols import (
     ArbitrageModuleProtocol
 )
 
-from .crewai_agents import SIGMAXCrewAIAgents, create_sigmax_agents
+from .crewai_agents import create_sigmax_agents
 
 # Import decision history
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))

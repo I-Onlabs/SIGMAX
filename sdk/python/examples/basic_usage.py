@@ -8,7 +8,6 @@ Demonstrates core functionality including:
 """
 
 import asyncio
-from decimal import Decimal
 
 from sigmax_sdk import (
     RiskProfile,
@@ -59,7 +58,7 @@ async def main() -> None:
                 risk_profile=RiskProfile.CONSERVATIVE,
                 mode=TradeMode.PAPER,
             )
-            print(f"   Analysis complete:")
+            print("   Analysis complete:")
             if result:
                 print(f"   - Symbol: {result.get('symbol', 'N/A')}")
                 print(f"   - Recommendation: {result.get('recommendation', 'N/A')}")
@@ -78,7 +77,7 @@ async def main() -> None:
                 risk_profile=RiskProfile.MODERATE,
                 mode=TradeMode.PAPER,
             )
-            print(f"   Analysis complete:")
+            print("   Analysis complete:")
             if result:
                 print(f"   - Symbol: {result.get('symbol', 'N/A')}")
                 print(f"   - Recommendation: {result.get('recommendation', 'N/A')}")

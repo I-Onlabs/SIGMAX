@@ -4,13 +4,11 @@ Tests for Exchange Credential Manager
 
 import pytest
 import os
-import json
 import tempfile
 from datetime import datetime
 from cryptography.fernet import Fernet
 from core.utils.exchange_manager import (
     ExchangeCredentialManager,
-    ExchangeType,
     NetworkType
 )
 

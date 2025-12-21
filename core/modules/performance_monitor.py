@@ -5,7 +5,7 @@ Tracks system performance, trading metrics, and resource usage
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 from dataclasses import dataclass, field
 from collections import deque
 import time

@@ -12,7 +12,6 @@ Implements traditional finance ratios adapted for cryptocurrency:
 
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from loguru import logger
 
 

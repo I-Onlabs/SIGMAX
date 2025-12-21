@@ -4,7 +4,7 @@ Risk Engine
 Performs pre-trade risk checks with reason codes for deterministic replay.
 """
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 from dataclasses import dataclass
 import time
 

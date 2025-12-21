@@ -6,7 +6,6 @@ Tests OpenTelemetry instrumentation, tracing, metrics, and SigNoz integration.
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch
 
 from core.modules.observability import (
     SigNozConfig,

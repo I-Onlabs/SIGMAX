@@ -5,12 +5,11 @@ Tests the ConfigValidator with various configuration scenarios.
 
 import pytest
 import os
-from unittest.mock import patch
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from core.config.validator import ConfigValidator, Severity
+from core.config.validator import ConfigValidator
 
 
 class TestEnvironmentValidation:
@@ -45,7 +44,7 @@ class TestEnvironmentValidation:
         result = validator.validate_all()
 
         summary = validator.get_summary()
-        print(f"\n=== Minimal Valid Config ===")
+        print("\n=== Minimal Valid Config ===")
         print(f"Errors: {summary['error_count']}")
         print(f"Warnings: {summary['warning_count']}")
         print(f"Valid: {result}")
@@ -70,7 +69,7 @@ class TestEnvironmentValidation:
         result = validator.validate_all()
 
         summary = validator.get_summary()
-        print(f"\n=== Live Trading Without API Keys ===")
+        print("\n=== Live Trading Without API Keys ===")
         print(f"Errors: {summary['error_count']}")
         print(f"Warnings: {summary['warning_count']}")
 
@@ -98,7 +97,7 @@ class TestEnvironmentValidation:
         result = validator.validate_all()
 
         summary = validator.get_summary()
-        print(f"\n=== Live Trading With API Keys ===")
+        print("\n=== Live Trading With API Keys ===")
         print(f"Errors: {summary['error_count']}")
         print(f"Warnings: {summary['warning_count']}")
 
@@ -122,7 +121,7 @@ class TestEnvironmentValidation:
         result = validator.validate_all()
 
         summary = validator.get_summary()
-        print(f"\n=== Dangerous Leverage Test ===")
+        print("\n=== Dangerous Leverage Test ===")
         print(f"Errors: {summary['error_count']}")
         print(f"Warnings: {summary['warning_count']}")
 
@@ -146,7 +145,7 @@ class TestEnvironmentValidation:
         result = validator.validate_all()
 
         summary = validator.get_summary()
-        print(f"\n=== Excessive Risk Limits ===")
+        print("\n=== Excessive Risk Limits ===")
         print(f"Errors: {summary['error_count']}")
         print(f"Warnings: {summary['warning_count']}")
 
@@ -171,7 +170,7 @@ class TestEnvironmentValidation:
         validator.validate_all()
         summary = validator.get_summary()
 
-        print(f"\n=== No LLM Configured ===")
+        print("\n=== No LLM Configured ===")
         print(f"Warnings: {summary['warning_count']}")
         assert summary['warning_count'] > 0  # Should warn about no LLM
 
@@ -181,8 +180,8 @@ class TestEnvironmentValidation:
         validator2.validate_all()
         summary2 = validator2.get_summary()
 
-        print(f"\n=== Ollama Configured ===")
-        print(f"Info count should include Ollama enabled")
+        print("\n=== Ollama Configured ===")
+        print("Info count should include Ollama enabled")
 
         # Test 3: With OpenAI
         del os.environ['OLLAMA_BASE_URL']
@@ -190,7 +189,7 @@ class TestEnvironmentValidation:
         validator3 = ConfigValidator()
         validator3.validate_all()
 
-        print(f"\n=== OpenAI Configured ===")
+        print("\n=== OpenAI Configured ===")
 
         # Test 4: Multiple LLMs
         os.environ['OLLAMA_BASE_URL'] = 'http://localhost:11434'
@@ -198,7 +197,7 @@ class TestEnvironmentValidation:
         validator4 = ConfigValidator()
         validator4.validate_all()
 
-        print(f"\n=== Multiple LLMs Configured ===")
+        print("\n=== Multiple LLMs Configured ===")
 
     def test_database_configuration_validation(self, clean_env):
         """Test database configuration validation"""
@@ -218,7 +217,7 @@ class TestEnvironmentValidation:
         validator.validate_all()
         summary = validator.get_summary()
 
-        print(f"\n=== No Database Configured ===")
+        print("\n=== No Database Configured ===")
         print(f"Warnings: {summary['warning_count']}")
         assert summary['warning_count'] > 0
 
@@ -227,14 +226,14 @@ class TestEnvironmentValidation:
         validator2 = ConfigValidator()
         validator2.validate_all()
 
-        print(f"\n=== PostgreSQL Configured ===")
+        print("\n=== PostgreSQL Configured ===")
 
         # Test 3: With Redis
         os.environ['REDIS_URL'] = 'redis://localhost:6379'
         validator3 = ConfigValidator()
         validator3.validate_all()
 
-        print(f"\n=== Redis Also Configured ===")
+        print("\n=== Redis Also Configured ===")
 
     def test_exchange_configuration(self, clean_env):
         """Test exchange configuration validation"""
@@ -277,7 +276,7 @@ class TestEnvironmentValidation:
         result = validator.validate_all()
 
         summary = validator.get_summary()
-        print(f"\n=== Invalid Trading Mode ===")
+        print("\n=== Invalid Trading Mode ===")
         print(f"Errors: {summary['error_count']}")
 
         assert summary['error_count'] > 0
@@ -299,7 +298,7 @@ class TestEnvironmentValidation:
         validator.validate_all()
         summary = validator.get_summary()
 
-        print(f"\n=== Validation Summary Structure ===")
+        print("\n=== Validation Summary Structure ===")
         print(f"Summary: {summary}")
 
         # Check summary structure
@@ -333,7 +332,7 @@ class TestEnvironmentValidation:
         result = validator.validate_all()
 
         summary = validator.get_summary()
-        print(f"\n=== Reasonable Defaults ===")
+        print("\n=== Reasonable Defaults ===")
         print(f"Errors: {summary['error_count']}")
         print(f"Warnings: {summary['warning_count']}")
         print(f"Valid: {result}")

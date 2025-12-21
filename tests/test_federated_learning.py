@@ -6,7 +6,6 @@ Tests Flower integration for distributed model training.
 
 import pytest
 import numpy as np
-from unittest.mock import Mock, MagicMock
 
 from core.modules.federated_learning import (
     FederatedConfig,
@@ -100,7 +99,6 @@ class TestTradingModelClient:
     )
     def test_get_parameters(self):
         """Test getting model parameters"""
-        import torch
         import torch.nn as nn
 
         model = nn.Linear(10, 1)
@@ -120,7 +118,6 @@ class TestTradingModelClient:
     )
     def test_set_parameters(self):
         """Test setting model parameters"""
-        import torch
         import torch.nn as nn
 
         model = nn.Linear(10, 1)

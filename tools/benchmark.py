@@ -6,7 +6,6 @@ Measures tick-to-trade latency and system throughput.
 """
 
 import sys
-import time
 import argparse
 import asyncio
 from pathlib import Path

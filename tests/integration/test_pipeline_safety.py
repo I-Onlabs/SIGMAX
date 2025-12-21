@@ -4,7 +4,6 @@ Integration tests for trading pipeline safety and validation
 
 import pytest
 from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime, timedelta
 import asyncio
 import numpy as np
 

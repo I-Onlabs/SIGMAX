@@ -12,14 +12,11 @@ Usage:
 """
 
 import argparse
-import asyncio
-import os
 import sys
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Dict, Optional
-import json
+from typing import List
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -301,11 +298,11 @@ class DeploymentManager:
 
                         self.log(f"✓ {service}: Started via docker-compose", "SUCCESS")
 
-                    except Exception as e:
+                    except Exception:
                         # Manual startup instruction
                         cmd = f"python -m apps.{service}.main --env {self.env}"
                         self.log(f"  Manual command: {cmd}", "WARNING")
-                        self.log(f"  Run in separate terminal or use screen/tmux", "INFO")
+                        self.log("  Run in separate terminal or use screen/tmux", "INFO")
                 else:
                     cmd = f"python -m apps.{service}.main --env {self.env}"
                     self.log(f"  Would start: {cmd}", "INFO")
@@ -348,7 +345,7 @@ class DeploymentManager:
                 self.log(f"✓ Prometheus targets: {healthy}/{total} healthy", "SUCCESS")
                 checks.append(healthy > 0)
             else:
-                self.log(f"✗ Prometheus API not responding", "ERROR")
+                self.log("✗ Prometheus API not responding", "ERROR")
                 checks.append(False)
         except Exception as e:
             self.log(f"✗ Prometheus check failed: {e}", "ERROR")
@@ -359,10 +356,10 @@ class DeploymentManager:
             import requests
             response = requests.get('http://localhost:3001/api/health', timeout=5)
             if response.status_code == 200:
-                self.log(f"✓ Grafana: Healthy", "SUCCESS")
+                self.log("✓ Grafana: Healthy", "SUCCESS")
                 checks.append(True)
             else:
-                self.log(f"✗ Grafana not responding", "ERROR")
+                self.log("✗ Grafana not responding", "ERROR")
                 checks.append(False)
         except Exception as e:
             self.log(f"✗ Grafana check failed: {e}", "ERROR")
@@ -421,17 +418,17 @@ class DeploymentManager:
         self.log("="*60 + "\n", "INFO")
 
         print("Next Steps:")
-        print(f"  1. Verify services: docker-compose ps")
-        print(f"  2. Check logs: docker-compose logs -f")
-        print(f"  3. Access Grafana: http://localhost:3001 (admin/admin)")
-        print(f"  4. Access Prometheus: http://localhost:9090")
-        print(f"  5. Run health checks: python scripts/health_check.py")
-        print(f"  6. Monitor metrics: See docs/MONITORING_SETUP.md")
+        print("  1. Verify services: docker-compose ps")
+        print("  2. Check logs: docker-compose logs -f")
+        print("  3. Access Grafana: http://localhost:3001 (admin/admin)")
+        print("  4. Access Prometheus: http://localhost:9090")
+        print("  5. Run health checks: python scripts/health_check.py")
+        print("  6. Monitor metrics: See docs/MONITORING_SETUP.md")
         print()
         print("Operational Guides:")
-        print(f"  - Operational Runbook: docs/OPERATIONAL_RUNBOOK.md")
-        print(f"  - Monitoring Setup: docs/MONITORING_SETUP.md")
-        print(f"  - Testnet Setup: docs/TESTNET_SETUP.md")
+        print("  - Operational Runbook: docs/OPERATIONAL_RUNBOOK.md")
+        print("  - Monitoring Setup: docs/MONITORING_SETUP.md")
+        print("  - Testnet Setup: docs/TESTNET_SETUP.md")
         print()
 
 

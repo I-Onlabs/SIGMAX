@@ -3,7 +3,7 @@ Decision History - Store and retrieve trading decisions for explainability
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import deque
 from loguru import logger
 import json

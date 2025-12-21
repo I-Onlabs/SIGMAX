@@ -9,7 +9,7 @@ This module provides integration with:
 Gracefully falls back to built-in implementations when packages unavailable.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 from loguru import logger
 import os

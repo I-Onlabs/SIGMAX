@@ -2,7 +2,7 @@
 Market Regime Detector - Identifies market conditions for adaptive strategies
 """
 
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any
 import numpy as np
 from datetime import datetime
 from enum import Enum

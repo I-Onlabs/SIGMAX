@@ -4,9 +4,7 @@ Migrated from LangGraph to CrewAI for enhanced multi-agent orchestration
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
 from loguru import logger
-import os
 
 # Try to import CrewAI
 CREWAI_AVAILABLE = False

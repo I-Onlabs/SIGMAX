@@ -17,9 +17,8 @@ import asyncio
 import json
 import os
 import sys
-import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 from datetime import datetime
 from enum import Enum
 
@@ -408,7 +407,7 @@ class HealthCheckRunner:
 
         # Text output
         print("\n" + "=" * 70)
-        print(f"SIGMAX Health Check Report")
+        print("SIGMAX Health Check Report")
         print(f"Timestamp: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}")
         print("=" * 70 + "\n")
 

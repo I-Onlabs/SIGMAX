@@ -5,7 +5,6 @@ Scam Checker - Detect honeypots, rug pulls, and scams
 from typing import Dict, Any, Optional
 from loguru import logger
 import aiohttp
-import asyncio
 
 
 class ScamChecker:
@@ -59,7 +58,7 @@ class ScamChecker:
         try:
             # Use Honeypot.is free API
             async with aiohttp.ClientSession() as session:
-                url = f"https://api.honeypot.is/v2/IsHoneypot"
+                url = "https://api.honeypot.is/v2/IsHoneypot"
                 params = {
                     "address": address,
                     "chainId": self._get_chain_id(chain)

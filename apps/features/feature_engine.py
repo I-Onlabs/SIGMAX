@@ -4,7 +4,6 @@ Feature Engine
 Computes features from order book data over micro-windows (200-500ms).
 """
 
-import asyncio
 import numpy as np
 from typing import Dict, List, Optional
 from collections import deque

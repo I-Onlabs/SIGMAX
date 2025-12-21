@@ -5,7 +5,6 @@ Tests the Phase 1 enhancements inspired by Dexter
 """
 
 import pytest
-import asyncio
 from datetime import datetime, timedelta
 from core.agents.validator import ValidationAgent
 from core.modules.research_safety import ResearchSafety

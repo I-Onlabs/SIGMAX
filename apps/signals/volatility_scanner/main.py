@@ -17,7 +17,7 @@ from typing import Dict
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from pkg.common import setup_logging, get_logger, load_config, get_metrics_collector, get_timestamp_ns
+from pkg.common import setup_logging, get_logger, load_config, get_metrics_collector
 from pkg.schemas import SignalEvent, SignalType, TopOfBook
 from apps.signals.common import SignalPublisher
 import zmq

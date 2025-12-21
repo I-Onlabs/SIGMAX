@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -43,7 +43,7 @@ class ChatMessage(BaseModel):
     """Chat message for analysis requests."""
 
     message: str = Field(..., description="Natural language request")
-    symbol: Optional[str] = Field(None, description="Trading pair symbol (e.g., BTC/USDT)")
+    symbol: str | None = Field(None, description="Trading pair symbol (e.g., BTC/USDT)")
     risk_profile: RiskProfile = Field(
         default=RiskProfile.CONSERVATIVE,
         description="Risk profile for analysis",
@@ -62,15 +62,15 @@ class MarketData(BaseModel):
 
     symbol: str
     price: Decimal
-    volume_24h: Optional[Decimal] = None
-    change_24h: Optional[Decimal] = None
-    high_24h: Optional[Decimal] = None
-    low_24h: Optional[Decimal] = None
+    volume_24h: Decimal | None = None
+    change_24h: Decimal | None = None
+    high_24h: Decimal | None = None
+    low_24h: Decimal | None = None
     timestamp: datetime
 
     @field_validator("price", "volume_24h", "change_24h", "high_24h", "low_24h", mode="before")
     @classmethod
-    def convert_to_decimal(cls, v: Any) -> Optional[Decimal]:
+    def convert_to_decimal(cls, v: Any) -> Decimal | None:
         """Convert numeric values to Decimal."""
         if v is None:
             return None
@@ -85,7 +85,7 @@ class AnalysisResult(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
     analysis: str = Field(..., description="Detailed analysis text")
     risk_level: str = Field(..., description="Assessed risk level")
-    market_data: Optional[MarketData] = None
+    market_data: MarketData | None = None
     indicators: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
@@ -103,9 +103,9 @@ class TradeProposal(BaseModel):
     symbol: str = Field(..., description="Trading pair")
     side: str = Field(..., description="Trade side (buy/sell)")
     size: Decimal = Field(..., description="Trade size")
-    price: Optional[Decimal] = Field(None, description="Entry price")
-    stop_loss: Optional[Decimal] = Field(None, description="Stop loss price")
-    take_profit: Optional[Decimal] = Field(None, description="Take profit price")
+    price: Decimal | None = Field(None, description="Entry price")
+    stop_loss: Decimal | None = Field(None, description="Stop loss price")
+    take_profit: Decimal | None = Field(None, description="Take profit price")
     status: ProposalStatus = Field(default=ProposalStatus.PENDING)
     risk_profile: RiskProfile
     mode: TradeMode
@@ -115,7 +115,7 @@ class TradeProposal(BaseModel):
 
     @field_validator("size", "price", "stop_loss", "take_profit", mode="before")
     @classmethod
-    def convert_to_decimal(cls, v: Any) -> Optional[Decimal]:
+    def convert_to_decimal(cls, v: Any) -> Decimal | None:
         """Convert numeric values to Decimal."""
         if v is None:
             return None
@@ -156,11 +156,11 @@ class ProposalCreateRequest(BaseModel):
     symbol: str
     risk_profile: RiskProfile = RiskProfile.CONSERVATIVE
     mode: TradeMode = TradeMode.PAPER
-    size: Optional[Decimal] = None
+    size: Decimal | None = None
 
     @field_validator("size", mode="before")
     @classmethod
-    def convert_to_decimal(cls, v: Any) -> Optional[Decimal]:
+    def convert_to_decimal(cls, v: Any) -> Decimal | None:
         """Convert size to Decimal."""
         if v is None:
             return None
@@ -176,4 +176,4 @@ class ProposalResponse(BaseModel):
     success: bool
     proposal_id: str
     message: str
-    proposal: Optional[TradeProposal] = None
+    proposal: TradeProposal | None = None

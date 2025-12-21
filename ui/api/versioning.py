@@ -24,7 +24,6 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.routing import APIRoute
 from typing import Callable
 from loguru import logger
-import os
 
 
 class VersionedRoute(APIRoute):
@@ -241,8 +240,8 @@ if __name__ == "__main__":
     add_legacy_redirects(app)
     add_version_info_endpoint(app)
 
-    print(f"✓ Versioned app created")
-    print(f"  Docs: /api/v1/docs")
-    print(f"  OpenAPI: /api/v1/openapi.json")
-    print(f"  Version info: /api/versions")
-    print(f"\n✅ Self-test complete!")
+    print("✓ Versioned app created")
+    print("  Docs: /api/v1/docs")
+    print("  OpenAPI: /api/v1/openapi.json")
+    print("  Version info: /api/versions")
+    print("\n✅ Self-test complete!")

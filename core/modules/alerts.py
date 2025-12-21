@@ -15,7 +15,6 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 import asyncio
 from loguru import logger
-import json
 
 try:
     import aiohttp

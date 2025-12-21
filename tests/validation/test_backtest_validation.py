@@ -4,8 +4,7 @@ Tests various trading strategies and validates all performance metrics.
 """
 
 import pytest
-import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 import numpy as np
 from typing import Dict, List
 import pandas as pd
@@ -229,7 +228,7 @@ class TestBacktestValidation:
         assert result.max_drawdown >= 0 and result.max_drawdown <= 1
 
         # In trending market, trend following should be profitable
-        print(f"\n=== Trending Market Results ===")
+        print("\n=== Trending Market Results ===")
         print(f"Total Return: {result.total_return:.2%}")
         print(f"Win Rate: {result.win_rate:.2%}")
         print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
@@ -260,7 +259,7 @@ class TestBacktestValidation:
         assert isinstance(result, BacktestResult)
         assert result.total_trades > 0
 
-        print(f"\n=== Ranging Market Results ===")
+        print("\n=== Ranging Market Results ===")
         print(f"Total Return: {result.total_return:.2%}")
         print(f"Win Rate: {result.win_rate:.2%}")
         print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
@@ -286,7 +285,7 @@ class TestBacktestValidation:
         assert isinstance(result, BacktestResult)
         assert result.total_trades >= 0
 
-        print(f"\n=== Volatile Market Results ===")
+        print("\n=== Volatile Market Results ===")
         print(f"Total Return: {result.total_return:.2%}")
         print(f"Win Rate: {result.win_rate:.2%}")
         print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
@@ -323,7 +322,7 @@ class TestBacktestValidation:
             # Validate trade counts
             assert result.winning_trades + result.losing_trades == result.total_trades
 
-        print(f"\n=== Metrics Validation ===")
+        print("\n=== Metrics Validation ===")
         print(f"✓ Total Return: {result.total_return:.2%}")
         print(f"✓ Win Rate: {result.win_rate:.2%}")
         print(f"✓ Sharpe Ratio: {result.sharpe_ratio:.2f}")
@@ -357,7 +356,7 @@ class TestBacktestValidation:
             )
             results.append((rate, result.total_return))
 
-        print(f"\n=== Commission Impact ===")
+        print("\n=== Commission Impact ===")
         for rate, ret in results:
             print(f"Commission {rate:.2%}: Return {ret:.2%}")
 
@@ -383,8 +382,8 @@ class TestBacktestValidation:
             # Position sizes should be reasonable (max 10% of capital)
             max_position = backtester.initial_capital * 0.1
 
-            print(f"\n=== Position Sizing Validation ===")
-            print(f"✓ Kelly Criterion position sizing active")
+            print("\n=== Position Sizing Validation ===")
+            print("✓ Kelly Criterion position sizing active")
             print(f"✓ Max position size: {max_position:.2f}")
             print(f"✓ Total trades executed: {result.total_trades}")
 
@@ -406,7 +405,7 @@ class TestBacktestValidation:
 
         assert result.total_trades == 0
         assert result.total_return == 0.0
-        print(f"\n=== Edge Case: No Signals ===")
+        print("\n=== Edge Case: No Signals ===")
         print(f"✓ Total trades: {result.total_trades}")
         print(f"✓ Return: {result.total_return:.2%}")
 
@@ -424,7 +423,7 @@ class TestBacktestValidation:
         )
 
         assert result.total_trades >= 0
-        print(f"\n=== Edge Case: Buy and Hold ===")
+        print("\n=== Edge Case: Buy and Hold ===")
         print(f"✓ Total trades: {result.total_trades}")
         print(f"✓ Return: {result.total_return:.2%}")
 

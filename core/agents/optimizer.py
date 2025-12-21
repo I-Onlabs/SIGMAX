@@ -2,7 +2,7 @@
 Optimizer Agent - Quantum Portfolio Optimization
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from loguru import logger
 
 

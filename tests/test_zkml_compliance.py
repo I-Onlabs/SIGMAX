@@ -25,8 +25,7 @@ from core.modules.zkml_compliance import (
     create_zkml_engine,
     EZKL_AVAILABLE,
     ONNX_AVAILABLE,
-    TORCH_AVAILABLE,
-    SKLEARN_AVAILABLE
+    TORCH_AVAILABLE
 )
 
 
@@ -55,7 +54,6 @@ class TestONNXModelConverter:
     @pytest.mark.skipif(not (TORCH_AVAILABLE and ONNX_AVAILABLE), reason="PyTorch or ONNX not available")
     def test_convert_pytorch_model(self):
         """Test PyTorch model to ONNX conversion"""
-        import torch
         import torch.nn as nn
 
         converter = ONNXModelConverter()

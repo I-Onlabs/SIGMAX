@@ -15,11 +15,9 @@ import sys
 import signal as signal_module
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import aiohttp
 import feedparser
-from bs4 import BeautifulSoup
-import re
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -158,7 +156,7 @@ class NewsSentimentScanner:
                 items = await self._fetch_rss_feed(feed_url)
                 news_items.extend(items)
             except Exception as e:
-                self.logger.warning(f"rss_fetch_error", feed=feed_url, error=str(e))
+                self.logger.warning("rss_fetch_error", feed=feed_url, error=str(e))
 
         # Fetch from NewsAPI if key is provided
         if self.newsapi_key:
@@ -192,7 +190,7 @@ class NewsSentimentScanner:
                             'source': feed_url
                         })
         except Exception as e:
-            self.logger.debug(f"rss_parse_error", feed=feed_url, error=str(e))
+            self.logger.debug("rss_parse_error", feed=feed_url, error=str(e))
 
         return items
 

@@ -9,14 +9,12 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
 from sigmax_sdk import (
     ProposalStatus,
     RiskProfile,
-    SigmaxAPIError,
     SigmaxAuthenticationError,
     SigmaxClient,
     SigmaxRateLimitError,

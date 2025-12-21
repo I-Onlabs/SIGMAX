@@ -312,7 +312,7 @@ class ExchangeFeed:
                 # Assign new ID
                 symbol_id = self._symbol_id_counter
                 self._symbol_id_counter += 1
-                self.logger.info(f"assigned_new_symbol_id", symbol=symbol, symbol_id=symbol_id)
+                self.logger.info("assigned_new_symbol_id", symbol=symbol, symbol_id=symbol_id)
 
         # Cache result
         self._symbol_cache[symbol] = symbol_id
@@ -354,7 +354,7 @@ class ExchangeFeed:
         except ImportError:
             return None
         except Exception as e:
-            self.logger.debug(f"db_lookup_error", symbol=symbol, error=str(e))
+            self.logger.debug("db_lookup_error", symbol=symbol, error=str(e))
             return None
 
 

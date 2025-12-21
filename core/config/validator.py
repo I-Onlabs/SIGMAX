@@ -1,6 +1,6 @@
 """Configuration validation for SIGMAX"""
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 import os
 from dataclasses import dataclass
 from enum import Enum

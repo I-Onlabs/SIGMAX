@@ -5,12 +5,11 @@ Maintains single-writer L2 order books for each symbol.
 Publishes TopOfBook and BookDelta messages.
 """
 
-import asyncio
 from typing import Dict, Optional
 from collections import deque
 
 from pkg.common import get_logger, get_metrics_collector, get_timestamp_ns, calculate_latency_us
-from pkg.schemas import MdUpdate, L2Book, TopOfBook, BookLevel, BookDelta
+from pkg.schemas import MdUpdate, L2Book, BookLevel
 
 
 class BookManager:
@@ -155,7 +154,7 @@ class BookManager:
                 # Assign new ID for unknown symbol
                 symbol_id = self._symbol_id_counter
                 self._symbol_id_counter += 1
-                self.logger.info(f"assigned_new_symbol_id", symbol=symbol, symbol_id=symbol_id)
+                self.logger.info("assigned_new_symbol_id", symbol=symbol, symbol_id=symbol_id)
 
         # Cache the result
         self._symbol_cache[symbol] = symbol_id
@@ -193,7 +192,7 @@ class BookManager:
             conn.close()
 
             if result:
-                self.logger.debug(f"symbol_found_in_db", symbol=symbol, id=result[0])
+                self.logger.debug("symbol_found_in_db", symbol=symbol, id=result[0])
                 return result[0]
 
             return None
@@ -202,5 +201,5 @@ class BookManager:
             self.logger.debug("psycopg2_not_available", symbol=symbol)
             return None
         except Exception as e:
-            self.logger.debug(f"db_lookup_error", symbol=symbol, error=str(e))
+            self.logger.debug("db_lookup_error", symbol=symbol, error=str(e))
             return None

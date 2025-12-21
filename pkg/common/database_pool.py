@@ -419,7 +419,7 @@ if __name__ == "__main__":
         # Test PostgreSQL
         try:
             engine = get_postgres_engine()
-            print(f"✓ PostgreSQL engine created")
+            print("✓ PostgreSQL engine created")
             print(f"  Pool size: {engine.pool.size()}")
         except Exception as e:
             print(f"✗ PostgreSQL: {e}")
@@ -427,7 +427,7 @@ if __name__ == "__main__":
         # Test Redis
         try:
             redis = await get_redis_pool()
-            print(f"✓ Redis pool created")
+            print("✓ Redis pool created")
         except Exception as e:
             print(f"✗ Redis: {e}")
 

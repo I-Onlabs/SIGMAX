@@ -311,9 +311,9 @@ class Cache:
 
         key_str = ":".join(parts)
 
-        # Add hash for long keys
+        # Add hash for long keys (MD5 is safe here - only for cache key shortening, not security)
         if len(key_str) > 100:
-            hash_suffix = hashlib.md5(key_str.encode()).hexdigest()[:8]
+            hash_suffix = hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()[:8]
             key_str = f"{key_str[:80]}:{hash_suffix}"
 
         return key_str

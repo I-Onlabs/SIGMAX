@@ -15,7 +15,6 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from pkg.common import setup_logging, get_logger, load_config, get_metrics_collector
-from pkg.schemas import MdUpdate
 from .feed_manager import FeedManager
 from .publisher import MarketDataPublisher
 

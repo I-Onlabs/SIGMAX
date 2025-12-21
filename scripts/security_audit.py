@@ -17,7 +17,6 @@ Usage:
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from datetime import datetime
@@ -140,7 +139,7 @@ class SecurityAuditor:
                             "line": content[:match.start()].count('\n') + 1,
                             "severity": "HIGH"
                         })
-            except Exception as e:
+            except Exception:
                 continue
 
         issue_count = len(findings["issues"])

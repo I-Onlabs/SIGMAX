@@ -101,7 +101,7 @@ class ExchangeCredentialManager:
         env_path = ".env"
         if os.path.exists(env_path):
             with open(env_path, "a") as f:
-                f.write(f"\n\n# Exchange API Encryption Key (auto-generated)\n")
+                f.write("\n\n# Exchange API Encryption Key (auto-generated)\n")
                 f.write(f"EXCHANGE_ENCRYPTION_KEY={key.decode()}\n")
             logger.info("Generated new encryption key and saved to .env")
         else:

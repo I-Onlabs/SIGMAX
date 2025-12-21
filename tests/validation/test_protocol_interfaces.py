@@ -6,8 +6,7 @@ Tests modules with mocked dependencies using the Protocol pattern.
 import pytest
 import asyncio
 from datetime import datetime
-from typing import Dict, Any, List
-from unittest.mock import AsyncMock, Mock, MagicMock
+from typing import Dict, List
 import sys
 import os
 
@@ -16,12 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from core.modules.protocols import (
     DataModuleProtocol,
     ExecutionModuleProtocol,
-    QuantumModuleProtocol,
-    ComplianceModuleProtocol,
-    RLModuleProtocol,
-    ArbitrageModuleProtocol,
-    OrchestratorProtocol,
-    AgentProtocol
+    ComplianceModuleProtocol
 )
 
 
@@ -165,7 +159,7 @@ class TestProtocolInterfaces:
         assert not data_module.initialized
 
         print("\n=== DataModule Protocol Test ===")
-        print(f"✓ Protocol methods work correctly")
+        print("✓ Protocol methods work correctly")
         print(f"✓ Mock data returned: {market_data}")
 
     @pytest.mark.asyncio
@@ -265,8 +259,8 @@ class TestProtocolInterfaces:
 
         print("\n=== Dependency Injection Pattern Test ===")
         print(f"✓ Market data retrieved: ${price:,.2f}")
-        print(f"✓ Compliance check passed")
-        print(f"✓ Trade executed successfully")
+        print("✓ Compliance check passed")
+        print("✓ Trade executed successfully")
         print(f"✓ Total trades: {status['trade_count']}")
 
     @pytest.mark.asyncio
@@ -300,9 +294,9 @@ class TestProtocolInterfaces:
 
         print("\n=== Emergency Stop Workflow Test ===")
         print(f"✓ Executed {status_before['trade_count']} trades")
-        print(f"✓ Emergency stop triggered")
+        print("✓ Emergency stop triggered")
         print(f"✓ Closed {close_result['closed_count']} positions")
-        print(f"✓ All positions closed successfully")
+        print("✓ All positions closed successfully")
 
     @pytest.mark.asyncio
     async def test_protocol_type_checking(self):
@@ -328,9 +322,9 @@ class TestProtocolInterfaces:
         assert hasattr(compliance_module, 'check_trade')
 
         print("\n=== Protocol Type Checking Test ===")
-        print(f"✓ DataModule satisfies DataModuleProtocol")
-        print(f"✓ ExecutionModule satisfies ExecutionModuleProtocol")
-        print(f"✓ ComplianceModule satisfies ComplianceModuleProtocol")
+        print("✓ DataModule satisfies DataModuleProtocol")
+        print("✓ ExecutionModule satisfies ExecutionModuleProtocol")
+        print("✓ ComplianceModule satisfies ComplianceModuleProtocol")
 
     @pytest.mark.asyncio
     async def test_concurrent_operations(self):
@@ -356,7 +350,7 @@ class TestProtocolInterfaces:
 
         print("\n=== Concurrent Operations Test ===")
         print(f"✓ Fetched data for {len(symbols)} symbols concurrently")
-        print(f"✓ All operations completed successfully")
+        print("✓ All operations completed successfully")
         print(f"✓ Data module call count: {data_module.call_count}")
 
 

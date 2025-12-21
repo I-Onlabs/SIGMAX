@@ -8,7 +8,7 @@ SIGMAX requires zero legal risk - only MIT, Apache 2.0, BSD-like licenses.
 
 import sys
 import subprocess
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Tuple
 
 
 # Allowed licenses (permissive only)

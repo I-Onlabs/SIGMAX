@@ -54,7 +54,7 @@ async def batch_analysis(
 
     # Process results
     analysis_results = {}
-    for symbol, result in zip(symbols, results):
+    for symbol, result in zip(symbols, results, strict=False):
         if isinstance(result, Exception):
             print(f"✗ {symbol}: Failed - {result}")
             analysis_results[symbol] = {"error": str(result)}
@@ -191,7 +191,7 @@ async def parallel_proposals(
     successful = 0
     failed = 0
 
-    for symbol, result in zip(symbols, results):
+    for symbol, result in zip(symbols, results, strict=False):
         if isinstance(result, Exception):
             print(f"✗ {symbol}: {result}")
             failed += 1

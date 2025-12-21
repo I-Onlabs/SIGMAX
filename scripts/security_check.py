@@ -13,11 +13,9 @@ Usage:
 """
 
 import argparse
-import os
 import sys
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Tuple
 import json
 
 # Add project root to path
@@ -204,7 +202,7 @@ class SecurityChecker:
             self.log("✓ No secrets found in code", "SUCCESS")
             return True
         else:
-            self.log(f"✗ Found potential secrets in code", "ERROR")
+            self.log("✗ Found potential secrets in code", "ERROR")
             return False
 
     def check_code_security(self) -> bool:
@@ -331,7 +329,7 @@ class SecurityChecker:
             self.log("✓ No configuration issues found", "SUCCESS")
             return True
         else:
-            self.log(f"✗ Found configuration issues", "ERROR")
+            self.log("✗ Found configuration issues", "ERROR")
             return False
 
     def check_file_permissions(self) -> bool:
@@ -379,7 +377,7 @@ class SecurityChecker:
             self.log("✓ File permissions look good", "SUCCESS")
             return True
         else:
-            self.log(f"✗ Found permission issues", "ERROR")
+            self.log("✗ Found permission issues", "ERROR")
             return False
 
     def print_summary(self):

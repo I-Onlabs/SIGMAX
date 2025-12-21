@@ -5,8 +5,6 @@ Tests the FundamentalAnalyzer agent and FinancialRatiosCalculator
 """
 
 import pytest
-from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch
 
 import sys
 from pathlib import Path

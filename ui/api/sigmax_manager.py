@@ -20,7 +20,6 @@ from main import SIGMAX
 
 # Shared channel/service contracts (core-level, used by all interfaces)
 from interfaces.channel_service import ChannelService
-from interfaces.contracts import Channel, Intent, StructuredRequest, UserPreferences, ExecutionPermissions
 
 
 class SIGMAXManager:

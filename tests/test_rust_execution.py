@@ -1,7 +1,7 @@
 """Tests for Rust Execution Engine"""
 import pytest
 from core.modules.rust_execution import (
-    RustExecutionEngine, RustExecution, execute_batch, benchmark_latency, RUST_MODULE_AVAILABLE
+    RustExecutionEngine, RustExecution, execute_batch, benchmark_latency
 )
 
 class TestRustExecutionEngine:

@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "agents"))
 
-from planner import ResearchTask, TaskStatus, TaskPriority
+from planner import ResearchTask, TaskStatus
 
 
 class TaskExecutor:

@@ -6,7 +6,7 @@ A dual-sided market making strategy with inventory management.
 
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))

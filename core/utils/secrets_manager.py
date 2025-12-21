@@ -341,7 +341,6 @@ def get_database_url(db_type: str = "POSTGRES") -> str:
 
 if __name__ == "__main__":
     # Self-test
-    import sys
 
     print("🔒 SIGMAX Secrets Manager Self-Test\n")
 
@@ -364,7 +363,7 @@ if __name__ == "__main__":
     # Test database URL construction
     try:
         db_url = secrets_manager.get_database_url("POSTGRES")
-        print(f"  Database URL construction: ✓")
+        print("  Database URL construction: ✓")
         print(f"    URL: {db_url}")
     except Exception as e:
         print(f"  Database URL construction: ✗ ({e})")

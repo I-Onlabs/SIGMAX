@@ -2,19 +2,18 @@
 SIGMAX FastAPI Backend - Enhanced with Security, Monitoring & Documentation
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends, status, Request
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 import asyncio
 import os
 import time
 from datetime import datetime
 from collections import defaultdict
-from functools import wraps
 import traceback
 
 from pydantic import BaseModel, Field, validator
@@ -860,7 +859,7 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         app,
-        host=os.getenv("API_HOST", "0.0.0.0"),
+        host=os.getenv("API_HOST", "127.0.0.1"),  # localhost by default for security
         port=int(os.getenv("API_PORT", 8000)),
         log_level="info"
     )

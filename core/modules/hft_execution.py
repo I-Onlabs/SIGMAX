@@ -3,9 +3,8 @@ High-Frequency Trading (HFT) Execution Module
 Uses hftbacktest for ultra-low-latency execution with queue position awareness
 """
 
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
-from datetime import datetime
 from loguru import logger
 import asyncio
 import time

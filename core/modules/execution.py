@@ -2,7 +2,7 @@
 Execution Module - Trade Execution via Freqtrade/CCXT
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from datetime import datetime
 from loguru import logger
 import os
@@ -147,7 +147,7 @@ class ExecutionModule:
 
     async def _calculate_daily_pnl(self) -> float:
         """Calculate profit/loss for current day"""
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 

@@ -10,7 +10,7 @@ import argparse
 import asyncio
 import socket
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List
 from dataclasses import dataclass
 from enum import Enum
 
@@ -344,7 +344,7 @@ async def run_health_check(args):
     exit_code = checker.print_results()
 
     if args.watch:
-        print(f"\nWatching... (press Ctrl+C to stop)")
+        print("\nWatching... (press Ctrl+C to stop)")
         print(f"Refresh interval: {args.interval}s\n")
         try:
             while True:

@@ -20,7 +20,6 @@ Usage:
 """
 
 import argparse
-import os
 import sys
 import subprocess
 import tarfile
@@ -226,7 +225,7 @@ class BackupManager:
             archive = self.create_archive(backup_files, timestamp, tag)
 
             self.log("\n" + "="*70)
-            self.log(f"Backup completed successfully!", "SUCCESS")
+            self.log("Backup completed successfully!", "SUCCESS")
             self.log(f"Archive: {archive}")
             self.log("="*70 + "\n")
 
@@ -245,7 +244,7 @@ class BackupManager:
             self.run_command([
                 'docker', 'cp',
                 str(backup_file),
-                f'sigmax-postgres:/tmp/restore.sql'
+                'sigmax-postgres:/tmp/restore.sql'
             ])
 
             # Drop existing database
@@ -323,7 +322,7 @@ class BackupManager:
             self.run_command([
                 'docker', 'cp',
                 str(backup_file),
-                f'sigmax-clickhouse:/tmp/restore.sql'
+                'sigmax-clickhouse:/tmp/restore.sql'
             ])
 
             # Execute restore

@@ -20,7 +20,7 @@ import sys
 import time
 import subprocess
 from pathlib import Path
-from typing import List, Dict
+from typing import List
 from datetime import datetime
 
 # Add project root to path
@@ -267,11 +267,11 @@ class EmergencyShutdown:
             report_file = report_dir / f"emergency_shutdown_{timestamp}.log"
 
             with open(report_file, 'w') as f:
-                f.write(f"SIGMAX Emergency Shutdown Report\n")
+                f.write("SIGMAX Emergency Shutdown Report\n")
                 f.write(f"{'='*60}\n\n")
                 f.write(f"Shutdown Type: {self.mode.upper()}\n")
                 f.write(f"Timestamp: {datetime.utcnow().isoformat()}\n")
-                f.write(f"\nShutdown Log:\n")
+                f.write("\nShutdown Log:\n")
                 f.write(f"{'-'*60}\n")
 
                 for entry in self.shutdown_log:

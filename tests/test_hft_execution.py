@@ -5,7 +5,6 @@ Tests for HFT Execution Engine
 import pytest
 import asyncio
 from core.modules.hft_execution import (
-    HFTExecutionEngine,
     LatencySimulator,
     QueuePositionManager,
     HFTOrder,

@@ -11,7 +11,6 @@ import numpy as np
 from loguru import logger
 import gymnasium as gym
 from gymnasium import spaces
-import os
 
 
 class TradingEnv(gym.Env):

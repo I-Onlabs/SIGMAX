@@ -2,8 +2,8 @@
 Portfolio Rebalancer - Intelligent portfolio rebalancing with quantum optimization
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any, List
+from datetime import datetime
 import numpy as np
 from loguru import logger
 import aiohttp

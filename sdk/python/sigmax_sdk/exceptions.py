@@ -6,13 +6,13 @@ Custom exception hierarchy for the SIGMAX SDK.
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 
 class SigmaxError(Exception):
     """Base exception for all SIGMAX SDK errors."""
 
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         """
         Initialize exception.
 
@@ -31,8 +31,8 @@ class SigmaxAPIError(SigmaxError):
     def __init__(
         self,
         message: str,
-        status_code: Optional[int] = None,
-        response_body: Optional[str] = None,
+        status_code: int | None = None,
+        response_body: str | None = None,
     ) -> None:
         """
         Initialize API error.
@@ -59,7 +59,7 @@ class SigmaxRateLimitError(SigmaxAPIError):
     def __init__(
         self,
         message: str = "Rate limit exceeded",
-        retry_after: Optional[int] = None,
+        retry_after: int | None = None,
     ) -> None:
         """
         Initialize rate limit error.

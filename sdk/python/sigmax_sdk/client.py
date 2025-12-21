@@ -7,7 +7,8 @@ Async-first client for SIGMAX API with full type safety and streaming support.
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncIterator, Optional
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 from httpx_sse import aconnect_sse
@@ -21,11 +22,7 @@ from .exceptions import (
     SigmaxValidationError,
 )
 from .models import (
-    AnalysisResult,
-    ChatMessage,
     ProposalCreateRequest,
-    ProposalResponse,
-    ProposalStatus,
     RiskProfile,
     SystemStatus,
     TradeMode,
@@ -64,7 +61,7 @@ class SigmaxClient:
     def __init__(
         self,
         api_url: str = "http://localhost:8000",
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         timeout: float = 60.0,
         max_retries: int = 3,
     ) -> None:
@@ -90,7 +87,7 @@ class SigmaxClient:
         if api_key:
             self.headers["Authorization"] = f"Bearer {api_key}"
 
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> SigmaxClient:
         """Async context manager entry."""
@@ -301,7 +298,7 @@ class SigmaxClient:
         symbol: str,
         risk_profile: RiskProfile = RiskProfile.CONSERVATIVE,
         mode: TradeMode = TradeMode.PAPER,
-        size: Optional[float] = None,
+        size: float | None = None,
     ) -> TradeProposal:
         """
         Create a trade proposal.

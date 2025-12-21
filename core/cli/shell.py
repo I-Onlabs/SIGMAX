@@ -193,7 +193,7 @@ class SigmaxShell:
 
         try:
             proposal = await self.client.approve_proposal(proposal_id)
-            console.print(f"[green]✓ Approved[/green]")
+            console.print("[green]✓ Approved[/green]")
             format_proposal(proposal, "text")
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
@@ -211,7 +211,7 @@ class SigmaxShell:
 
         try:
             result = await self.client.execute_proposal(proposal_id)
-            console.print(f"[green]✓ Executed[/green]")
+            console.print("[green]✓ Executed[/green]")
             console.print(f"Result: {result}")
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")

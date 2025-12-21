@@ -5,10 +5,8 @@ Validates position closing and cache cleanup behavior.
 
 import pytest
 import asyncio
-from datetime import datetime, timedelta
 import sys
 import os
-from unittest.mock import Mock, AsyncMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
@@ -46,13 +44,13 @@ class TestEmergencyStop:
 
         # Verify positions are open
         status_before = await execution.get_status()
-        print(f"\n=== Before Emergency Stop ===")
+        print("\n=== Before Emergency Stop ===")
         print(f"Paper balance: {execution.paper_balance}")
 
         # Trigger emergency stop
         close_result = await execution.close_all_positions()
 
-        print(f"\n=== After Emergency Stop ===")
+        print("\n=== After Emergency Stop ===")
         print(f"Close result: {close_result}")
         print(f"Paper balance: {execution.paper_balance}")
 
@@ -75,7 +73,7 @@ class TestEmergencyStop:
         # Call emergency stop with no positions
         result = await execution.close_all_positions()
 
-        print(f"\n=== Emergency Stop (No Positions) ===")
+        print("\n=== Emergency Stop (No Positions) ===")
         print(f"Result: {result}")
 
         assert result["success"] == True
@@ -99,7 +97,7 @@ class TestEmergencyStop:
         result2 = await execution.close_all_positions()
         result3 = await execution.close_all_positions()
 
-        print(f"\n=== Emergency Stop Idempotent Test ===")
+        print("\n=== Emergency Stop Idempotent Test ===")
         print(f"First call: {result1['closed_count']} positions")
         print(f"Second call: {result2['closed_count']} positions")
         print(f"Third call: {result3['closed_count']} positions")
@@ -131,7 +129,7 @@ class TestEmergencyStop:
         # USDT should still exist (may have changed due to trades)
         final_usdt = execution.paper_balance.get("USDT", 0)
 
-        print(f"\n=== USDT Preservation Test ===")
+        print("\n=== USDT Preservation Test ===")
         print(f"Initial USDT: ${initial_usdt:,.2f}")
         print(f"Final USDT: ${final_usdt:,.2f}")
 
@@ -156,7 +154,7 @@ class TestEmergencyStop:
         # Emergency stop
         result = await execution.close_all_positions()
 
-        print(f"\n=== Emergency Stop Status ===")
+        print("\n=== Emergency Stop Status ===")
         print(f"Success: {result['success']}")
         print(f"Closed count: {result['closed_count']}")
         print(f"Positions: {result.get('positions', [])}")
@@ -185,7 +183,7 @@ class TestCacheManagement:
         data1 = await data_module.get_market_data("BTC/USDT", "1h", 100)
         cache_size_1 = len(data_module.cache)
 
-        print(f"\n=== Cache Basic Operations ===")
+        print("\n=== Cache Basic Operations ===")
         print(f"Cache size after first call: {cache_size_1}")
 
         # Second call - cache hit (within TTL)
@@ -217,7 +215,7 @@ class TestCacheManagement:
         # Second call - should be cache miss due to expiration
         data2 = await data_module.get_market_data("BTC/USDT", "1h", 100)
 
-        print(f"\n=== Cache TTL Expiration Test ===")
+        print("\n=== Cache TTL Expiration Test ===")
         print(f"Cache TTL: {data_module.cache_ttl} seconds")
         print(f"Cache after expiration: {len(data_module.cache)} entries")
 
@@ -237,7 +235,7 @@ class TestCacheManagement:
             await data_module.get_market_data(symbol, "1h", 100)
 
         cache_size = len(data_module.cache)
-        print(f"\n=== Multi-Symbol Cache Test ===")
+        print("\n=== Multi-Symbol Cache Test ===")
         print(f"Symbols fetched: {len(symbols)}")
         print(f"Cache entries: {cache_size}")
         print(f"Cache keys: {list(data_module.cache.keys())}")
@@ -262,7 +260,7 @@ class TestCacheManagement:
             await data_module.get_market_data("BTC/USDT", tf, 100)
 
         cache_size = len(data_module.cache)
-        print(f"\n=== Multi-Timeframe Cache Test ===")
+        print("\n=== Multi-Timeframe Cache Test ===")
         print(f"Timeframes fetched: {len(timeframes)}")
         print(f"Cache entries: {cache_size}")
 
@@ -286,7 +284,7 @@ class TestCacheManagement:
             await data_module.get_market_data(symbol, "1h", 100)
 
         cache_size = len(data_module.cache)
-        print(f"\n=== Cache Memory Efficiency Test ===")
+        print("\n=== Cache Memory Efficiency Test ===")
         print(f"Iterations: {iterations}")
         print(f"Cache size: {cache_size}")
 
@@ -311,7 +309,7 @@ class TestCacheManagement:
         # Close module
         await data_module.close()
 
-        print(f"\n=== Cache Cleanup On Close ===")
+        print("\n=== Cache Cleanup On Close ===")
         print(f"Cache size after close: {len(data_module.cache)}")
 
         # Cache might still have entries (cleanup is async)
@@ -332,7 +330,7 @@ class TestCacheManagement:
 
         results = await asyncio.gather(*tasks)
 
-        print(f"\n=== Concurrent Cache Access ===")
+        print("\n=== Concurrent Cache Access ===")
         print(f"Concurrent requests: {len(tasks)}")
         print(f"Cache size: {len(data_module.cache)}")
 
@@ -355,8 +353,8 @@ class TestCacheManagement:
         for i in range(5):
             await data_module.get_market_data(symbol, "1h", 100)
 
-        print(f"\n=== Cache Hit Rate Test ===")
-        print(f"Requests made: 5")
+        print("\n=== Cache Hit Rate Test ===")
+        print("Requests made: 5")
         print(f"Cache size: {len(data_module.cache)}")
         print(f"Cache contents: {list(data_module.cache.keys())}")
 

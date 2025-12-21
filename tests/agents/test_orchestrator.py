@@ -3,10 +3,9 @@ Unit tests for SIGMAX Orchestrator
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
+from unittest.mock import AsyncMock
 
-from core.agents.orchestrator import SIGMAXOrchestrator, AgentState
+from core.agents.orchestrator import SIGMAXOrchestrator
 
 
 class TestSIGMAXOrchestrator:

@@ -3,7 +3,6 @@
 from typing import Dict, List
 import random
 from datetime import datetime, timedelta
-import numpy as np
 
 
 class MockMarketData:

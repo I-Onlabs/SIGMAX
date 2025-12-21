@@ -3,18 +3,11 @@ Integration tests for SIGMAX end-to-end workflows
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import AsyncMock, patch
 from datetime import datetime, timedelta
 import numpy as np
 
 from core.main import SIGMAX
-from core.agents.orchestrator import SIGMAXOrchestrator
-from core.modules.data import DataModule
-from core.modules.execution import ExecutionModule
-from core.modules.quantum import QuantumModule
-from core.modules.rl import RLModule  # Fixed: was rl_agent.RLAgent
-from core.modules.arbitrage import ArbitrageModule  # Fixed: was ArbitrageDetector
-from core.modules.compliance import ComplianceModule
 
 
 class TestSIGMAXIntegration:

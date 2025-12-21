@@ -20,7 +20,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from cli.client import SigmaxClient
-from cli.formatting import format_output, format_proposal, format_analysis
+from cli.formatting import format_proposal, format_analysis
 from cli.config import get_config, set_config, list_config
 
 console = Console()

@@ -309,7 +309,7 @@ class SafetyEnforcer:
 
         logger.critical(f"🚨 AUTO-PAUSE TRIGGERED: {violation.trigger}")
         logger.critical(f"   Reason: {violation.message}")
-        logger.critical(f"   Trading is PAUSED until manual review")
+        logger.critical("   Trading is PAUSED until manual review")
 
     def resume(self, force: bool = False):
         """

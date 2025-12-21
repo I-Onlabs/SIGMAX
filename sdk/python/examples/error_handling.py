@@ -9,7 +9,6 @@ Demonstrates comprehensive error handling patterns:
 """
 
 import asyncio
-from typing import Optional
 
 from sigmax_sdk import (
     RiskProfile,
@@ -92,7 +91,7 @@ async def safe_analysis(
     client: SigmaxClient,
     symbol: str,
     max_retries: int = 3,
-) -> Optional[dict]:
+) -> dict | None:
     """
     Analyze with comprehensive error handling and retries.
 
@@ -108,7 +107,7 @@ async def safe_analysis(
         try:
             print(f"Analyzing {symbol} (attempt {attempt + 1}/{max_retries})...")
             result = await client.analyze(symbol, RiskProfile.MODERATE)
-            print(f"✓ Success!")
+            print("✓ Success!")
             return result
 
         except SigmaxAuthenticationError as e:
@@ -132,7 +131,7 @@ async def safe_analysis(
 
         except SigmaxTimeoutError as e:
             if attempt < max_retries - 1:
-                print(f"  Timeout, retrying...")
+                print("  Timeout, retrying...")
                 await asyncio.sleep(2**attempt)  # Exponential backoff
             else:
                 print(f"  Max retries reached: {e.message}")
@@ -140,7 +139,7 @@ async def safe_analysis(
 
         except SigmaxConnectionError as e:
             if attempt < max_retries - 1:
-                print(f"  Connection failed, retrying...")
+                print("  Connection failed, retrying...")
                 await asyncio.sleep(2**attempt)
             else:
                 print(f"  Max retries reached: {e.message}")

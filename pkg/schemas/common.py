@@ -4,7 +4,6 @@ Common types and enums used across the trading system.
 
 from enum import IntEnum
 from dataclasses import dataclass
-from typing import Optional
 
 
 class Side(IntEnum):

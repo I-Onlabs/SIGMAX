@@ -2,7 +2,6 @@
 Telegram Bot - Natural Language Control Interface
 """
 
-from typing import Optional, Dict, Any
 from loguru import logger
 import os
 
@@ -45,10 +44,8 @@ class TelegramBot:
             return
 
         try:
-            from telegram import Bot
             from telegram.ext import Application, CommandHandler, MessageHandler, filters
             from interfaces.channel_service import ChannelService
-            from interfaces.contracts import Channel, Intent, StructuredRequest, UserPreferences, ExecutionPermissions
 
             # Create bot
             self.bot = Application.builder().token(self.token).build()
@@ -183,8 +180,8 @@ Agents: {len(status.get('agents', {}))} active
                 )
             else:
                 await update.message.reply_text(
-                    f"❌ No trading decisions recorded yet.\n\n"
-                    f"Start trading first with /start"
+                    "❌ No trading decisions recorded yet.\n\n"
+                    "Start trading first with /start"
                 )
             return
 

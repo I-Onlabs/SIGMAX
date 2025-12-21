@@ -5,8 +5,7 @@ Unit tests for data schemas.
 import pytest
 import time
 from pkg.schemas import (
-    MdUpdate, TopOfBook, OrderIntent, OrderAck, Fill, Reject,
-    FeatureFrame, SignalEvent, L2Book, BookLevel,
+    MdUpdate, TopOfBook, OrderIntent, OrderAck, FeatureFrame, SignalEvent, L2Book, BookLevel,
     Side, OrderType, TimeInForce, OrderStatus, SignalType
 )
 

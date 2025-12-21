@@ -18,8 +18,6 @@ Usage:
 
 from locust import HttpUser, task, between, events
 import random
-import json
-import time
 from datetime import datetime
 
 

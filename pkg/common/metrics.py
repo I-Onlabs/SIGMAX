@@ -5,9 +5,8 @@ Uses Prometheus client for metrics export.
 Tracks latencies, throughput, and system health.
 """
 
-from prometheus_client import Counter, Histogram, Gauge, Summary, Info
+from prometheus_client import Counter, Histogram, Gauge, Info
 from typing import Dict, Optional
-import time
 
 
 class MetricsCollector:

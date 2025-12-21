@@ -149,8 +149,10 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
+    "--cov=core",
     "--cov=pkg",
     "--cov=apps",
+    "--cov=ui",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
@@ -190,7 +192,7 @@ exclude_dirs = ["tests", "test_*.py"]
 skips = ["B101", "B601"]  # assert_used, paramiko_calls
 
 [tool.coverage.run]
-source = ["pkg", "apps"]
+source = ["core", "pkg", "apps", "ui"]
 omit = [
     "*/tests/*",
     "*/test_*.py",

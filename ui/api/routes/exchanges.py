@@ -256,7 +256,6 @@ async def get_supported_exchanges():
     Returns:
         List of supported exchanges with metadata
     """
-    from utils.exchange_manager import ExchangeType
 
     exchanges = [
         {

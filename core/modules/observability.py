@@ -23,7 +23,6 @@ See docs/SIGNOZ_INTEGRATION.md for usage and configuration.
 
 import functools
 import os
-import time
 from contextlib import contextmanager
 from typing import Any, Callable, Dict, Optional
 

@@ -3,8 +3,6 @@ Unit tests for Quantum Module
 """
 
 import pytest
-from unittest.mock import Mock, patch
-import numpy as np
 
 from core.modules.quantum import QuantumModule
 

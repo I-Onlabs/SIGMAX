@@ -452,7 +452,7 @@ async def main():
             if (end_date - start_date).days < 7:
                 console.print("[yellow]Warning: Short backtest period (<7 days). Results may not be statistically significant.[/yellow]")
 
-            console.print(f"\n[bold cyan]📊 Starting Backtest[/bold cyan]")
+            console.print("\n[bold cyan]📊 Starting Backtest[/bold cyan]")
             console.print(f"Period: {args.start} to {args.end}")
             console.print(f"Duration: {(end_date - start_date).days} days\n")
 
@@ -568,7 +568,7 @@ async def main():
             sys.exit(0)
 
         except ValueError as e:
-            console.print(f"[red]Error: Invalid date format. Use YYYY-MM-DD (e.g., 2024-01-01)[/red]")
+            console.print("[red]Error: Invalid date format. Use YYYY-MM-DD (e.g., 2024-01-01)[/red]")
             logger.error(f"Date parsing error: {e}")
             sys.exit(1)
         except Exception as e:

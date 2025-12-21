@@ -3,7 +3,6 @@ Tests for RL Module
 """
 
 import pytest
-import numpy as np
 from core.modules.rl import RLModule, TradingEnv
 
 

@@ -11,7 +11,6 @@ Features:
 from typing import Dict, Any, Optional
 from loguru import logger
 import aiohttp
-import json
 import os
 
 # Try to import zkML module

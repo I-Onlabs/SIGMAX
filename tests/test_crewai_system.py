@@ -3,8 +3,7 @@ Tests for CrewAI Agent System
 """
 
 import pytest
-import asyncio
-from core.agents.crewai_agents import SIGMAXCrewAIAgents, create_sigmax_agents, CREWAI_AVAILABLE
+from core.agents.crewai_agents import create_sigmax_agents, CREWAI_AVAILABLE
 from core.agents.crewai_orchestrator import SIGMAXCrewAIOrchestrator
 
 

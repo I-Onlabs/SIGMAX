@@ -4,7 +4,6 @@ Real-time bidirectional communication endpoint.
 """
 
 import asyncio
-from datetime import datetime
 from typing import Dict, Any, Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from loguru import logger
