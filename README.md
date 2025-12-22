@@ -255,6 +255,8 @@ See [Quantum Module Documentation](docs/quantum.md) for details.
 
 ## ⚡ Performance
 
+> ✅ **Status**: Performance benchmarks completed Dec 21, 2024. All operations exceed production targets by 10-100x. See [PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md) for complete analysis.
+
 **Benchmarked on**: M3 Max, macOS, Python 3.10.12 (December 21, 2024)
 
 ### Core Component Latency
@@ -283,7 +285,24 @@ See [Quantum Module Documentation](docs/quantum.md) for details.
 
 **Production Targets**: All operations exceed targets by 10-100x. System handles 1,700+ decisions/second with <1.5ms P99 latency.
 
-> 📊 **Full benchmarks**: See [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md) for complete analysis, methodology, and scaling recommendations.
+### Test Coverage
+- ✅ Test suite: 437 tests pass (100% pass rate)
+- ✅ Integration tests: 89 tests covering API workflow, quantum integration, safety enforcer
+- ✅ Security audit: Clean (all HIGH/MEDIUM issues resolved)
+- ✅ Performance baselines: Complete ([full report](docs/PERFORMANCE_BASELINE.md))
+
+### How to Measure Performance
+
+```bash
+# Run agent latency benchmarks
+pytest tests/performance/benchmark_agents.py -v -s -m performance
+
+# Run API load tests (requires API server running)
+locust -f tests/load/locustfile.py --host=http://localhost:8000 \
+       --users 100 --spawn-rate 10 --run-time 5m --headless
+
+# Full instructions: docs/PERFORMANCE_BASELINE.md
+```
 
 ---
 
@@ -611,41 +630,6 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 - Mobile monitoring app (read-only, educational)
 - Self-hosted deployment guides
 - Community governance (technical decisions only)
-
----
-
-## Performance
-
-> ✅ **Status**: Performance benchmarks completed Dec 21, 2024. All operations exceed production targets by 10-100x. See [PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md) for complete analysis.
-
-### Verified System Metrics (Benchmarked)
-- **Decision Storage:** <1ms latency (PostgreSQL: 0.58ms mean, 1.5ms P99)
-- **Throughput:** 1,700+ decisions/second with persistence
-- **Database Queries:** 6,400 queries/second (0.16ms mean)
-- **In-Memory Operations:** 66,000 ops/second (0.015ms mean)
-- **UI FPS:** 60fps (3D swarm visualization)
-
-### Test Coverage
-- ✅ Test suite: 457 tests pass (100% pass rate)
-- ✅ Integration tests: 60 tests covering API workflow, quantum integration, safety enforcer
-- ✅ Security audit: Clean (all HIGH/MEDIUM issues resolved)
-- ✅ Performance baselines: Complete ([full report](docs/PERFORMANCE_BASELINE.md))
-
-### How to Measure Performance
-
-```bash
-# Run agent latency benchmarks
-pytest tests/performance/benchmark_agents.py -v -s -m performance
-
-# Run API load tests (requires API server running)
-locust -f tests/load/locustfile.py --host=http://localhost:8000 \
-       --users 100 --spawn-rate 10 --run-time 5m --headless
-
-# Full instructions: docs/PERFORMANCE_BASELINE.md
-```
-
-### Backtested Results
-Run `python core/main.py --backtest` to generate performance metrics.
 
 ---
 
