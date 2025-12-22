@@ -1,0 +1,79 @@
+{
+  "DecisionHistory.add_decision (in-memory)": {
+    "name": "DecisionHistory.add_decision (in-memory)",
+    "iterations": 1000,
+    "min_ms": 0.012917007552459836,
+    "max_ms": 0.06954101263545454,
+    "mean_ms": 0.014910187339410186,
+    "median_ms": 0.014542019926011562,
+    "stdev_ms": 0.0025417926268898575,
+    "p95_ms": 0.016875012079253793,
+    "p99_ms": 0.022041989723220468
+  },
+  "DecisionHistory.get_last_decision": {
+    "name": "DecisionHistory.get_last_decision",
+    "iterations": 1000,
+    "min_ms": 0.0001659791450947523,
+    "max_ms": 0.000292027834802866,
+    "mean_ms": 0.00020959225366823375,
+    "median_ms": 0.00020800507627427578,
+    "stdev_ms": 1.823326442525414e-05,
+    "p95_ms": 0.0002500019036233425,
+    "p99_ms": 0.0002500019036233425
+  },
+  "DecisionHistory.get_decisions (limit=10)": {
+    "name": "DecisionHistory.get_decisions (limit=10)",
+    "iterations": 1000,
+    "min_ms": 0.0008749775588512421,
+    "max_ms": 0.0029999937396496534,
+    "mean_ms": 0.000927870103623718,
+    "median_ms": 0.0009170034900307655,
+    "stdev_ms": 7.932820269573564e-05,
+    "p95_ms": 0.0010410149116069078,
+    "p99_ms": 0.0011249794624745846
+  },
+  "DecisionHistory.format_decision_explanation": {
+    "name": "DecisionHistory.format_decision_explanation",
+    "iterations": 1000,
+    "min_ms": 0.0009999785106629133,
+    "max_ms": 0.0014999823179095984,
+    "mean_ms": 0.0010680467239581048,
+    "median_ms": 0.0010829826351255178,
+    "stdev_ms": 3.773003226576658e-05,
+    "p95_ms": 0.0011250085663050413,
+    "p99_ms": 0.0012090022210031748
+  },
+  "DecisionHistory.add_decision (PostgreSQL)": {
+    "name": "DecisionHistory.add_decision (PostgreSQL)",
+    "iterations": 100,
+    "min_ms": 0.2818749926518649,
+    "max_ms": 1.50095799472183,
+    "mean_ms": 0.5812204297399148,
+    "median_ms": 0.5307289975462481,
+    "stdev_ms": 0.21208751658036168,
+    "p95_ms": 0.9972089901566505,
+    "p99_ms": 1.50095799472183
+  },
+  "PostgreSQL: Query debates (LIMIT 10)": {
+    "name": "PostgreSQL: Query debates (LIMIT 10)",
+    "iterations": 100,
+    "min_ms": 0.13791699893772602,
+    "max_ms": 0.23449998116120696,
+    "mean_ms": 0.15580249892082065,
+    "median_ms": 0.15393749345093966,
+    "stdev_ms": 0.013058592477071532,
+    "p95_ms": 0.17504199058748782,
+    "p99_ms": 0.23449998116120696
+  },
+  "QuantumModule initialization": {
+    "name": "QuantumModule initialization",
+    "iterations": 10,
+    "min_ms": 0.01429201802238822,
+    "max_ms": 0.015833007637411356,
+    "mean_ms": 0.014774900046177208,
+    "median_ms": 0.014603996532969177,
+    "stdev_ms": 0.0004487061219605577,
+    "p95_ms": 0.015833007637411356,
+    "p99_ms": 0.015833007637411356
+  }
+}

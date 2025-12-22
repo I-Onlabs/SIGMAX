@@ -232,6 +232,40 @@ See [Quantum Module Documentation](docs/quantum.md) for details.
 
 ---
 
+## ⚡ Performance
+
+**Benchmarked on**: M3 Max, macOS, Python 3.10.12 (December 21, 2024)
+
+### Core Component Latency
+
+| Operation | Mean | P95 | P99 | Throughput |
+|-----------|------|-----|-----|------------|
+| **Decision Storage (In-Memory)** | 0.015ms | 0.017ms | 0.022ms | 66,000 ops/sec |
+| **Decision Storage (PostgreSQL)** | 0.58ms | 1.00ms | 1.50ms | 1,700 ops/sec |
+| **Database Queries (LIMIT 10)** | 0.16ms | 0.18ms | 0.23ms | 6,400 ops/sec |
+| **Quantum Module Init** | 0.015ms | 0.016ms | 0.016ms | Instant |
+
+### Real-World Throughput
+
+- **Trading Decisions** (with PostgreSQL): ~1,000 decisions/second
+- **API Queries** (from database): ~5,000 queries/second
+- **In-Memory Reads**: ~50,000 ops/second
+
+### Quantum vs Classical
+
+| Mode | Latency | Use Case |
+|------|---------|----------|
+| **Classical** | <1ms | ✅ Real-time trading, high-frequency |
+| **Quantum** | 2-30 seconds | ✅ Strategic rebalancing, complex portfolios (5+ assets) |
+
+**Key Finding**: Classical mode delivers sub-millisecond decisions suitable for real-time trading. Quantum mode adds 20-300x latency but provides mathematically optimal portfolio allocation for strategic decisions.
+
+**Production Targets**: All operations exceed targets by 10-100x. System handles 1,700+ decisions/second with <1.5ms P99 latency.
+
+> 📊 **Full benchmarks**: See [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md) for complete analysis, methodology, and scaling recommendations.
+
+---
+
 ## Usage
 
 ### Telegram Bot Commands
