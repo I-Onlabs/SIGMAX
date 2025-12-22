@@ -1,0 +1,13 @@
+# Include documentation
+include README.md
+include LICENSE
+include requirements.txt
+
+# Include type hints
+include cli/py.typed
+
+# Exclude unnecessary files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+global-exclude *.swp

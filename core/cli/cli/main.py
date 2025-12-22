@@ -193,7 +193,11 @@ def shell(
 @app.command("version")
 def version():
     """Show SIGMAX CLI version."""
-    from cli import __version__
+    try:
+        from importlib.metadata import version as get_version
+        __version__ = get_version("sigmax-cli")
+    except Exception:
+        __version__ = "0.1.0"  # Fallback version
 
     console.print(f"[bold cyan]SIGMAX CLI[/bold cyan] version [green]{__version__}[/green]")
 
