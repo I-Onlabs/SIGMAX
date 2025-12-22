@@ -43,11 +43,11 @@ console = Console()
 @app.command("analyze")
 def analyze(
     symbol: str = typer.Argument(..., help="Trading pair (e.g., BTC/USDT)"),
-    risk: str = typer.Option("conservative", "--risk", "-r", help="Risk profile: conservative, balanced, aggressive"),
-    mode: str = typer.Option("paper", "--mode", "-m", help="Trading mode: paper or live"),
-    format: str = typer.Option("text", "--format", "-f", help="Output format: json, table, text"),
+    risk: str = typer.Option("conservative", "--risk", help="Risk profile: conservative, balanced, aggressive"),
+    mode: str = typer.Option("paper", "--mode", help="Trading mode: paper or live"),
+    format: str = typer.Option("text", "--format", help="Output format: json, table, text"),
     stream: bool = typer.Option(False, "--stream", "-s", help="Stream analysis progress"),
-    quantum: bool = typer.Option(True, "--quantum/--no-quantum", help="Enable quantum portfolio optimization"),
+    quantum: bool = typer.Option(True, help="Enable quantum portfolio optimization"),
 ):
     """
     Analyze a trading pair and get AI recommendation.
@@ -63,7 +63,7 @@ def analyze(
 
 @app.command("status")
 def status(
-    format: str = typer.Option("text", "--format", "-f", help="Output format: json, table, text"),
+    format: str = typer.Option("text", "--format", help="Output format: json, table, text"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show detailed status"),
 ):
     """
@@ -81,10 +81,10 @@ def status(
 def propose(
     symbol: str = typer.Argument(..., help="Trading pair (e.g., BTC/USDT)"),
     size: Optional[float] = typer.Option(None, "--size", help="Position size in USD"),
-    risk: str = typer.Option("conservative", "--risk", "-r", help="Risk profile"),
-    mode: str = typer.Option("paper", "--mode", "-m", help="Trading mode: paper or live"),
-    format: str = typer.Option("text", "--format", "-f", help="Output format: json, table, text"),
-    quantum: bool = typer.Option(True, "--quantum/--no-quantum", help="Enable quantum portfolio optimization"),
+    risk: str = typer.Option("conservative", "--risk", help="Risk profile"),
+    mode: str = typer.Option("paper", "--mode", help="Trading mode: paper or live"),
+    format: str = typer.Option("text", "--format", help="Output format: json, table, text"),
+    quantum: bool = typer.Option(True, help="Enable quantum portfolio optimization"),
 ):
     """
     Create a trade proposal.
@@ -101,7 +101,7 @@ def propose(
 @app.command("approve")
 def approve(
     proposal_id: str = typer.Argument(..., help="Proposal ID to approve"),
-    format: str = typer.Option("text", "--format", "-f", help="Output format: json, table, text"),
+    format: str = typer.Option("text", "--format", help="Output format: json, table, text"),
 ):
     """
     Approve a trade proposal.
@@ -116,7 +116,7 @@ def approve(
 @app.command("execute")
 def execute(
     proposal_id: str = typer.Argument(..., help="Proposal ID to execute"),
-    format: str = typer.Option("text", "--format", "-f", help="Output format: json, table, text"),
+    format: str = typer.Option("text", "--format", help="Output format: json, table, text"),
     force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
 ):
     """
@@ -137,7 +137,7 @@ def execute(
 
 @app.command("proposals")
 def list_proposals(
-    format: str = typer.Option("table", "--format", "-f", help="Output format: json, table, text"),
+    format: str = typer.Option("table", "--format", help="Output format: json, table, text"),
     status: Optional[str] = typer.Option(None, "--status", help="Filter by status: pending, approved, executed"),
 ):
     """

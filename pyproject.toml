@@ -11,7 +11,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 keywords = ["trading", "crypto", "research", "educational", "ai", "quantum", "multi-agent", "prototype"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -104,7 +104,19 @@ Repository = "https://github.com/I-Onlabs/SIGMAX"
 "Bug Tracker" = "https://github.com/I-Onlabs/SIGMAX/issues"
 
 [project.scripts]
+# CLI entry point
 sigmax = "core.cli.main:app"
+
+# Application entry points
+sigmax-ingest = "apps.ingest_cex.main:main"
+sigmax-book = "apps.book_shard.main:main"
+sigmax-features = "apps.features.main:main"
+sigmax-decision = "apps.decision.main:main"
+sigmax-risk = "apps.risk.main:main"
+sigmax-router = "apps.router.main:main"
+sigmax-exec = "apps.exec_cex.main:main"
+sigmax-obs = "apps.obs.main:main"
+sigmax-replay = "apps.replay.main:main"
 
 [tool.setuptools]
 packages = ["pkg", "apps", "core"]
