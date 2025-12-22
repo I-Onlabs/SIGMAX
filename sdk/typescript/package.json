@@ -25,7 +25,9 @@
     "build:finalize": "node scripts/finalize-build.js",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "example:basic": "node examples/node-example.js",
     "example:streaming": "npx tsx examples/streaming.ts",
     "dev": "tsc --watch"
@@ -52,9 +54,12 @@
   },
   "homepage": "https://github.com/yourusername/sigmax#readme",
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "@types/node": "^25.0.3",
+    "@vitest/coverage-v8": "^4.0.16",
+    "happy-dom": "^20.0.11",
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.16"
   },
-  "dependencies": {},
   "engines": {
     "node": ">=18.0.0"
   }

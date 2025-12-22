@@ -11,7 +11,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 keywords = [
     "sigmax",
     "trading",
@@ -31,6 +31,7 @@ classifiers = [
     "Intended Audience :: Financial and Insurance Industry",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Office/Business :: Financial :: Investment",
@@ -70,12 +71,12 @@ sigmax_sdk = ["py.typed"]
 
 [tool.black]
 line-length = 100
-target-version = ['py311']
+target-version = ['py310']
 include = '\.pyi?$'
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -90,7 +91,7 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.10"
 strict = true
 warn_return_any = true
 warn_unused_configs = true

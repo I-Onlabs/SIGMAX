@@ -337,7 +337,7 @@ class SigmaxClient:
             client = self._get_client()
             response = await client.post(
                 f"{self.api_url}/api/chat/proposals",
-                json=request.model_dump(exclude_none=True),
+                json=request.model_dump(mode='json', exclude_none=True),
                 timeout=30.0,
             )
 

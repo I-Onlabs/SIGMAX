@@ -24,7 +24,7 @@ import {
   AgentDebate,
 } from './types';
 import { buildUrl, makeRequest } from './utils/fetch';
-import { streamSSE } from './utils/sse';
+// import { streamSSE } from './utils/sse'; // TODO: Implement streaming support
 
 /**
  * SIGMAX SDK Client

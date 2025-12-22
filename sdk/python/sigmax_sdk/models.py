@@ -11,7 +11,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class RiskProfile(str, Enum):
@@ -53,8 +53,7 @@ class ChatMessage(BaseModel):
         description="Trading mode",
     )
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class MarketData(BaseModel):
@@ -89,11 +88,12 @@ class AnalysisResult(BaseModel):
     indicators: dict[str, Any] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda v: v.isoformat(),
             Decimal: lambda v: str(v),
         }
+    )
 
 
 class TradeProposal(BaseModel):
@@ -121,12 +121,13 @@ class TradeProposal(BaseModel):
             return None
         return Decimal(str(v))
 
-    class Config:
-        use_enum_values = True
-        json_encoders = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_encoders={
             datetime: lambda v: v.isoformat(),
             Decimal: lambda v: str(v),
         }
+    )
 
 
 class SystemStatus(BaseModel):
@@ -143,11 +144,12 @@ class SystemStatus(BaseModel):
     exchange_health: bool = Field(..., description="Exchange connectivity status")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        use_enum_values = True
-        json_encoders = {
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_encoders={
             datetime: lambda v: v.isoformat(),
         }
+    )
 
 
 class ProposalCreateRequest(BaseModel):
@@ -166,8 +168,12 @@ class ProposalCreateRequest(BaseModel):
             return None
         return Decimal(str(v))
 
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(
+        use_enum_values=True,
+        json_encoders={
+            Decimal: lambda v: str(v),
+        }
+    )
 
 
 class ProposalResponse(BaseModel):
