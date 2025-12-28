@@ -22,6 +22,8 @@ SIGMAX is an **open-source, autonomous AI trading system** that combines multi-a
 🤖 **Multi-Agent Debate** - Bull vs Bear agents with researcher arbitration
 ⚛️ **Quantum Optimization** - VQE/QAOA portfolio optimization with Qiskit (real implementation)
 🛡️ **Safety-First** - Auto-pause triggers, risk limits, paper trading
+🔒 **AI Security** - Prompt injection defense, MCP hijacking protection, fake news detection
+🧠 **Behavioral Finance** - Cognitive biases, social sentiment, Fear & Greed modeling
 🎨 **Neural Cockpit** - 3D visualization with React + Three.js
 🔊 **Multiple Interfaces** - Telegram, Web UI, CLI, Python/TypeScript SDKs
 💯 **Local Option** - Can run with Ollama (default uses cloud LLMs)
@@ -86,9 +88,9 @@ python main.py
 
 ---
 
-## 🎉 Recent Development Updates (Dec 21, 2024)
+## 🎉 Recent Development Updates (Dec 28, 2024)
 
-SIGMAX has completed **four major development phases** with production-ready components:
+SIGMAX has completed **six major development phases** with production-ready components:
 
 | Phase | Achievement | Status |
 |-------|------------|--------|
@@ -96,12 +98,16 @@ SIGMAX has completed **four major development phases** with production-ready com
 | **Phase 2** | Integration testing - 437 tests, 89 integration tests, 100% pass rate | ✅ [Summary](docs/PHASE2_FINAL_SUMMARY.md) |
 | **Phase 3** | SDK publishing - Python & TypeScript ready for PyPI/npm | ✅ [Python](docs/PHASE3_PYTHON_SDK_READY.md) • [TypeScript](docs/PHASE3_TYPESCRIPT_SDK_COMPLETE.md) |
 | **Phase 4** | CLI packaging - PyPI-ready distribution with comprehensive docs | ✅ [Details](docs/PHASE4_CLI_PACKAGING_COMPLETE.md) |
+| **Phase 5** | AI Security - TradeTrap-inspired multi-layer defense system | ✅ [Docs](docs/SECURITY_MODULE.md) |
+| **Phase 6** | Behavioral Finance - TwinMarket-inspired agent behavior modeling | ✅ [Docs](docs/BEHAVIORAL_FINANCE.md) |
 
 **Key Highlights**:
 - 🚀 **Performance**: Sub-millisecond decisions, production-ready throughput
 - 🧪 **Testing**: Comprehensive coverage with clean security audit
 - 📦 **Distribution**: SDKs ready for publication (pending final review)
 - 🛠️ **Tooling**: Professional CLI with multiple installation modes
+- 🔒 **Security**: Prompt injection, MCP hijacking, state tampering, fake news defense
+- 🧠 **Behavioral**: Cognitive biases, social sentiment networks, order book simulation
 
 See [Roadmap](#roadmap) for complete phase details.
 
@@ -221,6 +227,53 @@ See [Quantum Module Documentation](docs/quantum.md) for details.
 - **Multi-Chain** - BTC, ETH, Solana, Base, Arbitrum, Polygon (planned)
 - **Slippage Monitoring** - Auto-pause on excessive slippage (>1%)
 - **Backtesting** - Framework for Sharpe/Sortino, max drawdown analysis
+
+### 🔒 AI Security Module
+
+SIGMAX implements multi-layered defense against AI-specific trading threats (inspired by [TradeTrap](https://github.com/Yanlewen/TradeTrap)):
+
+| Defense Layer | Threat | Protection |
+|--------------|--------|------------|
+| **PromptGuard** | Prompt injection | Pattern detection, sanitization |
+| **ToolValidator** | MCP hijacking | Schema validation, anomaly detection |
+| **StateIntegrity** | State tampering | Position/balance verification |
+| **NewsValidator** | Fake news | Source credibility, manipulation detection |
+
+```python
+from core.agents import SecureOrchestrator
+
+orchestrator = SecureOrchestrator(enable_all_guards=True)
+result = await orchestrator.analyze_symbol_secure("BTC/USDT")
+```
+
+See [Security Module Documentation](docs/SECURITY_MODULE.md) for details.
+
+### 🧠 Behavioral Finance Module
+
+SIGMAX models realistic agent behavior with cognitive biases and social dynamics (inspired by [TwinMarket](https://github.com/FreedomIntelligence/TwinMarket)):
+
+**Cognitive Biases:**
+- Disposition Effect - Hold losers, sell winners early
+- Loss Aversion - Weight losses 2x more than gains
+- Overconfidence - Overestimate prediction accuracy
+- Herding - Follow crowd behavior
+
+**Social Sentiment:**
+- Fear & Greed Index (0-100 scale)
+- Sentiment propagation networks
+- Herd behavior detection
+
+**Market Simulation:**
+- Order book matching engine
+- Price-time priority
+- Market impact modeling
+
+```bash
+# Run multi-agent simulation
+python tools/behavioral_simulation.py --agents 20 --rounds 100 --symbol BTC/USDT
+```
+
+See [Behavioral Finance Documentation](docs/BEHAVIORAL_FINANCE.md) for details.
 
 ### 🛡️ Safety & Compliance
 
@@ -521,6 +574,10 @@ See [Interface Enhancement Plan](docs/INTERFACE_ENHANCEMENT_PLAN.md) for details
 - [Phase 3: Fundamental Analysis](docs/PHASE3_FUNDAMENTALS.md)
 - [Integration Testing](docs/INTEGRATION_TESTING.md)
 
+### Security & Behavioral
+- [Security Module](docs/SECURITY_MODULE.md) - TradeTrap-inspired AI defense
+- [Behavioral Finance](docs/BEHAVIORAL_FINANCE.md) - TwinMarket-inspired agent modeling
+
 ### API & Development
 - [API Reference](docs/API_REFERENCE.md)
 - [CLI Guide](docs/CLI.md)
@@ -754,7 +811,7 @@ While the roadmap includes exploratory phases (2-4), these are **research direct
 
 Built with: [Freqtrade](https://www.freqtrade.io/) • [Qiskit](https://qiskit.org/) • [LangChain](https://www.langchain.com/) • [Tauri](https://tauri.app/) • [React](https://reactjs.org/) • [Three.js](https://threejs.org/)
 
-Inspired by: Soly_AI • FinRobot • AutoGPT • Metagpt
+Inspired by: Soly_AI • FinRobot • AutoGPT • Metagpt • [AI-Trader](https://github.com/HKUDS/AI-Trader) • [TradeTrap](https://github.com/Yanlewen/TradeTrap) • [TwinMarket](https://github.com/FreedomIntelligence/TwinMarket)
 
 ---
 
