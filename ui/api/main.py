@@ -39,6 +39,8 @@ from routes.websocket import (
     shutdown_websocket_manager,
     broadcast_system_updates
 )
+from routes.security import router as security_router
+from routes.behavioral import router as behavioral_router
 
 
 # Rate limiting
@@ -196,6 +198,8 @@ app = FastAPI(
         {"name": "Control", "description": "System control operations"},
         {"name": "Monitoring", "description": "Metrics and monitoring"},
         {"name": "exchanges", "description": "Exchange API credential management"},
+        {"name": "security", "description": "Security metrics and threat monitoring"},
+        {"name": "behavioral", "description": "Behavioral finance analytics"},
     ]
 )
 
@@ -291,6 +295,10 @@ app.include_router(chat_router)
 logger.info("✓ AI chat routes registered")
 app.include_router(websocket_router, prefix="/api")
 logger.info("✓ WebSocket routes registered")
+app.include_router(security_router, prefix="/api")
+logger.info("✓ Security dashboard routes registered")
+app.include_router(behavioral_router, prefix="/api")
+logger.info("✓ Behavioral analytics routes registered")
 
 
 # Request models with validation
