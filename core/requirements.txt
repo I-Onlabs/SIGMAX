@@ -121,7 +121,7 @@ aiogram==3.16.0
 # ============================================
 prometheus-client==0.23.1
 opentelemetry-api==1.29.0
-opentelemetry-sdk==1.29.0
+opentelemetry-sdk==1.39.1
 sentry-sdk==2.19.2
 loguru==0.7.3
 
