@@ -1,0 +1,64 @@
+# SIGMAX Performance Optimization Workflow
+# Performance profiling and optimization for HFT
+
+name: SIGMAX Performance Optimization
+version: "1.0"
+description: Performance analysis and optimization using perf plugins
+
+triggers:
+  - on_latency_spike
+  - weekly
+  - pre_release
+  - manual
+
+config:
+  timeout_minutes: 20
+  baseline_comparison: true
+
+steps:
+  1_profiling:
+    name: System Profiling
+    plugins:
+      - performance-profiler
+      - latency-analyzer
+      - memory-leak-detector
+    parallel: true
+    timeout: 300s
+    output: profiling_report
+
+  2_database_optimization:
+    name: Database Optimization
+    plugins:
+      - postgres-optimizer
+      - redis-cache-optimizer
+      - database-query-optimizer
+    timeout: 180s
+    output: database_report
+
+  3_async_optimization:
+    name: Async & Network Optimization
+    plugins:
+      - async-optimizer
+    timeout: 120s
+    output: async_report
+
+  4_load_testing:
+    name: Load Testing
+    plugins:
+      - load-testing-suite
+    timeout: 300s
+    output: load_test_report
+
+  5_optimization_report:
+    name: Generate Optimization Report
+    inputs:
+      - profiling_report
+      - database_report
+      - async_report
+      - load_test_report
+    output: final_optimization_report
+
+targets:
+  decision_latency_p99_ms: 1.5
+  throughput_ops_sec: 1700
+  memory_usage_mb: 512

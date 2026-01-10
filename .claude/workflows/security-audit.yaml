@@ -1,0 +1,66 @@
+# SIGMAX Security Audit Workflow
+# Comprehensive security scanning for trading system
+
+name: SIGMAX Security Audit
+version: "1.0"
+description: Multi-layer security audit using security plugins
+
+triggers:
+  - pre_deploy
+  - weekly
+  - on_vulnerability_alert
+  - manual
+
+config:
+  timeout_minutes: 30
+  fail_on_critical: true
+  generate_report: true
+
+steps:
+  1_code_security:
+    name: Code Security Scan
+    plugins:
+      - security-pro-pack
+      - dependency-vulnerability-scanner
+    parallel: true
+    timeout: 300s
+    output: code_security_report
+
+  2_wallet_security:
+    name: Wallet & Contract Security
+    plugins:
+      - wallet-security-auditor
+      - smart-contract-auditor
+    timeout: 180s
+    output: wallet_security_report
+
+  3_api_security:
+    name: API Security Scan
+    plugins:
+      - api-security-scanner
+      - authentication-validator
+    timeout: 120s
+    output: api_security_report
+
+  4_access_control:
+    name: Access Control Audit
+    plugins:
+      - access-control-auditor
+    timeout: 60s
+    output: access_control_report
+
+  5_final_report:
+    name: Generate Security Report
+    plugins:
+      - project-health-auditor
+    inputs:
+      - code_security_report
+      - wallet_security_report
+      - api_security_report
+      - access_control_report
+    output: final_security_report
+
+thresholds:
+  critical_issues: 0
+  high_issues: 3
+  medium_issues: 10

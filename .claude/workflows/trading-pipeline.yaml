@@ -1,0 +1,76 @@
+# SIGMAX Trading Pipeline Workflow
+# Automated plugin orchestration for trading decisions
+
+name: SIGMAX Trading Pipeline
+version: "1.0"
+description: End-to-end trading analysis using crypto plugins
+
+triggers:
+  - on_market_open
+  - on_price_alert
+  - on_whale_movement
+  - manual
+
+config:
+  timeout_minutes: 10
+  retry_on_failure: true
+  max_retries: 2
+
+steps:
+  1_research:
+    name: Market Research
+    plugins:
+      - crypto-news-aggregator
+      - on-chain-analytics
+      - market-sentiment-analyzer
+    parallel: true
+    timeout: 120s
+    output: research_report
+    
+  2_analysis:
+    name: Technical Analysis
+    plugins:
+      - crypto-signal-generator
+      - whale-alert-monitor
+      - liquidity-pool-analyzer
+    input: research_report
+    parallel: true
+    timeout: 60s
+    output: analysis_result
+    
+  3_risk_check:
+    name: Risk Assessment
+    plugins:
+      - wallet-security-auditor
+      - crypto-derivatives-tracker
+      - mempool-analyzer
+    input: analysis_result
+    timeout: 30s
+    output: risk_assessment
+    
+  4_execution:
+    name: Trade Execution
+    plugins:
+      - gas-fee-optimizer
+      - dex-aggregator-router
+      - arbitrage-opportunity-finder
+    input: risk_assessment
+    condition: risk_assessment.approved == true
+    timeout: 15s
+    output: trade_result
+    
+  5_monitoring:
+    name: Post-Trade Monitoring
+    plugins:
+      - crypto-portfolio-tracker
+      - performance-profiler
+    input: trade_result
+    output: monitoring_report
+
+notifications:
+  on_success:
+    - telegram
+    - slack
+  on_failure:
+    - telegram
+    - email
