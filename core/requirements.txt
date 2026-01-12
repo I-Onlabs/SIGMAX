@@ -27,7 +27,7 @@ ta-lib==0.4.32
 yfinance==0.2.50
 alpaca-py==0.43.2  # Updated from 0.36.1 (version not available)
 web3==7.6.0
-solana==0.35.1
+solana==0.36.10
 uniswap-python==0.7.7
 
 # ============================================
