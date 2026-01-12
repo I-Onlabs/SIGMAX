@@ -59,7 +59,7 @@ qiskit-finance==0.4.1
 # ============================================
 quantstats==0.0.62
 pyportfolioopt==1.5.6
-riskfolio-lib==6.3.1
+riskfolio-lib==7.1.0
 empyrical==0.5.5
 
 # ============================================
