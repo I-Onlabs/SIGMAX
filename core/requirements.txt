@@ -102,7 +102,7 @@ authlib==1.6.5      # Fix CVE-2025-59420, CVE-2025-61920, CVE-2025-62706 (JWS/JW
 brotli==1.2.0       # Fix CVE-2025-6176 (DoS via decompression bomb)
 deepdiff==8.6.1     # Fix CVE-2025-58367 (RCE via class pollution + Pickle)
 Django==5.2.9       # Fix 7 CVEs including SQL injection (CVE-2025-57833, CVE-2025-59681, CVE-2025-59682, CVE-2025-64458, CVE-2025-64459, CVE-2025-13372, CVE-2025-64460)
-filelock==3.20.1    # Fix CVE-2025-68146 (TOCTOU race condition → RCE)
+filelock==3.20.3    # Fix CVE-2025-68146 (TOCTOU race condition → RCE)
 fonttools==4.60.2   # Fix CVE-2025-66034 (arbitrary file write → RCE)
 h2==4.3.0           # Fix CVE-2025-57804 (HTTP/2 request splitting)
 jupyter-core==5.8.1 # Fix CVE-2025-30167 (Windows config file vulnerability)
