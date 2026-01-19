@@ -81,12 +81,15 @@ class HealthChecker:
         try:
             import psycopg2
             import os
+            password = os.getenv("POSTGRES_PASSWORD")
+            if not password:
+                raise ValueError("POSTGRES_PASSWORD environment variable not set")
             conn = psycopg2.connect(
                 host=os.getenv("POSTGRES_HOST", "localhost"),
                 port=int(os.getenv("POSTGRES_PORT", "5432")),
                 database=os.getenv("POSTGRES_DB", "sigmax"),
                 user=os.getenv("POSTGRES_USER", "sigmax"),
-                password=os.getenv("POSTGRES_PASSWORD", "changeme"),
+                password=password,
                 connect_timeout=3
             )
             cursor = conn.cursor()
