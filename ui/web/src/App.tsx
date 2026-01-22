@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Activity, Brain, TrendingUp, Shield, Zap, AlertTriangle } from 'lucide-react'
+import { Activity, Brain, TrendingUp, Shield, Zap, AlertTriangle, BarChart3, MessageSquare, AlertCircle, Settings } from 'lucide-react'
 import NeuralSwarm3D from './components/NeuralSwarm3D'
 import StatusPanel from './components/StatusPanel'
 import TradingPanel from './components/TradingPanel'
@@ -8,6 +8,7 @@ import QuantumCircuit from './components/QuantumCircuit'
 import RiskDashboard from './components/RiskDashboard'
 import AlertPanel from './components/AlertPanel'
 import PerformanceChart from './components/PerformanceChart'
+import Toast from './components/Toast'
 import { useWebSocket } from './hooks/useWebSocket'
 import api from './services/api'
 
@@ -23,15 +24,18 @@ function App() {
   } = useWebSocket()
 
   const [controlLoading, setControlLoading] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null)
 
   // Control actions
   const handleStartTrading = async () => {
     setControlLoading('start')
     try {
       await api.startTrading()
+      setToast({ message: 'Trading started successfully', type: 'success' })
     } catch (error) {
       console.error('Failed to start trading:', error)
-      alert('Failed to start trading: ' + (error as Error).message)
+      setToast({ message: 'Failed to start trading: ' + (error as Error).message, type: 'error' })
     } finally {
       setControlLoading(null)
     }
@@ -41,9 +45,10 @@ function App() {
     setControlLoading('pause')
     try {
       await api.pauseTrading()
+      setToast({ message: 'Trading paused successfully', type: 'warning' })
     } catch (error) {
       console.error('Failed to pause trading:', error)
-      alert('Failed to pause trading: ' + (error as Error).message)
+      setToast({ message: 'Failed to pause trading: ' + (error as Error).message, type: 'error' })
     } finally {
       setControlLoading(null)
     }
@@ -57,10 +62,10 @@ function App() {
     setControlLoading('stop')
     try {
       const result = await api.emergencyStop()
-      alert(`Emergency stop executed. Positions closed: ${result.positions_closed || 0}`)
+      setToast({ message: `Emergency stop executed. Positions closed: ${result.positions_closed || 0}`, type: 'warning' })
     } catch (error) {
       console.error('Emergency stop failed:', error)
-      alert('Emergency stop failed: ' + (error as Error).message)
+      setToast({ message: 'Emergency stop failed: ' + (error as Error).message, type: 'error' })
     } finally {
       setControlLoading(null)
     }
@@ -68,6 +73,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {/* Header */}
       <header className="border-b border-white/10 backdrop-blur-lg bg-white/5">
         <div className="container mx-auto px-6 py-4">
@@ -114,8 +120,68 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className="w-64 bg-black/20 backdrop-blur-lg border-r border-white/10 min-h-screen">
+          <nav className="p-6">
+            <div className="space-y-2">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeTab === 'dashboard' ? 'bg-cyan-500/20 border border-cyan-500/30' : 'hover:bg-white/5'
+                }`}
+                aria-label="Dashboard"
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span>Dashboard</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('trading')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeTab === 'trading' ? 'bg-cyan-500/20 border border-cyan-500/30' : 'hover:bg-white/5'
+                }`}
+                aria-label="Trading"
+              >
+                <TrendingUp className="w-5 h-5" />
+                <span>Trading</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('risk')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeTab === 'risk' ? 'bg-cyan-500/20 border border-cyan-500/30' : 'hover:bg-white/5'
+                }`}
+                aria-label="Risk Management"
+              >
+                <Shield className="w-5 h-5" />
+                <span>Risk</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('agents')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeTab === 'agents' ? 'bg-cyan-500/20 border border-cyan-500/30' : 'hover:bg-white/5'
+                }`}
+                aria-label="Agent Activity"
+              >
+                <MessageSquare className="w-5 h-5" />
+                <span>Agents</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('alerts')}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeTab === 'alerts' ? 'bg-cyan-500/20 border border-cyan-500/30' : 'hover:bg-white/5'
+                }`}
+                aria-label="Alerts"
+              >
+                <AlertCircle className="w-5 h-5" />
+                <span>Alerts</span>
+              </button>
+            </div>
+          </nav>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 container mx-auto px-6 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* 3D Agent Swarm */}
@@ -193,8 +259,8 @@ function App() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
