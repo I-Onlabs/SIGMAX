@@ -23,7 +23,7 @@ freqtrade==2024.12
 pandas==2.2.3
 numpy==1.26.4
 pandas-ta>=0.3.14b  # Note: Install from GitHub if not available: pip install git+https://github.com/twopirllc/pandas-ta
-ta-lib==0.4.32
+ta-lib==0.6.8
 yfinance==0.2.50
 alpaca-py==0.43.2  # Updated from 0.36.1 (version not available)
 web3==7.14.0
