@@ -3,7 +3,7 @@
 # ============================================
 # LLM & Agents
 # ============================================
-langchain==1.2.6
+langchain==1.2.7
 langchain-community==0.4.1
 langchain-core==1.2.7
 langgraph==0.2.59
