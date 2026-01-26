@@ -37,10 +37,10 @@ scikit-learn==1.8.0
 stable-baselines3==2.4.0
 gym==0.26.2
 gymnasium==1.0.0
-torch==2.9.1
+torch==2.10.0
 tensorflow==2.20.0
 # keras==3.12.0  # BLOCKED: tensorflow-macos pins keras<3.12 (CVE-2025-12058, CVE-2025-12060 unfixed)
-xgboost==3.1.2
+xgboost==3.1.3
 lightgbm==4.6.0
 catboost==1.2.8
 
