@@ -50,6 +50,11 @@ Then in your project:
 npm link @sigmax/sdk
 ```
 
+## Publishing
+
+Publishing is handled via GitHub Actions on tag `sdk-ts-v*`.
+See `RELEASING.md` for the exact steps and required `NPM_TOKEN` secret.
+
 ## Quick Start
 
 ### Node.js (TypeScript/ESM)

@@ -484,6 +484,8 @@ await client.executeProposal(proposal.proposalId);
 
 **[📖 TypeScript SDK Documentation](sdk/typescript/README.md)**
 
+Publishing is automated via GitHub Actions when a `sdk-ts-v*` tag is pushed.
+
 ### Web API
 
 ```bash
