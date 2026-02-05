@@ -131,6 +131,26 @@ class TestValidationAgent:
         assert result['passed'] == False
         assert result['checks']['completeness'] < 1.0
 
+    @pytest.mark.asyncio
+    async def test_validation_coverage_accepts_technical_analysis(self, validator):
+        """Coverage should count technical_analysis when technical data is absent."""
+        research_data = {
+            'news': {'score': 0.5},
+            'social': {'score': 0.3},
+            'onchain': {'whale_activity': 'neutral'},
+            'sentiment': 0.2,
+            'timestamp': datetime.now().isoformat()
+        }
+
+        result = await validator.validate(
+            research_summary="Comprehensive research with all sources analyzed",
+            technical_analysis="Complete technical analysis with RSI and MACD",
+            research_data=research_data
+        )
+
+        assert result['checks']['coverage'] > 0.0
+        assert not any('Missing technical' in gap for gap in result.get('gaps', []))
+
 
 class TestSentimentAgent:
     """Test SentimentAgent handling of rpc_snapshot"""
