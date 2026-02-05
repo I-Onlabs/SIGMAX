@@ -106,7 +106,7 @@ filelock==3.20.3    # Fix CVE-2025-68146 (TOCTOU race condition → RCE)
 fonttools==4.60.2   # Fix CVE-2025-66034 (arbitrary file write → RCE)
 h2==4.3.0           # Fix CVE-2025-57804 (HTTP/2 request splitting)
 jupyter-core==5.8.1 # Fix CVE-2025-30167 (Windows config file vulnerability)
-pypdf==6.6.0        # Fix CVE-2025-66019 (PDF parsing vulnerability)
+pypdf==6.6.2        # Fix CVE-2025-66019 (PDF parsing vulnerability)
 tornado==6.5        # Fix CVE-2025-47287 (HTTP request smuggling)
 urllib3==2.6.3      # Fix 4 CVEs (CVE-2025-50182, CVE-2025-50181, CVE-2025-66418, CVE-2025-66471)
 
