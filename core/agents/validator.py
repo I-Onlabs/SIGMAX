@@ -11,6 +11,7 @@ Inspired by Dexter's validation approach, this agent checks:
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from loguru import logger
+import os
 
 
 class ValidationAgent:
@@ -42,8 +43,12 @@ class ValidationAgent:
         self.required_data_sources = self.config.get('required_data_sources', [
             'news', 'social', 'onchain', 'technical'
         ])
-        self.min_summary_length = self.config.get('min_summary_length', 20)
-        self.min_technical_length = self.config.get('min_technical_length', 20)
+        self.min_summary_length = self._resolve_min_length(
+            'min_summary_length', 'MIN_RESEARCH_SUMMARY_LENGTH', 20
+        )
+        self.min_technical_length = self._resolve_min_length(
+            'min_technical_length', 'MIN_TECHNICAL_ANALYSIS_LENGTH', 20
+        )
 
         logger.info("✓ Validation agent initialized")
 
@@ -364,6 +369,22 @@ class ValidationAgent:
             'score': max(0.0, min(1.0, score)),
             'missing_sources': missing_sources
         }
+
+    def _resolve_min_length(self, config_key: str, env_key: str, default: int) -> int:
+        """Resolve a minimum length from config or environment."""
+        value = self.config.get(config_key)
+        if value is not None:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return default
+        env_value = os.getenv(env_key)
+        if env_value:
+            try:
+                return int(env_value)
+            except ValueError:
+                return default
+        return default
 
     async def _generate_validation_summary(
         self,

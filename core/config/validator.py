@@ -125,6 +125,22 @@ class ConfigValidator:
                 "EXCHANGES"
             ))
 
+        # Validation thresholds (optional)
+        min_summary_length = os.getenv("MIN_RESEARCH_SUMMARY_LENGTH")
+        min_technical_length = os.getenv("MIN_TECHNICAL_ANALYSIS_LENGTH")
+        if min_summary_length:
+            self.results.append(ValidationResult(
+                Severity.INFO,
+                f"MIN_RESEARCH_SUMMARY_LENGTH set to {min_summary_length}",
+                "MIN_RESEARCH_SUMMARY_LENGTH"
+            ))
+        if min_technical_length:
+            self.results.append(ValidationResult(
+                Severity.INFO,
+                f"MIN_TECHNICAL_ANALYSIS_LENGTH set to {min_technical_length}",
+                "MIN_TECHNICAL_ANALYSIS_LENGTH"
+            ))
+
         if chains:
             missing = []
             if "evm" in chains and not os.getenv("CHAIN_RPC_EVM"):
