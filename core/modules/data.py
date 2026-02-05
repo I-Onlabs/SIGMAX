@@ -7,6 +7,7 @@ from datetime import datetime
 import asyncio
 from loguru import logger
 import os
+from .chain_data import ChainDataModule
 
 
 class DataModule:
@@ -23,6 +24,7 @@ class DataModule:
     def __init__(self):
         self.exchange = None
         self.exchanges: Dict[str, Any] = {}
+        self.chain_module: Optional[ChainDataModule] = None
         self.cache = {}
         self.cache_ttl = 60  # seconds
         self._cache_cleanup_task = None
@@ -41,6 +43,11 @@ class DataModule:
                 if name.strip()
             ]
             testnet = os.getenv("TESTNET", "true").lower() == "true"
+            chains = [
+                name.strip().lower()
+                for name in os.getenv("CHAINS", "").split(",")
+                if name.strip()
+            ]
 
             async def create_exchange(name: str):
                 if name == "binance":
@@ -81,6 +88,11 @@ class DataModule:
                 self.exchange = await create_exchange(exchange_name)
                 await self.exchange.load_markets()
                 logger.info(f"✓ Data module initialized with {exchange_name}")
+
+            if chains:
+                self.chain_module = ChainDataModule(chains=chains)
+                await self.chain_module.initialize()
+                logger.info(f"✓ Chain data module initialized with {len(chains)} chains")
 
         except Exception as e:
             logger.warning(f"Could not initialize CCXT: {e}. Using mock data.")
@@ -141,6 +153,12 @@ class DataModule:
             else:
                 # Mock data
                 data = self._generate_mock_data(normalized_symbol)
+
+            if self.chain_module:
+                try:
+                    data["onchain"] = await self.chain_module.get_onchain_snapshot()
+                except Exception as e:
+                    logger.warning(f"Failed to fetch onchain snapshot: {e}")
 
             # Cache it
             self.cache[cache_key] = (data, datetime.now())

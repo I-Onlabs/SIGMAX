@@ -224,7 +224,7 @@ See [Quantum Module Documentation](docs/quantum.md) for details.
 
 - **Freqtrade Integration** - Paper + Live trading (implemented)
 - **HFT Support** - HFT execution module present; LEAN engine integration planned
-- **Multi-Chain** - BTC, ETH, Solana, Base, Arbitrum, Polygon (planned; multi-exchange data supported via `EXCHANGES`)
+- **Multi-Chain** - On-chain RPC sampling for EVM/Solana via `CHAINS` + `CHAIN_RPC_*`; full multi-chain execution planned
 - **Slippage Monitoring** - Auto-pause on excessive slippage (>1%) (implemented)
 - **Backtesting** - Framework for Sharpe/Sortino, max drawdown analysis (implemented)
 

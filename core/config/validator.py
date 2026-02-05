@@ -103,6 +103,11 @@ class ConfigValidator:
             for name in os.getenv("EXCHANGES", "").split(",")
             if name.strip()
         ]
+        chains = [
+            name.strip().lower()
+            for name in os.getenv("CHAINS", "").split(",")
+            if name.strip()
+        ]
 
         # Validate exchange
         exchange = os.getenv("EXCHANGE", "binance").lower()
@@ -119,6 +124,25 @@ class ConfigValidator:
                 f"EXCHANGES configured: {', '.join(exchanges)}",
                 "EXCHANGES"
             ))
+
+        if chains:
+            missing = []
+            if "evm" in chains and not os.getenv("CHAIN_RPC_EVM"):
+                missing.append("CHAIN_RPC_EVM")
+            if "solana" in chains and not os.getenv("CHAIN_RPC_SOLANA"):
+                missing.append("CHAIN_RPC_SOLANA")
+            if missing:
+                self.results.append(ValidationResult(
+                    Severity.WARNING,
+                    f"CHAINS configured but missing RPC endpoints: {', '.join(missing)}",
+                    "CHAINS"
+                ))
+            else:
+                self.results.append(ValidationResult(
+                    Severity.INFO,
+                    f"CHAINS configured: {', '.join(chains)}",
+                    "CHAINS"
+                ))
 
     def _validate_llm_config(self):
         """Validate LLM configuration"""
