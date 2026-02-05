@@ -240,12 +240,25 @@ class SIGMAXOrchestrator:
         async def sentiment_handler(task: ResearchTask, context: Dict[str, Any]):
             """Handle sentiment analysis tasks"""
             symbol = context.get('symbol', '')
+            market_data = context.get('market_data', {})
             news_data = await self.researcher._get_news_sentiment(symbol)
             social_data = await self.researcher._get_social_sentiment(symbol)
+            onchain_data = await self.researcher._get_onchain_metrics(symbol)
+            rpc_snapshot = market_data.get('onchain', {})
+
+            if rpc_snapshot:
+                onchain_data["rpc_snapshot"] = rpc_snapshot
+                onchain_data["rpc_source"] = "chain_rpc"
+
             return {
                 'news': news_data,
                 'social': social_data,
-                'sentiment': (news_data.get('score', 0.0) + social_data.get('score', 0.0)) / 2
+                'onchain': onchain_data,
+                'sentiment': self.researcher._calculate_sentiment(
+                    news_data,
+                    social_data,
+                    onchain_data
+                )
             }
 
         # Register handler for on-chain metrics

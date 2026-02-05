@@ -237,6 +237,9 @@ class ResearcherAgent:
 
         base_symbol = symbol.split("/")[0]
 
+        if base_symbol in symbol and not symbol.endswith("/USDT") and "/" not in symbol:
+            base_symbol = symbol
+
         # CoinGecko coin ID mapping
         coin_id_map = {
             'BTC': 'bitcoin',

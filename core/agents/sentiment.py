@@ -342,7 +342,11 @@ class SentimentAgent:
             "source": source
         }
 
-    async def _analyze_onchain(self, symbol: str) -> Dict[str, Any]:
+    async def _analyze_onchain(
+        self,
+        symbol: str,
+        rpc_snapshot: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Analyze on-chain metrics for sentiment using GoldRush API"""
 
         goldrush_key = os.getenv("GOLDRUSH_API_KEY", "")
@@ -441,6 +445,25 @@ class SentimentAgent:
 
         total_score = (flow_score * 0.5 + whale_score * 0.3 + activity_score * 0.2)
 
+        # Optional: adjust with RPC snapshot freshness/latency if provided.
+        rpc_adjustment = 0.0
+        if rpc_snapshot:
+            latencies = []
+            for chain_data in rpc_snapshot.values():
+                latency = chain_data.get("rpc_latency_ms")
+                if isinstance(latency, (int, float)):
+                    latencies.append(latency)
+
+            if latencies:
+                avg_latency = sum(latencies) / len(latencies)
+                # High latency reduces confidence slightly.
+                if avg_latency > 1000:
+                    rpc_adjustment = -0.05
+                elif avg_latency < 200:
+                    rpc_adjustment = 0.02
+
+        total_score = max(-1.0, min(1.0, total_score + rpc_adjustment))
+
         return {
             "score": total_score,
             "exchange_flow": {
@@ -458,7 +481,9 @@ class SentimentAgent:
                 "whale_activity": "active" if whale_score > 0 else "quiet",
                 "network_activity": "high" if activity_score > 0 else "low"
             },
-            "source": source
+            "source": source,
+            "rpc_snapshot": rpc_snapshot or {},
+            "rpc_adjustment": rpc_adjustment
         }
 
     async def _get_fear_greed_index(self) -> Dict[str, Any]:
