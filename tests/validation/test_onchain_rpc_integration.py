@@ -17,6 +17,12 @@ async def test_onchain_rpc_adjustment(monkeypatch):
     assert result["rpc_snapshot"] == rpc_snapshot
     assert result["rpc_adjustment"] <= 0
     assert -1.0 <= result["score"] <= 1.0
+    confidence = agent._calculate_confidence(
+        {"score": 0.1, "article_count": 0},
+        {"score": 0.1, "mention_count": 0},
+        result
+    )
+    assert 0.0 <= confidence <= 1.0
 
 
 @pytest.mark.asyncio
@@ -32,3 +38,9 @@ async def test_onchain_rpc_adjustment_positive(monkeypatch):
 
     assert result["rpc_snapshot"] == rpc_snapshot
     assert result["rpc_adjustment"] >= 0
+    confidence = agent._calculate_confidence(
+        {"score": 0.1, "article_count": 0},
+        {"score": 0.1, "mention_count": 0},
+        result
+    )
+    assert 0.0 <= confidence <= 1.0

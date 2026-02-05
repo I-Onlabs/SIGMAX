@@ -588,7 +588,8 @@ class SentimentAgent:
 
         volume_boost = min(data_volume / 100, 0.2)  # Max 0.2 boost
 
-        return min(confidence + volume_boost, 1.0)
+        adjusted = confidence + volume_boost + onchain.get("rpc_adjustment", 0.0)
+        return min(max(adjusted, 0.0), 1.0)
 
     async def _generate_summary(
         self,
