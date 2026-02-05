@@ -75,6 +75,10 @@ class ResearcherAgent:
             news_sentiment = await self._get_news_sentiment(symbol)
             social_sentiment = await self._get_social_sentiment(symbol)
             onchain_metrics = await self._get_onchain_metrics(symbol)
+            rpc_snapshot = market_data.get("onchain", {}) if isinstance(market_data, dict) else {}
+            if rpc_snapshot:
+                onchain_metrics["rpc_snapshot"] = rpc_snapshot
+                onchain_metrics["rpc_source"] = "chain_rpc"
             macro_factors = await self._get_macro_factors()
 
             # Calculate aggregate sentiment
