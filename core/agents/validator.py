@@ -112,8 +112,14 @@ class ValidationAgent:
                 data_gaps.extend([f"Stale data from {src}" for src in freshness_result['stale_sources']])
 
             # 4. Check coverage (are all required sources present?)
+            coverage_data = research_data or {}
+            if technical_analysis and "technical" not in coverage_data:
+                coverage_data = {
+                    **coverage_data,
+                    "technical": {"summary": technical_analysis}
+                }
             coverage_result = await self._check_coverage(
-                research_data=research_data
+                research_data=coverage_data
             )
             validation_checks['coverage'] = coverage_result['score']
             data_gaps.extend(coverage_result['missing_sources'])
