@@ -42,6 +42,8 @@ class ValidationAgent:
         self.required_data_sources = self.config.get('required_data_sources', [
             'news', 'social', 'onchain', 'technical'
         ])
+        self.min_summary_length = self.config.get('min_summary_length', 20)
+        self.min_technical_length = self.config.get('min_technical_length', 20)
 
         logger.info("✓ Validation agent initialized")
 
@@ -186,12 +188,12 @@ class ValidationAgent:
         score = 1.0
 
         # Check if research summary exists
-        if not research_summary or len(research_summary.strip()) < 50:
+        if not research_summary or len(research_summary.strip()) < self.min_summary_length:
             gaps.append("Research summary missing or too short")
             score -= 0.4
 
         # Check if technical analysis exists
-        if not technical_analysis or len(technical_analysis.strip()) < 50:
+        if not technical_analysis or len(technical_analysis.strip()) < self.min_technical_length:
             gaps.append("Technical analysis missing or incomplete")
             score -= 0.3
 
@@ -304,6 +306,18 @@ class ValidationAgent:
                 except Exception:
                     pass
 
+        # Check on-chain RPC snapshot freshness if provided
+        onchain = research_data.get('onchain', {})
+        rpc_snapshot = onchain.get('rpc_snapshot', {}) if isinstance(onchain, dict) else {}
+        if isinstance(rpc_snapshot, dict):
+            for chain_name, chain_data in rpc_snapshot.items():
+                if not isinstance(chain_data, dict):
+                    continue
+                block_age_sec = chain_data.get("block_age_sec")
+                if isinstance(block_age_sec, (int, float)) and block_age_sec > max_age.total_seconds():
+                    stale_sources.append(f"{chain_name} rpc (block_age {int(block_age_sec)}s)")
+                    score -= 0.1
+
         return {
             'score': max(0.0, min(1.0, score)),
             'stale_sources': stale_sources
@@ -391,7 +405,9 @@ Data Gaps: {len(data_gaps)}
         return {
             'validation_threshold': self.validation_threshold,
             'data_freshness_seconds': self.data_freshness_seconds,
-            'required_data_sources': self.required_data_sources
+            'required_data_sources': self.required_data_sources,
+            'min_summary_length': self.min_summary_length,
+            'min_technical_length': self.min_technical_length
         }
 
     def update_config(self, config: Dict[str, Any]) -> None:
@@ -404,5 +420,11 @@ Data Gaps: {len(data_gaps)}
 
         if 'required_data_sources' in config:
             self.required_data_sources = config['required_data_sources']
+
+        if 'min_summary_length' in config:
+            self.min_summary_length = config['min_summary_length']
+
+        if 'min_technical_length' in config:
+            self.min_technical_length = config['min_technical_length']
 
         logger.info(f"✓ Validation config updated: {config}")

@@ -85,6 +85,32 @@ class TestValidationAgent:
         assert any('stale' in gap.lower() for gap in result.get('gaps', []))
 
     @pytest.mark.asyncio
+    async def test_validation_detects_stale_onchain_rpc(self, validator):
+        """Test that validation detects stale on-chain RPC snapshot"""
+        research_data = {
+            'news': {'score': 0.5},
+            'social': {'score': 0.3},
+            'onchain': {
+                'whale_activity': 'neutral',
+                'rpc_snapshot': {
+                    'evm': {'block_age_sec': 9999}
+                }
+            },
+            'technical': {'summary': 'Analysis'},
+            'sentiment': 0.2,
+            'timestamp': datetime.now().isoformat()
+        }
+
+        result = await validator.validate(
+            research_summary="Research includes stale on-chain snapshot",
+            technical_analysis="Technical indicators available",
+            research_data=research_data
+        )
+
+        assert result['passed'] == False
+        assert any('rpc' in gap.lower() for gap in result.get('gaps', []))
+
+    @pytest.mark.asyncio
     async def test_validation_checks_summary_quality(self, validator):
         """Test that validation checks summary quality"""
         research_data = {

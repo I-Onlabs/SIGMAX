@@ -182,7 +182,7 @@ class ResearchSafety:
 
     def get_decision_cost(self, decision_id: str) -> float:
         """Get total LLM cost for a decision"""
-        return self.llm_costs.get(decision_id, 0.0)
+        return round(self.llm_costs.get(decision_id, 0.0), 2)
 
     def get_daily_cost(self, date: Optional[str] = None) -> float:
         """Get total research cost for a date"""
