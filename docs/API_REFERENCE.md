@@ -35,6 +35,25 @@ curl -H "Authorization: Bearer your-api-key-here" \
 
 ---
 
+## Configuration (Environment Variables)
+
+**Execution backend**
+- `EXECUTION_BACKEND`: `ccxt` (default) or `lean`
+- `LEAN_BRIDGE_URL`: HTTP endpoint for LEAN execution (required if `EXECUTION_BACKEND=lean`)
+- `LEAN_BRIDGE_TIMEOUT`: Bridge timeout in seconds (default `5`)
+- `LEAN_BRIDGE_CLOSE_URL`: Optional close-all endpoint (default `LEAN_BRIDGE_URL/close_all`)
+
+**Multi-exchange data**
+- `EXCHANGE`: Default exchange id (e.g., `binance`)
+- `EXCHANGES`: Comma-separated list of exchanges to initialize (e.g., `binance,coinbase`)
+
+**On-chain sampling (optional)**
+- `CHAINS`: Comma-separated list of chains to sample (e.g., `evm,solana`)
+- `CHAIN_RPC_EVM`: JSON-RPC endpoint for EVM chains
+- `CHAIN_RPC_SOLANA`: JSON-RPC endpoint for Solana
+
+---
+
 ## System Endpoints
 
 ### GET /
