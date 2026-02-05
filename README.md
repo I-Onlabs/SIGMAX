@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![React 18](https://img.shields.io/badge/react-18-blue.svg)](https://reactjs.org/)
+[![React 19](https://img.shields.io/badge/react-19-blue.svg)](https://reactjs.org/)
 
 > ⚠️ **RESEARCH SOFTWARE - EDUCATIONAL USE ONLY**
 > SIGMAX is experimental research software for learning about AI trading systems.
@@ -24,7 +24,7 @@ SIGMAX is an **open-source, autonomous AI trading system** that combines multi-a
 🛡️ **Safety-First** - Auto-pause triggers, risk limits, paper trading
 🔒 **AI Security** - Prompt injection defense, MCP hijacking protection, fake news detection
 🧠 **Behavioral Finance** - Cognitive biases, social sentiment, Fear & Greed modeling
-🎨 **Neural Cockpit** - 3D visualization with React + Three.js
+🎨 **Web UI** - Minimal, tabbed dashboard for system state, events, and connections
 🔊 **Multiple Interfaces** - Telegram, Web UI, CLI, Python/TypeScript SDKs
 💯 **Local Option** - Can run with Ollama (default uses cloud LLMs)
 
@@ -206,7 +206,7 @@ SIGMAX uses quantum computing (VQE/QAOA algorithms via Qiskit) for portfolio opt
 **Features:**
 - **Portfolio Optimization** - VQE + QAOA algorithms for optimal position sizing
 - **Hot-starting** - Faster convergence using classical solutions as initial state
-- **Real-time Visualization** - Live circuit rendering in Neural Cockpit UI
+- **Visualization Hooks** - Circuit data available via API for optional UI rendering
 - **Classical Fallback** - Automatic Kelly Criterion fallback when quantum disabled/fails
 
 **Configuration:**
@@ -295,14 +295,13 @@ See [Behavioral Finance Documentation](docs/BEHAVIORAL_FINANCE.md) for details.
 - CSV export for analysis
 - API request audit logs
 
-### 🎨 Neural Cockpit UI
+### 🎨 Web UI
 
-- **3D Agent Swarm** - Live agent activity visualization
-- **Quantum Circuit Viewer** - Interactive simulator
-- **Latency Waterfall** - Microsecond performance tracking
-- **Performance Charts** - Real-time PnL, win rate, Sharpe ratio
-- **Voice Commands** - Natural language control
-- **macOS Native** - Tauri .app (6MB installer)
+- **Tabbed Layout** - Overview, Analysis, Events, System Health, Connections
+- **Performance Charts** - In-session metrics and trends
+- **Event Log** - Filterable trading events
+- **System Status** - Health indicators and risk triggers
+- **Connections** - Exchange accounts + actions
 
 ---
 
@@ -526,7 +525,7 @@ SIGMAX/
 ├── trading/               # Trading engines
 │   ├── freqtrade/        # Main bot
 │   └── lean/             # HFT backup
-├── ui/                    # Neural Cockpit
+├── ui/                    # Web UI + API
 │   ├── web/              # React frontend
 │   ├── desktop/          # Tauri wrapper
 │   └── api/              # FastAPI backend
@@ -543,7 +542,7 @@ SIGMAX supports multiple interfaces feeding the same orchestrator:
 | Interface | Status | Use Case |
 |-----------|--------|----------|
 | **Telegram Bot** | ✅ Production | Natural language control |
-| **Web UI** | ✅ Production | 3D visualization |
+| **Web UI** | ✅ Production | Minimal dashboard |
 | **Web API** | ✅ Production | REST + SSE streaming |
 | **CLI** | ✅ Production | Automation/scripting ([docs](docs/CLI.md)) |
 | **Python SDK** | ✅ Available | Programmatic access ([docs](sdk/python/README.md)) |
