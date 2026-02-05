@@ -2,7 +2,7 @@
 Sentiment Agent - Advanced Multi-Source Sentiment Analysis
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from datetime import datetime
 from loguru import logger
 import os
