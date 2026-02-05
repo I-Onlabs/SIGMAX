@@ -51,6 +51,7 @@ curl -H "Authorization: Bearer your-api-key-here" \
 - `CHAINS`: Comma-separated list of chains to sample (e.g., `evm,solana`)
 - `CHAIN_RPC_EVM`: JSON-RPC endpoint for EVM chains
 - `CHAIN_RPC_SOLANA`: JSON-RPC endpoint for Solana
+- `onchain` field in market data will include `rpc_snapshot` with `base_fee_wei`, `block_age_sec`, and `rpc_latency_ms` when available.
 
 ---
 
