@@ -53,6 +53,10 @@ curl -H "Authorization: Bearer your-api-key-here" \
 - `CHAIN_RPC_SOLANA`: JSON-RPC endpoint for Solana
 - `onchain` field in market data will include `rpc_snapshot` with `base_fee_wei`, `block_age_sec`, and `rpc_latency_ms` when available.
 
+**Validation thresholds (optional)**
+- `MIN_RESEARCH_SUMMARY_LENGTH`: Minimum chars required for research summaries (default `20`)
+- `MIN_TECHNICAL_ANALYSIS_LENGTH`: Minimum chars required for technical analysis (default `20`)
+
 ---
 
 ## System Endpoints

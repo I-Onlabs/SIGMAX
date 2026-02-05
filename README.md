@@ -713,6 +713,10 @@ MAX_DAILY_LOSS=10
 MAX_POSITION_SIZE=15
 STOP_LOSS_PCT=1.5
 
+# Validation thresholds (optional)
+MIN_RESEARCH_SUMMARY_LENGTH=20
+MIN_TECHNICAL_ANALYSIS_LENGTH=20
+
 # Quantum Computing (VQE/QAOA Portfolio Optimization)
 QUANTUM_ENABLED=true              # Enable quantum optimization (default: true)
 QUANTUM_BACKEND=qiskit_aer         # Quantum simulator backend
