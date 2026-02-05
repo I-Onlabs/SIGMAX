@@ -447,9 +447,11 @@ class SentimentAgent:
 
         # Optional: adjust with RPC snapshot freshness/latency if provided.
         rpc_adjustment = 0.0
-        if rpc_snapshot:
+        if isinstance(rpc_snapshot, dict) and rpc_snapshot:
             latencies = []
             for chain_data in rpc_snapshot.values():
+                if not isinstance(chain_data, dict):
+                    continue
                 latency = chain_data.get("rpc_latency_ms")
                 if isinstance(latency, (int, float)):
                     latencies.append(latency)
@@ -482,7 +484,7 @@ class SentimentAgent:
                 "network_activity": "high" if activity_score > 0 else "low"
             },
             "source": source,
-            "rpc_snapshot": rpc_snapshot or {},
+            "rpc_snapshot": rpc_snapshot if isinstance(rpc_snapshot, dict) else {},
             "rpc_adjustment": rpc_adjustment
         }
 
