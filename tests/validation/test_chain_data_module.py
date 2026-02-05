@@ -19,8 +19,14 @@ async def test_chain_data_snapshot(monkeypatch):
     module = ChainDataModule(chains=["evm", "solana"])
 
     def fake_post_json(url, payload):
-        if payload.get("method") == "eth_blockNumber":
-            return {"result": "0x10"}
+        if payload.get("method") == "eth_getBlockByNumber":
+            return {
+                "result": {
+                    "number": "0x10",
+                    "baseFeePerGas": "0x1",
+                    "timestamp": "0x0"
+                }
+            }
         if payload.get("method") == "getSlot":
             return {"result": 123}
         return {}
@@ -31,4 +37,5 @@ async def test_chain_data_snapshot(monkeypatch):
     snapshot = await module.get_onchain_snapshot()
 
     assert snapshot["evm"]["latest_block"] == 16
+    assert snapshot["evm"]["base_fee_wei"] == 1
     assert snapshot["solana"]["latest_slot"] == 123

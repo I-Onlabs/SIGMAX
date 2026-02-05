@@ -21,6 +21,8 @@ class ChainStatus:
     chain: str
     latest_block: Optional[int] = None
     latest_slot: Optional[int] = None
+    base_fee_wei: Optional[int] = None
+    block_age_sec: Optional[int] = None
     rpc_latency_ms: Optional[float] = None
     timestamp: str = ""
 
@@ -81,16 +83,26 @@ class ChainDataModule:
         return None
 
     async def _fetch_evm_status(self, rpc_url: str) -> Optional[Dict[str, Any]]:
-        payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1}
+        payload = {"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": ["latest", False], "id": 1}
         start = time.monotonic()
         try:
             data = await asyncio.to_thread(self._post_json, rpc_url, payload)
             latency_ms = (time.monotonic() - start) * 1000
-            block_hex = data.get("result")
+            block = data.get("result") or {}
+            block_hex = block.get("number")
             latest_block = int(block_hex, 16) if block_hex else None
+            base_fee_hex = block.get("baseFeePerGas")
+            base_fee_wei = int(base_fee_hex, 16) if base_fee_hex else None
+            timestamp_hex = block.get("timestamp")
+            block_age_sec = None
+            if timestamp_hex:
+                block_ts = int(timestamp_hex, 16)
+                block_age_sec = max(0, int(time.time()) - block_ts)
             status = ChainStatus(
                 chain="evm",
                 latest_block=latest_block,
+                base_fee_wei=base_fee_wei,
+                block_age_sec=block_age_sec,
                 rpc_latency_ms=latency_ms,
                 timestamp=datetime.utcnow().isoformat()
             )
