@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, Zap } from 'lucide-react'
-import api from '../services/api'
+import { useState, useEffect } from 'react';
+import Panel from '../ui/components/Panel';
+import PrimaryAction from '../ui/components/PrimaryAction';
+import StatRow from '../ui/components/StatRow';
+import api from '../services/api';
 
 interface TradingPanelProps {
   marketData?: Array<{ symbol: string; price: number; change_24h: number }>;
@@ -8,110 +10,114 @@ interface TradingPanelProps {
 }
 
 export default function TradingPanel({ marketData, agentDecisions }: TradingPanelProps) {
-  const [symbol, setSymbol] = useState('BTC/USDT')
-  const [analyzing, setAnalyzing] = useState(false)
-  const [decision, setDecision] = useState<any>(null)
+  const [symbol, setSymbol] = useState('BTC/USDT');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [decision, setDecision] = useState<any>(null);
 
-  // Update decision when agentDecisions changes
   useEffect(() => {
     if (agentDecisions && agentDecisions.length > 0) {
-      const latestForSymbol = agentDecisions.find(d => d.symbol === symbol)
+      const latestForSymbol = agentDecisions.find((d) => d.symbol === symbol);
       if (latestForSymbol) {
-        setDecision(latestForSymbol)
+        setDecision(latestForSymbol);
       }
     }
-  }, [agentDecisions, symbol])
+  }, [agentDecisions, symbol]);
 
   const handleAnalyze = async () => {
-    setAnalyzing(true)
+    setAnalyzing(true);
 
     try {
-      const data = await api.analyzeSymbol({ symbol, include_debate: false })
-      setDecision(data)
+      const data = await api.analyzeSymbol({ symbol, include_debate: false });
+      setDecision(data);
     } catch (error) {
-      console.error('Analysis failed:', error)
-      alert('Analysis failed: ' + (error as Error).message)
+      console.error('Analysis failed:', error);
+      alert('Analysis failed: ' + (error as Error).message);
     } finally {
-      setAnalyzing(false)
+      setAnalyzing(false);
     }
-  }
+  };
 
-  // Get current price from market data
-  const currentPrice = marketData?.find(m => m.symbol === symbol)?.price
-  const priceChange = marketData?.find(m => m.symbol === symbol)?.change_24h
+  const currentPrice = marketData?.find((m) => m.symbol === symbol)?.price;
+  const priceChange = marketData?.find((m) => m.symbol === symbol)?.change_24h;
 
   return (
-    <div className="rounded-2xl border border-white/10 backdrop-blur-lg bg-white/5 p-6">
-      <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <TrendingUp className="w-5 h-5 text-green-400" />
-          <span>Trading Analysis</span>
-        </div>
-        {currentPrice && (
-          <div className="text-right">
-            <div className="text-2xl font-bold">${currentPrice.toLocaleString()}</div>
-            {priceChange !== undefined && (
-              <div className={`text-sm flex items-center justify-end ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {priceChange >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)}%
-              </div>
-            )}
-          </div>
-        )}
-      </h3>
-
+    <Panel title="Analysis">
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Symbol</label>
-          <input
-            type="text"
-            value={symbol}
-            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 focus:border-cyan-500 focus:outline-none"
-            placeholder="BTC/USDT"
-          />
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold mb-2">Symbol</label>
+            <input
+              type="text"
+              value={symbol}
+              onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+              className="w-full px-3 py-2 rounded-[var(--radius)] border border-[var(--line)] bg-transparent text-sm"
+              placeholder="BTC/USDT"
+            />
+          </div>
+          <div className="min-w-[140px] text-right">
+            <div className="text-xs text-[var(--muted)]">Last Price</div>
+            <div className="text-lg font-semibold">
+              {currentPrice ? `$${currentPrice.toLocaleString()}` : '—'}
+            </div>
+            <div className="text-xs text-[var(--muted)]">
+              {priceChange !== undefined ? `${priceChange.toFixed(2)}%` : '—'}
+            </div>
+          </div>
         </div>
 
-        <button
-          onClick={handleAnalyze}
-          disabled={analyzing}
-          className="w-full px-4 py-3 rounded-xl bg-cyan-500/20 border border-cyan-500/30 hover:bg-cyan-500/30 transition-colors disabled:opacity-50"
-        >
+        <PrimaryAction onClick={handleAnalyze} disabled={analyzing} className="w-full">
           {analyzing ? 'Analyzing...' : 'Analyze'}
-        </button>
+        </PrimaryAction>
 
         {decision && (
-          <div className="mt-4 p-4 rounded-lg bg-white/5 border border-white/10">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium">Decision</span>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                decision.decision === 'buy' ? 'bg-green-500/20 text-green-400' :
-                decision.decision === 'sell' ? 'bg-red-500/20 text-red-400' :
-                'bg-gray-500/20 text-gray-400'
-              }`}>
-                {decision.decision?.toUpperCase()}
+          <div className="border border-[var(--line)] rounded-[var(--radius)] p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-[var(--muted)]">Decision</span>
+              <span className="text-xs font-semibold">
+                {decision.decision?.toUpperCase() || 'HOLD'}
               </span>
             </div>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Confidence</span>
-                <span className="font-semibold">{(decision.confidence * 100).toFixed(0)}%</span>
-              </div>
-
-              {decision.reasoning && (
-                <div className="pt-3 border-t border-white/10">
-                  <p className="text-xs text-gray-400 mb-2">Bull Case:</p>
-                  <p className="text-xs">{decision.reasoning.bull}</p>
-
-                  <p className="text-xs text-gray-400 mt-2 mb-2">Bear Case:</p>
-                  <p className="text-xs">{decision.reasoning.bear}</p>
-                </div>
-              )}
+            <div className="space-y-2">
+              <StatRow
+                label="Confidence"
+                value={`${Math.round((typeof decision.confidence === 'number' ? decision.confidence : 0) * 100)}%`}
+              />
             </div>
+            {(() => {
+              const reasoning = decision.reasoning;
+              const bull =
+                (typeof reasoning === 'object' && reasoning?.bull) ||
+                decision.bull_score ||
+                '—';
+              const bear =
+                (typeof reasoning === 'object' && reasoning?.bear) ||
+                decision.bear_score ||
+                '—';
+              const summary =
+                typeof reasoning === 'string' ? reasoning : decision.reasoning?.summary;
+
+              return (
+                <div className="mt-3 pt-3 border-t border-[var(--line)] text-xs space-y-2">
+                  <div>
+                    <div className="text-[var(--muted)]">Bull</div>
+                    <div>{bull}</div>
+                  </div>
+                  <div>
+                    <div className="text-[var(--muted)]">Bear</div>
+                    <div>{bear}</div>
+                  </div>
+                  {summary && (
+                    <div>
+                      <div className="text-[var(--muted)]">Summary</div>
+                      <div>{summary}</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
-    </div>
-  )
+    </Panel>
+  );
 }

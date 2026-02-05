@@ -7,11 +7,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        'glass': 'rgba(255, 255, 255, 0.05)',
+        bg: 'var(--bg)',
+        fg: 'var(--fg)',
+        muted: 'var(--muted)',
+        line: 'var(--line)',
+        panel: 'var(--panel)',
+        accent: 'var(--accent)',
+        danger: 'var(--danger)',
       },
-      backdropBlur: {
-        'glass': '10px',
-      }
+      borderRadius: {
+        base: 'var(--radius)',
+      },
     },
   },
   plugins: [],

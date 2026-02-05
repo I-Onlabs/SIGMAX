@@ -1,269 +1,172 @@
-import { useState } from 'react'
-import { AlertTriangle, Info, AlertCircle, XCircle, X, Bell, BellOff, TrendingUp, TrendingDown } from 'lucide-react'
-
-interface Alert {
-  id: string
-  level: 'info' | 'warning' | 'critical' | 'emergency'
-  title: string
-  message: string
-  timestamp: string
-  tags: string[]
-}
+import { useEffect, useState } from 'react';
+import Panel from '../ui/components/Panel';
+import EventList, { type EventItem } from '../ui/components/EventList';
+import DataBoundary from '../ui/data/DataBoundary';
+import { resolveDataState } from '../ui/state';
 
 interface AlertPanelProps {
   trades?: Array<{
-    symbol: string
-    action: string
-    size: number
-    order_id?: string
-    status?: string
-    filled_price?: number
-    fee?: number
-    timestamp: string
-  }>
+    symbol: string;
+    action: string;
+    size: number;
+    order_id?: string;
+    status?: string;
+    filled_price?: number;
+    fee?: number;
+    timestamp?: string;
+  }>;
 }
 
+type TradeEvent = NonNullable<AlertPanelProps['trades']>[number];
+
+const formatTimestamp = (timestamp?: string) => {
+  if (!timestamp) return '—';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const resolveSeverity = (status?: string): EventItem['severity'] => {
+  const normalized = status?.toLowerCase();
+  if (!normalized) return 'info';
+  if (['emergency', 'halted', 'panic'].includes(normalized)) return 'emergency';
+  if (['failed', 'rejected'].includes(normalized)) return 'critical';
+  if (['pending', 'submitted', 'cancelled', 'canceled'].includes(normalized)) return 'warning';
+  if (['filled', 'success', 'succeeded', 'completed'].includes(normalized)) return 'info';
+  return 'info';
+};
+
 export default function AlertPanel({ trades }: AlertPanelProps) {
-  const [filter, setFilter] = useState<string>('all')
-  const [muted, setMuted] = useState(false)
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set())
+  const [filter, setFilter] = useState<string>('all');
+  const [muted, setMuted] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [visibleTrades, setVisibleTrades] = useState<TradeEvent[]>(trades || []);
 
-  // Convert trades to alerts format, filtering out dismissed ones
-  const alerts: Alert[] = (trades?.map((trade, i) => {
-    const isSuccess = trade.status === 'filled' || trade.status === 'success'
-    const isBuy = trade.action === 'buy'
-    const id = trade.order_id || `trade-${i}`
-
-    // Skip dismissed alerts
-    if (dismissedIds.has(id)) return null
-
-    return {
-      id,
-      level: isSuccess ? 'info' : 'warning',
-      title: `${isBuy ? 'Buy' : 'Sell'} Order ${isSuccess ? 'Filled' : 'Pending'}`,
-      message: `${trade.action.toUpperCase()} ${trade.size} ${trade.symbol}${trade.filled_price ? ` @ $${trade.filled_price.toFixed(2)}` : ''}${trade.fee ? ` (fee: $${trade.fee.toFixed(4)})` : ''}`,
-      timestamp: trade.timestamp,
-      tags: [trade.symbol, trade.action, trade.status || 'pending']
+  useEffect(() => {
+    if (!muted) {
+      setVisibleTrades(trades || []);
     }
-  }).filter(Boolean) as Alert[]) || []
+  }, [muted, trades]);
+
+  const alerts = visibleTrades.reduce<EventItem[]>((acc, trade, i) => {
+    const id = trade.order_id || `trade-${i}`;
+    if (dismissedIds.has(id)) return acc;
+
+    const severity = resolveSeverity(trade.status);
+    const description = trade.filled_price
+      ? `Filled @ ${trade.filled_price.toFixed(2)}`
+      : trade.status
+        ? `Status: ${trade.status}`
+        : undefined;
+    const meta: string[] = [];
+    if (trade.order_id) {
+      meta.push(`Order ${trade.order_id}`);
+    }
+    if (typeof trade.fee === 'number') {
+      meta.push(`Fee ${trade.fee.toFixed(4)}`);
+    }
+    if (trade.status) {
+      meta.push(`Status ${trade.status}`);
+    }
+
+    acc.push({
+      id,
+      title: `${trade.action.toUpperCase()} ${trade.size} ${trade.symbol}`,
+      description,
+      timestamp: formatTimestamp(trade.timestamp),
+      severity,
+      meta,
+    });
+
+    return acc;
+  }, []);
+
+  const filteredAlerts =
+    filter === 'all' ? alerts : alerts.filter((a) => a.severity === filter);
+
+  const dataState = resolveDataState({
+    isLoading: trades === undefined,
+    isEmpty: filteredAlerts.length === 0,
+  });
 
   const dismissAlert = (id: string) => {
-    setDismissedIds(prev => new Set([...prev, id]))
-  }
+    setDismissedIds((prev) => new Set([...prev, id]));
+  };
 
   const clearAll = () => {
-    setDismissedIds(new Set(alerts.map(a => a.id)))
-  }
-
-  const getAlertIcon = (level: string) => {
-    switch (level) {
-      case 'info':
-        return <Info className="w-5 h-5 text-blue-400" />
-      case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-yellow-400" />
-      case 'critical':
-        return <AlertCircle className="w-5 h-5 text-orange-400" />
-      case 'emergency':
-        return <XCircle className="w-5 h-5 text-red-400" />
-      default:
-        return <Info className="w-5 h-5 text-gray-400" />
-    }
-  }
-
-  const getAlertStyle = (level: string) => {
-    switch (level) {
-      case 'info':
-        return 'border-blue-500/30 bg-blue-500/10'
-      case 'warning':
-        return 'border-yellow-500/30 bg-yellow-500/10'
-      case 'critical':
-        return 'border-orange-500/30 bg-orange-500/10'
-      case 'emergency':
-        return 'border-red-500/30 bg-red-500/10 animate-pulse'
-      default:
-        return 'border-gray-500/30 bg-gray-500/10'
-    }
-  }
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`
-    return date.toLocaleDateString()
-  }
-
-  const filteredAlerts = filter === 'all'
-    ? alerts
-    : alerts.filter(a => a.level === filter)
+    setDismissedIds(new Set(alerts.map((a) => a.id)));
+  };
 
   const alertCounts = {
     all: alerts.length,
-    info: alerts.filter(a => a.level === 'info').length,
-    warning: alerts.filter(a => a.level === 'warning').length,
-    critical: alerts.filter(a => a.level === 'critical').length,
-    emergency: alerts.filter(a => a.level === 'emergency').length
-  }
+    info: alerts.filter((a) => a.severity === 'info').length,
+    warning: alerts.filter((a) => a.severity === 'warning').length,
+    critical: alerts.filter((a) => a.severity === 'critical').length,
+    emergency: alerts.filter((a) => a.severity === 'emergency').length,
+  };
 
   return (
-    <div className="rounded-2xl border border-white/10 backdrop-blur-lg bg-white/5">
-      {/* Header */}
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <Bell className="w-5 h-5 text-cyan-400" />
-            <h3 className="text-lg font-semibold">System Alerts</h3>
-            {alerts.length > 0 && (
-              <span className="px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-400">
-                {alerts.length}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center space-x-2">
+    <Panel
+      title="Events"
+      action={
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMuted((prev) => !prev)}
+            className="text-xs px-2 py-1 border border-[var(--line)] rounded-[var(--radius)]"
+          >
+            {muted ? 'Resume Updates' : 'Freeze List'}
+          </button>
+          {alerts.length > 0 && (
             <button
-              onClick={() => setMuted(!muted)}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              onClick={clearAll}
+              className="text-xs px-2 py-1 border border-[var(--line)] rounded-[var(--radius)]"
             >
-              {muted ? (
-                <BellOff className="w-4 h-4 text-gray-400" />
-              ) : (
-                <Bell className="w-4 h-4 text-cyan-400" />
-              )}
+              Clear
             </button>
-
-            {alerts.length > 0 && (
-              <button
-                onClick={clearAll}
-                className="px-3 py-1 text-sm rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                Clear All
-              </button>
-            )}
-          </div>
+          )}
         </div>
+      }
+    >
+      <div className="flex flex-wrap gap-2 mb-4">
+        {[
+          { key: 'all', label: 'All' },
+          { key: 'critical', label: 'Critical' },
+          { key: 'emergency', label: 'Emergency' },
+          { key: 'warning', label: 'Warning' },
+          { key: 'info', label: 'Info' },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key)}
+            className={`text-xs px-2 py-1 border border-[var(--line)] rounded-[var(--radius)] ${
+              filter === key ? 'text-[var(--fg)]' : 'text-[var(--muted)]'
+            }`}
+          >
+            {label} ({alertCounts[key as keyof typeof alertCounts]})
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-[var(--muted)] mb-4">
+        Freeze list is UI-only. Live updates continue in the background.
+      </p>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center space-x-2 overflow-x-auto">
-          {[
-            { key: 'all', label: 'All' },
-            { key: 'emergency', label: 'Emergency' },
-            { key: 'critical', label: 'Critical' },
-            { key: 'warning', label: 'Warning' },
-            { key: 'info', label: 'Info' }
-          ].map(({ key, label }) => (
+      <DataBoundary
+        state={dataState}
+        loadingLabel="Loading events..."
+        emptyLabel="No events available."
+      >
+        <EventList
+          items={filteredAlerts}
+          renderAction={(item) => (
             <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className={`px-3 py-1 text-sm rounded-lg transition-colors whitespace-nowrap ${
-                filter === key
-                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                  : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              }`}
+              onClick={() => dismissAlert(item.id)}
+              className="text-xs text-[var(--muted)]"
             >
-              {label}
-              {alertCounts[key as keyof typeof alertCounts] > 0 && (
-                <span className="ml-1">({alertCounts[key as keyof typeof alertCounts]})</span>
-              )}
+              Dismiss
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Alert List */}
-      <div className="max-h-96 overflow-y-auto">
-        {filteredAlerts.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No alerts</p>
-            <p className="text-sm mt-1">System operating normally</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-white/5">
-            {filteredAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className={`p-4 ${getAlertStyle(alert.level)} border-l-4 hover:bg-white/5 transition-colors`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3 flex-1">
-                    <div className="mt-0.5">
-                      {getAlertIcon(alert.level)}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="font-semibold text-sm">{alert.title}</h4>
-                        <span className="text-xs text-gray-500">
-                          {formatTimestamp(alert.timestamp)}
-                        </span>
-                      </div>
-
-                      <p className="text-sm text-gray-300 mb-2">{alert.message}</p>
-
-                      {alert.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {alert.tags.map((tag, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-0.5 text-xs rounded bg-white/10 text-gray-400"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => dismissAlert(alert.id)}
-                    className="ml-2 p-1 rounded hover:bg-white/10 transition-colors"
-                  >
-                    <X className="w-4 h-4 text-gray-400" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Alert Stats */}
-      {alerts.length > 0 && (
-        <div className="p-4 border-t border-white/10 bg-white/5">
-          <div className="grid grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-red-400">
-                {alertCounts.emergency}
-              </div>
-              <div className="text-xs text-gray-400">Emergency</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-orange-400">
-                {alertCounts.critical}
-              </div>
-              <div className="text-xs text-gray-400">Critical</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-yellow-400">
-                {alertCounts.warning}
-              </div>
-              <div className="text-xs text-gray-400">Warning</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-400">
-                {alertCounts.info}
-              </div>
-              <div className="text-xs text-gray-400">Info</div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+          )}
+        />
+      </DataBoundary>
+    </Panel>
+  );
 }

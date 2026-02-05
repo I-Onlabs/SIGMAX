@@ -194,14 +194,14 @@ class SIGMAXApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+    const headers = new Headers(options.headers || {});
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
+    }
 
     // Add API key if available
     if (this.apiKey) {
-      headers['Authorization'] = `Bearer ${this.apiKey}`;
+      headers.set('Authorization', `Bearer ${this.apiKey}`);
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {

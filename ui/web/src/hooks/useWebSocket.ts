@@ -57,6 +57,7 @@ export interface TradeExecution {
   status: string;
   filled_price: number;
   fee: number;
+  timestamp?: string;
 }
 
 export interface AgentDecision {
@@ -159,7 +160,14 @@ export function useWebSocket(): UseWebSocketReturn {
               break;
 
             case 'trade_execution':
-              setTradeExecutions(prev => [message.data, ...prev].slice(0, 50));
+              setTradeExecutions((prev) => {
+                const data = message.data || {};
+                const withTimestamp = {
+                  ...data,
+                  timestamp: data.timestamp || message.timestamp,
+                };
+                return [withTimestamp, ...prev].slice(0, 50);
+              });
               break;
 
             case 'agent_decision':
