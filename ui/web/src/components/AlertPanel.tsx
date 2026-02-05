@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Panel from '../ui/components/Panel';
 import EventList, { type EventItem } from '../ui/components/EventList';
 import DataBoundary from '../ui/data/DataBoundary';
@@ -40,14 +40,9 @@ export default function AlertPanel({ trades }: AlertPanelProps) {
   const [filter, setFilter] = useState<string>('all');
   const [muted, setMuted] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  const [visibleTrades, setVisibleTrades] = useState<TradeEvent[]>(trades || []);
+  const [frozenTrades, setFrozenTrades] = useState<TradeEvent[]>([]);
 
-  useEffect(() => {
-    if (!muted) {
-      setVisibleTrades(trades || []);
-    }
-  }, [muted, trades]);
-
+  const visibleTrades = muted ? frozenTrades : trades || [];
   const alerts = visibleTrades.reduce<EventItem[]>((acc, trade, i) => {
     const id = trade.order_id || `trade-${i}`;
     if (dismissedIds.has(id)) return acc;
@@ -111,7 +106,14 @@ export default function AlertPanel({ trades }: AlertPanelProps) {
       action={
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setMuted((prev) => !prev)}
+            onClick={() => {
+              setMuted((prev) => {
+                if (!prev) {
+                  setFrozenTrades(trades || []);
+                }
+                return !prev;
+              });
+            }}
             className="text-xs px-2 py-1 border border-[var(--line)] rounded-[var(--radius)]"
           >
             {muted ? 'Resume Updates' : 'Freeze List'}

@@ -103,6 +103,7 @@ export function useWebSocket(): UseWebSocketReturn {
   const [agentDecisions, setAgentDecisions] = useState<AgentDecision[]>([]);
 
   const ws = useRef<WebSocket | null>(null);
+  const connectRef = useRef<() => void>(() => {});
   const reconnectTimeout = useRef<number | null>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 10;
@@ -214,7 +215,7 @@ export function useWebSocket(): UseWebSocketReturn {
           );
 
           reconnectTimeout.current = window.setTimeout(() => {
-            connect();
+            connectRef.current();
           }, delay);
         } else {
           console.error('Max reconnection attempts reached');
@@ -227,6 +228,9 @@ export function useWebSocket(): UseWebSocketReturn {
       setConnected(false);
     }
   }, []);
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   /**
    * Send message to server
@@ -250,6 +254,7 @@ export function useWebSocket(): UseWebSocketReturn {
    * Connect on mount, cleanup on unmount
    */
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     connect();
 
     return () => {

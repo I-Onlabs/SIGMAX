@@ -28,6 +28,7 @@ export default function PerformanceChart({ portfolio }: PerformanceChartProps) {
 
   useEffect(() => {
     if (portfolio && portfolio.total_value !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPerformanceHistory((prev) => {
         const newHistory = [
           ...prev,
@@ -61,7 +62,12 @@ export default function PerformanceChart({ portfolio }: PerformanceChartProps) {
     '7d': 7 * 24 * 60 * 60 * 1000,
     '30d': 30 * 24 * 60 * 60 * 1000,
   };
-  const cutoff = Date.now() - timeframeMs[timeframe];
+  const latestTimestamp = performanceHistory.length
+    ? Date.parse(performanceHistory[performanceHistory.length - 1].timestamp)
+    : 0;
+  const cutoff = Number.isNaN(latestTimestamp)
+    ? 0
+    : latestTimestamp - timeframeMs[timeframe];
   const filteredHistory = performanceHistory.filter((entry) => {
     const ts = Date.parse(entry.timestamp);
     return Number.isNaN(ts) ? true : ts >= cutoff;
