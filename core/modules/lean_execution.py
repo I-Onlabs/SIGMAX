@@ -128,6 +128,16 @@ class LeanExecutionModule:
                 "detail": str(e)
             }
 
+    async def get_portfolio(self) -> Dict[str, Any]:
+        """Return a minimal portfolio snapshot (LEAN bridge may provide this separately)."""
+        return {
+            "balances": {},
+            "positions": [],
+            "total_value": 0.0,
+            "available_capital": 0.0,
+            "backend": "lean"
+        }
+
     async def get_status(self) -> Dict[str, Any]:
         """Return bridge status without network calls."""
         return {

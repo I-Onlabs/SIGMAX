@@ -19,3 +19,6 @@ async def test_lean_execution_unconfigured():
     close_result = await module.close_all_positions()
     assert close_result["success"] is False
     assert "LEAN bridge not configured" in close_result["error"]
+
+    portfolio = await module.get_portfolio()
+    assert portfolio["backend"] == "lean"
