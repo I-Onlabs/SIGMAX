@@ -1,6 +1,7 @@
 import pytest
 
 from core.modules.chain_data import ChainDataModule
+from core.modules.data import DataModule
 
 
 @pytest.mark.asyncio
@@ -39,3 +40,18 @@ async def test_chain_data_snapshot(monkeypatch):
     assert snapshot["evm"]["latest_block"] == 16
     assert snapshot["evm"]["base_fee_wei"] == 1
     assert snapshot["solana"]["latest_slot"] == 123
+
+
+@pytest.mark.asyncio
+async def test_data_module_exchange_prefix_fallback(monkeypatch):
+    module = DataModule()
+
+    # Configure one known exchange; the prefix below will be unknown.
+    module.exchanges = {"binance": object()}
+    module.exchange = module.exchanges["binance"]
+
+    exchange, symbol, exchange_id = module._select_exchange("kraken:BTC/USDT")
+
+    assert exchange is module.exchange
+    assert symbol == "BTC/USDT"
+    assert exchange_id is None
