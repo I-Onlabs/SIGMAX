@@ -252,7 +252,19 @@ class SIGMAXOrchestrator:
         async def onchain_handler(task: ResearchTask, context: Dict[str, Any]):
             """Handle on-chain metrics tasks"""
             symbol = context.get('symbol', '')
-            return await self.researcher._get_onchain_metrics(symbol)
+            market_data = context.get('market_data', {})
+            rpc_snapshot = market_data.get('onchain', {})
+            try:
+                data = await self.researcher._get_onchain_metrics(symbol)
+            except Exception as e:
+                logger.warning(f"On-chain metrics fallback used: {e}")
+                data = {}
+
+            if rpc_snapshot:
+                data["rpc_snapshot"] = rpc_snapshot
+                data["rpc_source"] = "chain_rpc"
+
+            return data
 
         # Register handler for technical analysis
         async def technical_handler(task: ResearchTask, context: Dict[str, Any]):
