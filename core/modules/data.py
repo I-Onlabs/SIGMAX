@@ -265,6 +265,10 @@ class DataModule:
             exchange = self.exchanges.get(exchange_id)
             if exchange:
                 return exchange, normalized_symbol, exchange_id
+            logger.warning(
+                f"Exchange prefix '{exchange_id}' not configured; falling back to default exchange."
+            )
+            symbol = normalized_symbol
 
         exchange_id = None
         if self.exchange:
