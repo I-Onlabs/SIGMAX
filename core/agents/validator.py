@@ -286,7 +286,7 @@ class ValidationAgent:
                 age = current_time - data_time
 
                 if age > max_age:
-                    stale_sources.append(f"Research data ({age.seconds}s old)")
+                    stale_sources.append(f"Research data ({int(age.total_seconds())}s old)")
                     score -= 0.4
             except Exception:
                 pass
@@ -301,7 +301,7 @@ class ValidationAgent:
                     age = current_time - source_time
 
                     if age > max_age:
-                        stale_sources.append(f"{source_name} ({age.seconds}s old)")
+                        stale_sources.append(f"{source_name} ({int(age.total_seconds())}s old)")
                         score -= 0.15
                 except Exception:
                     pass
