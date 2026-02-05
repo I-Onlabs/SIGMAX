@@ -156,6 +156,17 @@ class TestSentimentAgent:
     """Test SentimentAgent handling of rpc_snapshot"""
 
     @pytest.mark.asyncio
+    async def test_onchain_rpc_snapshot_empty(self):
+        """Empty rpc_snapshot should be handled safely."""
+        from core.agents.sentiment import SentimentAgent
+
+        agent = SentimentAgent(llm=None)
+        result = await agent._analyze_onchain("BTC/USDT", rpc_snapshot={})
+
+        assert isinstance(result, dict)
+        assert result.get("rpc_snapshot") == {}
+
+    @pytest.mark.asyncio
     async def test_onchain_rpc_snapshot_non_dict(self):
         """Non-dict rpc_snapshot should be ignored safely."""
         from core.agents.sentiment import SentimentAgent
