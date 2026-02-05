@@ -2,7 +2,7 @@
 Data Module - Market Data Fetching & Management
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 import asyncio
 from loguru import logger
@@ -22,6 +22,7 @@ class DataModule:
 
     def __init__(self):
         self.exchange = None
+        self.exchanges: Dict[str, Any] = {}
         self.cache = {}
         self.cache_ttl = 60  # seconds
         self._cache_cleanup_task = None
@@ -34,31 +35,52 @@ class DataModule:
             import ccxt.async_support as ccxt
 
             exchange_name = os.getenv("EXCHANGE", "binance").lower()
+            exchange_list = [
+                name.strip().lower()
+                for name in os.getenv("EXCHANGES", "").split(",")
+                if name.strip()
+            ]
             testnet = os.getenv("TESTNET", "true").lower() == "true"
 
-            if exchange_name == "binance":
-                self.exchange = ccxt.binance({
-                    'apiKey': os.getenv("API_KEY"),
-                    'secret': os.getenv("API_SECRET"),
-                    'enableRateLimit': True,
-                    'options': {
-                        'defaultType': 'future' if testnet else 'spot',
-                        'test': testnet
-                    }
-                })
-            else:
-                # Generic exchange
-                exchange_class = getattr(ccxt, exchange_name)
-                self.exchange = exchange_class({
+            async def create_exchange(name: str):
+                if name == "binance":
+                    return ccxt.binance({
+                        'apiKey': os.getenv("API_KEY"),
+                        'secret': os.getenv("API_SECRET"),
+                        'enableRateLimit': True,
+                        'options': {
+                            'defaultType': 'future' if testnet else 'spot',
+                            'test': testnet
+                        }
+                    })
+                exchange_class = getattr(ccxt, name)
+                return exchange_class({
                     'apiKey': os.getenv("API_KEY"),
                     'secret': os.getenv("API_SECRET"),
                     'enableRateLimit': True
                 })
 
-            # Load markets
-            await self.exchange.load_markets()
+            if exchange_list:
+                for name in exchange_list:
+                    try:
+                        ex = await create_exchange(name)
+                        await ex.load_markets()
+                        self.exchanges[name] = ex
+                        logger.info(f"✓ Data exchange initialized: {name}")
+                    except Exception as e:
+                        logger.warning(f"Failed to initialize exchange {name}: {e}")
 
-            logger.info(f"✓ Data module initialized with {exchange_name}")
+                self.exchange = self.exchanges.get(exchange_name) or next(
+                    iter(self.exchanges.values()), None
+                )
+                if self.exchange:
+                    logger.info(f"✓ Data module initialized with {len(self.exchanges)} exchanges")
+                else:
+                    logger.warning("No exchanges available after initialization")
+            else:
+                self.exchange = await create_exchange(exchange_name)
+                await self.exchange.load_markets()
+                logger.info(f"✓ Data module initialized with {exchange_name}")
 
         except Exception as e:
             logger.warning(f"Could not initialize CCXT: {e}. Using mock data.")
@@ -85,7 +107,8 @@ class DataModule:
         Returns:
             Market data dictionary
         """
-        cache_key = f"{symbol}_{timeframe}"
+        exchange, normalized_symbol, exchange_id = self._select_exchange(symbol)
+        cache_key = f"{exchange_id or 'default'}:{normalized_symbol}_{timeframe}"
 
         # Check cache
         if cache_key in self.cache:
@@ -94,14 +117,15 @@ class DataModule:
                 return cached_data
 
         try:
-            if self.exchange:
+            if exchange:
                 # Fetch real data
-                ticker = await self.exchange.fetch_ticker(symbol)
-                ohlcv = await self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
-                orderbook = await self.exchange.fetch_order_book(symbol, limit=20)
+                ticker = await exchange.fetch_ticker(normalized_symbol)
+                ohlcv = await exchange.fetch_ohlcv(normalized_symbol, timeframe, limit=limit)
+                orderbook = await exchange.fetch_order_book(normalized_symbol, limit=20)
 
                 data = {
-                    "symbol": symbol,
+                    "symbol": normalized_symbol,
+                    "exchange": exchange_id,
                     "price": ticker['last'],
                     "volume_24h": ticker['quoteVolume'],
                     "change_24h": ticker['percentage'],
@@ -116,7 +140,7 @@ class DataModule:
                 }
             else:
                 # Mock data
-                data = self._generate_mock_data(symbol)
+                data = self._generate_mock_data(normalized_symbol)
 
             # Cache it
             self.cache[cache_key] = (data, datetime.now())
@@ -125,7 +149,7 @@ class DataModule:
 
         except Exception as e:
             logger.error(f"Error fetching market data for {symbol}: {e}")
-            return self._generate_mock_data(symbol)
+            return self._generate_mock_data(normalized_symbol)
 
     def _generate_mock_data(self, symbol: str) -> Dict[str, Any]:
         """Generate mock market data for testing"""
@@ -141,7 +165,8 @@ class DataModule:
         timeframe: str = "1h"
     ) -> List[List[float]]:
         """Get historical OHLCV data"""
-        if not self.exchange:
+        exchange, normalized_symbol, _ = self._select_exchange(symbol)
+        if not exchange:
             return []
 
         try:
@@ -149,8 +174,8 @@ class DataModule:
             all_ohlcv = []
 
             while since < int(end.timestamp() * 1000):
-                ohlcv = await self.exchange.fetch_ohlcv(
-                    symbol,
+                ohlcv = await exchange.fetch_ohlcv(
+                    normalized_symbol,
                     timeframe,
                     since=since,
                     limit=1000
@@ -162,7 +187,7 @@ class DataModule:
                 all_ohlcv.extend(ohlcv)
                 since = ohlcv[-1][0] + 1
 
-                await asyncio.sleep(self.exchange.rateLimit / 1000)
+                await asyncio.sleep(exchange.rateLimit / 1000)
 
             return all_ohlcv
 
@@ -202,8 +227,28 @@ class DataModule:
             except asyncio.CancelledError:
                 pass
 
-        # Close exchange
-        if self.exchange:
+        # Close exchanges
+        for exchange in self.exchanges.values():
+            await exchange.close()
+        if self.exchange and not self.exchanges:
             await self.exchange.close()
 
         logger.info("✓ Data module closed")
+
+    def _select_exchange(self, symbol: str) -> Tuple[Optional[Any], str, Optional[str]]:
+        """
+        Resolve exchange based on symbol prefix or default exchange.
+
+        Supports 'exchange:symbol' format when multiple exchanges are configured.
+        """
+        if ":" in symbol:
+            exchange_id, normalized_symbol = symbol.split(":", 1)
+            exchange_id = exchange_id.lower()
+            exchange = self.exchanges.get(exchange_id)
+            if exchange:
+                return exchange, normalized_symbol, exchange_id
+
+        exchange_id = None
+        if self.exchange:
+            exchange_id = getattr(self.exchange, "id", None)
+        return self.exchange, symbol, exchange_id

@@ -84,6 +84,26 @@ class ConfigValidator:
                     "TESTNET"
                 ))
 
+        execution_backend = os.getenv("EXECUTION_BACKEND", "ccxt").lower()
+        if execution_backend not in ["ccxt", "lean"]:
+            self.results.append(ValidationResult(
+                Severity.WARNING,
+                f"EXECUTION_BACKEND '{execution_backend}' not recognized. Use 'ccxt' or 'lean'.",
+                "EXECUTION_BACKEND"
+            ))
+        elif execution_backend == "lean" and not os.getenv("LEAN_BRIDGE_URL"):
+            self.results.append(ValidationResult(
+                Severity.WARNING,
+                "LEAN_BRIDGE_URL not set. LEAN execution will be unavailable.",
+                "LEAN_BRIDGE_URL"
+            ))
+
+        exchanges = [
+            name.strip().lower()
+            for name in os.getenv("EXCHANGES", "").split(",")
+            if name.strip()
+        ]
+
         # Validate exchange
         exchange = os.getenv("EXCHANGE", "binance").lower()
         supported_exchanges = ["binance", "coinbase", "kraken", "bybit", "okx"]
@@ -92,6 +112,12 @@ class ConfigValidator:
                 Severity.WARNING,
                 f"Exchange '{exchange}' may not be fully supported. Recommended: {supported_exchanges}",
                 "EXCHANGE"
+            ))
+        if exchanges:
+            self.results.append(ValidationResult(
+                Severity.INFO,
+                f"EXCHANGES configured: {', '.join(exchanges)}",
+                "EXCHANGES"
             ))
 
     def _validate_llm_config(self):

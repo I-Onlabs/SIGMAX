@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from agents.orchestrator import SIGMAXOrchestrator
 from modules.data import DataModule
 from modules.execution import ExecutionModule
+from modules.lean_execution import LeanExecutionModule
 from modules.quantum import QuantumModule
 from modules.rl import RLModule
 from modules.arbitrage import ArbitrageModule
@@ -159,10 +160,16 @@ class SIGMAX:
 
                 # Initialize execution module
                 task = progress.add_task("Initializing execution module...", total=None)
-                self.execution_module = ExecutionModule(mode=self.mode)
-                await self.execution_module.initialize()
+                execution_backend = os.getenv("EXECUTION_BACKEND", "ccxt").lower()
+                if execution_backend == "lean":
+                    self.execution_module = LeanExecutionModule(mode=self.mode)
+                    await self.execution_module.initialize()
+                    logger.info("✓ LEAN execution module initialized")
+                else:
+                    self.execution_module = ExecutionModule(mode=self.mode)
+                    await self.execution_module.initialize()
+                    logger.info("✓ Execution module initialized")
                 progress.remove_task(task)
-                logger.info("✓ Execution module initialized")
 
                 # Initialize quantum module (if enabled)
                 if os.getenv("QUANTUM_ENABLED", "true").lower() == "true":
