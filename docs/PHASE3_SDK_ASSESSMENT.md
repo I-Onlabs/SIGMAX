@@ -1,5 +1,7 @@
 # Phase 3: SDK Publishing - Initial Assessment
 
+> ⚠️ Historical assessment. Current readiness may differ; verify against latest SDK docs.
+
 **Date**: December 21, 2024
 **Phase**: Phase 3 (SDK Publishing) from REMEDIATION_PLAN.md
 **Status**: 🔄 **IN PROGRESS** - Assessment Complete

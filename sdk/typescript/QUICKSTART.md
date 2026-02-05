@@ -11,8 +11,25 @@ Get up and running with the SIGMAX TypeScript SDK in minutes.
 
 ## Installation
 
+If published:
+
 ```bash
 npm install @sigmax/sdk
+```
+
+If not published, install from source:
+
+```bash
+git clone https://github.com/I-Onlabs/SIGMAX.git
+cd SIGMAX/sdk/typescript
+npm install && npm run build
+npm link
+```
+
+Then in your project:
+
+```bash
+npm link @sigmax/sdk
 ```
 
 ## 5-Minute Walkthrough

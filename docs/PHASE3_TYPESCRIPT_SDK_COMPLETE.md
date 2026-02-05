@@ -1,5 +1,7 @@
 # Phase 3: TypeScript SDK - Publication Ready ✅
 
+> ⚠️ Publication status depends on npm release. This doc reflects readiness, not a confirmed publish.
+
 **Status**: COMPLETE
 **Date**: 2025-12-21
 **Phase**: 3.2 - TypeScript SDK Preparation

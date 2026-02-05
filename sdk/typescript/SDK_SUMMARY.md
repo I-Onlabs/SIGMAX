@@ -68,6 +68,8 @@ sdk/typescript/
 
 ## Installation
 
+If published:
+
 ```bash
 npm install @sigmax/sdk
 # or
@@ -75,6 +77,8 @@ yarn add @sigmax/sdk
 # or
 pnpm add @sigmax/sdk
 ```
+
+If not published, install from source (see `INSTALL.md`).
 
 ## Quick Usage
 

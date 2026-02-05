@@ -1,9 +1,8 @@
 # SIGMAX TypeScript SDK
 
-> ⚠️ **NOT YET PUBLISHED TO NPM - INSTALL FROM SOURCE**
+> ⚠️ **Publication status depends on npm release**
 >
-> This SDK is functional code but **not yet published** to npm.
-> Use source installation below. Publishing planned for v0.3.0.
+> If `@sigmax/sdk` is not published, use source installation below.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status: Alpha](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/I-Onlabs/SIGMAX)
@@ -12,8 +11,8 @@ TypeScript/JavaScript SDK for the **SIGMAX Autonomous AI Crypto Trading System**
 
 ## ⚠️ Current Status
 
-- **Version**: 0.2.0-alpha (NOT published)
-- **Maturity**: Alpha - Research Software
+- **Version**: 1.0.0 (package.json)
+- **Maturity**: Research Software
 - **Use Case**: Educational and Research Only
 - **Production Ready**: No - Use at your own risk
 
@@ -28,16 +27,15 @@ TypeScript/JavaScript SDK for the **SIGMAX Autonomous AI Crypto Trading System**
 
 ## Installation
 
-### ~~From npm~~ **[NOT AVAILABLE YET]**
+### From npm (if published)
 
 ```bash
-# ❌ These will NOT work until we publish to npm
-# npm install @sigmax/sdk
+npm install @sigmax/sdk
 # yarn add @sigmax/sdk
 # pnpm add @sigmax/sdk
 ```
 
-### From Source (Required for now)
+### From Source
 
 ```bash
 git clone https://github.com/I-Onlabs/SIGMAX.git

@@ -11,6 +11,18 @@ Before you begin, ensure you have:
 - SIGMAX API server running (default: http://localhost:8000)
 - SIGMAX API key
 
+## Installation Options
+
+If `@sigmax/sdk` is published, you can install directly:
+
+```bash
+npm install @sigmax/sdk
+# yarn add @sigmax/sdk
+# pnpm add @sigmax/sdk
+```
+
+If not published, install from source:
+
 ## Step 1: Install Dependencies
 
 Navigate to the SDK directory and install dependencies:

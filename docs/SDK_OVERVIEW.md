@@ -112,6 +112,8 @@ asyncio.run(stream_analysis())
 
 ### Installation
 
+If published:
+
 ```bash
 npm install @sigmax/sdk
 # or
@@ -119,6 +121,8 @@ yarn add @sigmax/sdk
 # or
 pnpm add @sigmax/sdk
 ```
+
+If not published, install from source (see `sdk/typescript/INSTALL.md`).
 
 ### Quick Start (Node.js)
 

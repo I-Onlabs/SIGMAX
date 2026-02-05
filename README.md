@@ -438,10 +438,11 @@ async with SigmaxClient(api_url="http://localhost:8000") as client:
 
 ### TypeScript SDK
 
-> ⚠️ **NOT YET PUBLISHED** - Install from source until v0.3.0
+> ⚠️ Publication status depends on npm release. If not published, install from source.
 
 ```bash
-# ❌ npm install @sigmax/sdk  # NOT available yet
+# ✅ If published:
+# npm install @sigmax/sdk
 
 # ✅ Install from source:
 git clone https://github.com/I-Onlabs/SIGMAX.git
@@ -546,7 +547,7 @@ SIGMAX supports multiple interfaces feeding the same orchestrator:
 | **Web API** | ✅ Production | REST + SSE streaming |
 | **CLI** | ✅ Production | Automation/scripting ([docs](docs/CLI.md)) |
 | **Python SDK** | ✅ Available | Programmatic access ([docs](sdk/python/README.md)) |
-| **TypeScript SDK** | ✅ Available | Web/Node.js integration ([docs](sdk/typescript/README.md)) |
+| **TypeScript SDK** | ⚠️ Source install | Web/Node.js integration ([docs](sdk/typescript/README.md)) |
 | **WebSocket** | ✅ Available | Real-time bidirectional ([docs](docs/WEBSOCKET.md)) |
 
 See [Interface Enhancement Plan](docs/INTERFACE_ENHANCEMENT_PLAN.md) for details.
@@ -643,9 +644,9 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 - ✅ Safety enforcer verification
 - 📋 [Test summary](docs/PHASE2_FINAL_SUMMARY.md)
 
-### ✅ Phase 3: SDK Publishing (Complete - Dec 21, 2024)
-- ✅ Python SDK ready for PyPI (84% coverage, 13/13 tests passing)
-- ✅ TypeScript SDK ready for npm (52% coverage, 41/41 tests passing)
+### ✅ Phase 3: SDK Preparation (Complete - Dec 21, 2024)
+- ✅ Python SDK prepared for PyPI (84% coverage, 13/13 tests passing)
+- ✅ TypeScript SDK prepared for npm (52% coverage, 41/41 tests passing)
 - ✅ Security audits complete (no vulnerabilities)
 - ✅ Dual-format builds (CJS + ESM)
 - 📦 [Python SDK status](docs/PHASE3_PYTHON_SDK_READY.md) | [TypeScript SDK status](docs/PHASE3_TYPESCRIPT_SDK_COMPLETE.md)
@@ -659,8 +660,8 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 
 ### ✅ Phase 5: Multi-Interface (Complete)
 - ✅ CLI interface (`sigmax` command)
-- ✅ Python SDK (sigmax-sdk v1.0.0) - ready for publication
-- ✅ TypeScript SDK (@sigmax/sdk v1.0.0) - ready for publication
+- ✅ Python SDK (sigmax-sdk v1.0.0) - source install available
+- ✅ TypeScript SDK (@sigmax/sdk v1.0.0) - source install available
 - ✅ WebSocket support
 - ✅ Enhanced documentation
 
