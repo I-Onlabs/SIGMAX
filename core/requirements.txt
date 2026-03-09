@@ -20,7 +20,7 @@ sentence-transformers==5.2.0
 # ============================================
 ccxt==4.4.41
 freqtrade==2026.1
-pandas==2.2.3
+pandas==3.0.1
 numpy==1.26.4
 pandas-ta>=0.3.14b  # Note: Install from GitHub if not available: pip install git+https://github.com/twopirllc/pandas-ta
 ta-lib==0.4.32
