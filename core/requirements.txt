@@ -78,7 +78,7 @@ pydantic-settings==2.7.0
 # ============================================
 sqlalchemy==2.0.36
 asyncpg==0.30.0
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.11
 redis==7.1.0
 clickhouse-driver==0.2.9
 
