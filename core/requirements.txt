@@ -91,7 +91,7 @@ aiokafka==0.12.0
 # ============================================
 # Security & Privacy
 # ============================================
-cryptography==46.0.5
+cryptography==46.0.6
 pycryptodome==3.23.0
 # SECURITY FIX: Replaced python-jose (unmaintained, CVE vulnerabilities)
 # with PyJWT (actively maintained, no known vulnerabilities)
