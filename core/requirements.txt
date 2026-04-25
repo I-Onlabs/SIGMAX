@@ -5,7 +5,7 @@
 # ============================================
 langchain==1.2.12
 langchain-community==0.4.1
-langchain-core==1.2.19
+langchain-core==1.2.28
 langgraph==1.0.10rc1
 langchain-openai==1.1.14
 langchain-anthropic==1.3.5
@@ -26,7 +26,7 @@ pandas-ta>=0.3.14b  # Note: Install from GitHub if not available: pip install gi
 ta-lib==0.4.32
 yfinance==0.2.50
 alpaca-py==0.43.2  # Updated from 0.36.1 (version not available)
-web3==7.14.0
+web3==7.15.0
 solana==0.36.11
 uniswap-python==0.7.7
 
@@ -69,7 +69,7 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 websockets==14.1
 httpx==0.28.1
-aiohttp==3.13.3
+aiohttp==3.13.4
 pydantic==2.12.4
 pydantic-settings==2.7.0
 
@@ -91,16 +91,16 @@ aiokafka==0.12.0
 # ============================================
 # Security & Privacy
 # ============================================
-cryptography==46.0.5
+cryptography==46.0.7
 pycryptodome==3.23.0
 # SECURITY FIX: Replaced python-jose (unmaintained, CVE vulnerabilities)
 # with PyJWT (actively maintained, no known vulnerabilities)
 PyJWT[crypto]==2.10.1
 passlib[bcrypt]==1.7.4
 # SECURITY: Pin transitive dependencies to fix CVEs (Dec 2025)
-authlib==1.6.7      # Fix CVE-2025-59420, CVE-2025-61920, CVE-2025-62706 (JWS/JWE attacks)
+authlib==1.6.11      # Fix CVE-2025-59420, CVE-2025-61920, CVE-2025-62706 (JWS/JWE attacks)
 brotli==1.2.0       # Fix CVE-2025-6176 (DoS via decompression bomb)
-deepdiff==8.6.1     # Fix CVE-2025-58367 (RCE via class pollution + Pickle)
+deepdiff==8.6.2     # Fix CVE-2025-58367 (RCE via class pollution + Pickle)
 Django==5.2.11      # Fix 7 CVEs including SQL injection (CVE-2025-57833, CVE-2025-59681, CVE-2025-59682, CVE-2025-64458, CVE-2025-64459, CVE-2025-13372, CVE-2025-64460)
 filelock==3.20.3    # Fix CVE-2025-68146 (TOCTOU race condition → RCE)
 fonttools==4.60.2   # Fix CVE-2025-66034 (arbitrary file write → RCE)
@@ -134,7 +134,7 @@ toml==0.10.2
 click==8.1.8
 rich==14.3.3
 tqdm==4.67.1
-requests==2.32.4
+requests==2.33.0
 beautifulsoup4==4.12.3
 lxml==6.1.0
 feedparser==6.0.11
