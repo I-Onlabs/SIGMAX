@@ -34,7 +34,7 @@ uniswap-python==0.7.7
 # ML & RL
 # ============================================
 scikit-learn==1.8.0
-stable-baselines3==2.4.0
+stable-baselines3==2.8.0
 gym==0.26.2
 gymnasium==1.0.0
 torch==2.11.0
