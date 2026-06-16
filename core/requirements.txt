@@ -95,7 +95,7 @@ cryptography==47.0.0
 pycryptodome==3.23.0
 # SECURITY FIX: Replaced python-jose (unmaintained, CVE vulnerabilities)
 # with PyJWT (actively maintained, no known vulnerabilities)
-PyJWT[crypto]==2.10.1
+PyJWT[crypto]==2.13.0
 passlib[bcrypt]==1.7.4
 # SECURITY: Pin transitive dependencies to fix CVEs (Dec 2025)
 authlib==1.6.11      # Fix CVE-2025-59420, CVE-2025-61920, CVE-2025-62706 (JWS/JWE attacks)
